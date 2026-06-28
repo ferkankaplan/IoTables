@@ -11,6 +11,9 @@ dependencies = [
   "uvicorn[standard]>=0.35",
 ]
 
+[project.scripts]
+iotables-api = "iotables.main:app"
+
 [dependency-groups]
 dev = [
   "httpx>=0.28",

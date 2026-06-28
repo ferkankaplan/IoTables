@@ -1,6 +1,6 @@
-import enum
 import uuid
 from datetime import UTC, datetime
+from enum import StrEnum
 
 from sqlalchemy import DateTime, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from iotables.core.database import Base
 
 
-class TenantStatus(str, enum.Enum):
+class TenantStatus(StrEnum):
     draft = "draft"
     active = "active"
     suspended = "suspended"

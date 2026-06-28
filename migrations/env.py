@@ -1,14 +1,14 @@
 from logging.config import fileConfig
 
 from alembic import context
+from iotables.core.database import Base
+from iotables.platform import models as platform_models
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from iotables.core.database import Base
-from iotables.platform.models import Tenant
-
 config = context.config
+_ = platform_models
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

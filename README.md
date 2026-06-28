@@ -23,6 +23,18 @@ Install dependencies:
 uv sync
 ```
 
+Start PostgreSQL:
+
+```sh
+docker compose up -d postgres
+```
+
+Run migrations:
+
+```sh
+uv run alembic upgrade head
+```
+
 Run API:
 
 ```sh
