@@ -1,0 +1,71 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+.pnpm-store/
+.vite/
+.turbo/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Databases and local state
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.dump
+
+# Docker / runtime
+docker-data/
+tmp/
+temp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Secrets / certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Generated media / reports
+playwright-report/
+test-results/
