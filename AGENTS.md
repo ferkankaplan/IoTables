@@ -86,6 +86,39 @@ When multiple solutions are possible, choose the one that best improves long-ter
 - Do not introduce new dependencies without a clear architectural reason.
 - Update documentation when behavior, commands, architecture, or setup changes.
 
+## Operational Safety and Idempotency
+
+Before adding a new class, function, module, service, API endpoint, workflow, or background operation, define the safety mechanisms that protect it. The safeguards are part of the feature, not an afterthought.
+
+Assume critical actions can be retried, double-clicked, replayed, triggered concurrently, called by the wrong actor, or interrupted halfway. Design the frontend, backend, and database so these conditions do not corrupt state or create duplicate business records.
+
+For every meaningful operation, consider and implement the relevant protections first:
+
+- Frontend protections: disabled pending buttons, loading states, duplicate-submit prevention, debounce/throttle where appropriate, and clear retry behavior.
+- Backend protections: authorization guards, permission policies, request validation, idempotency keys, domain invariant checks, transaction boundaries, and concurrency handling.
+- Database protections: unique constraints, foreign keys, check constraints, durable operation records, row locks or equivalent concurrency controls when needed.
+- One-time operations: provisioning, starter templates, migrations of business state, and bootstrap flows must record completion durably and must not run again on restart, deployment, migration, or release upgrade.
+- Rollback and recovery: define what happens if the operation fails halfway, which changes are rolled back transactionally, which external side effects need compensating actions, and how the operation can be retried safely.
+
+Do not rely on the frontend as the only defense. The backend and database must remain correct if the frontend misbehaves, the user repeats an action, the network retries a request, or two requests arrive at the same time.
+
+Examples of required invariants:
+
+- The same order submission must not create duplicate orders.
+- A one-time tenant starter template must apply only once per tenant.
+- A closed table session must not accept new orders.
+- Tenant identity fields that are declared immutable must not be changed through any code path.
+
+When an operation spans multiple steps, prefer a single database transaction for atomic state changes. If the operation includes non-transactional side effects such as SMS, email, payment provider calls, DNS changes, or device communication, document and implement the recovery strategy explicitly. Do not pretend those side effects roll back automatically.
+
+## UX and Interface Principles
+
+For admin and operational interfaces, prefer fewer stable pages with rich contextual controls over many narrow pages.
+
+Users should keep their working context. Use panels, drawers, dialogs, inline editing, and contextual sidebars for secondary objects and detail editing when this avoids unnecessary navigation. A separate full page should exist only when the workflow has a distinct primary context, deep complexity, or a durable URL-worthy workspace.
+
+Do not split tightly owned concepts into separate primary screens just because they are separate entities. For example, tables belong to hall management; selecting a table should open a contextual detail panel inside the hall workspace unless the product explicitly requires a standalone table workflow.
+
 ## Testing and Verification
 
 - Add or update tests when behavior changes.

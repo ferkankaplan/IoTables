@@ -4,7 +4,9 @@
 
 PlatformApp is the private owner interface for operating IoTables as a platform.
 
-It is used only by the platform owner. Its main responsibility is to create, inspect, configure, suspend, and support tenant businesses. A tenant represents a cafe or restaurant customer.
+It is a single-user admin panel served from `platform.iotables.net`. The first interaction must require login. After login, the platform owner can inspect active tenants, monitor their health, and create new tenants.
+
+Its main responsibility is to create, inspect, configure, suspend, and support tenant businesses. A tenant represents a cafe or restaurant customer.
 
 PlatformApp is not a tenant runtime interface. It does not operate tables, orders, stations, cashier workflows, customer ordering sessions, or payments directly.
 
@@ -12,8 +14,9 @@ PlatformApp is not a tenant runtime interface. It does not operate tables, order
 
 | User | Scope | Allowed Capabilities | Limits |
 | --- | --- | --- | --- |
-| Platform Owner | Global platform scope | Manage tenants and platform-level configuration | Does not act as tenant staff by default |
-| Support Operator | Optional future role | Inspect tenant state and assist with operational issues | Cannot perform destructive or financial actions without explicit permission |
+| Platform Owner | Global platform scope | Login to PlatformApp, list tenants, inspect tenant health, create tenants, manage platform-level tenant configuration | Does not act as tenant staff by default |
+
+PlatformApp is single-user for the initial product. Additional platform roles, such as support operators, are not part of the first version unless explicitly introduced later.
 
 ## App Authority
 
@@ -24,8 +27,15 @@ PlatformApp can manage platform-owned records and platform-level lifecycle decis
 | Tenant registry | Create, view, update, suspend, reactivate |
 | Tenant provisioning | Start tenant setup flow |
 | Tenant status | Control platform-level availability |
+| Tenant domain | Define the immutable tenant subdomain |
+| Tenant profile | Define required and optional restaurant metadata |
+| Tenant admin bootstrap | Create the first tenant admin credentials |
+| Tenant starter data | Apply sector-based starter data once during tenant creation |
+| Tenant health | View high-level tenant health and operational status |
 | Tenant limits | Define package, capacity, or feature limits when those concepts exist |
 | Platform audit | View platform-level operational history when available |
+
+Tenant name and tenant domain are immutable after creation. Tenant GSM number is required and editable, but it is treated as a sensitive operational contact because it is used for tenant admin password setup and OTP verification. Optional tenant profile fields can be changed later.
 
 ## Not Authorized
 
@@ -39,28 +49,123 @@ PlatformApp must not silently bypass tenant boundaries.
 
 ## Screens and URLs
 
-Initial URLs are documentation targets, not final routing commitments.
+PlatformApp is served from `platform.iotables.net`.
 
 | Screen | URL | Purpose |
 | --- | --- | --- |
-| Platform Dashboard | `/platform` | Overview of tenants and platform health |
-| Tenant List | `/platform/tenants` | List and filter tenant businesses |
-| Create Tenant | `/platform/tenants/new` | Start tenant creation |
-| Tenant Detail | `/platform/tenants/:tenantId` | Inspect tenant profile, status, and setup state |
-| Tenant Settings | `/platform/tenants/:tenantId/settings` | Manage platform-owned tenant configuration |
-| Tenant Audit | `/platform/tenants/:tenantId/audit` | Review platform-level changes for a tenant |
+| Login | `https://platform.iotables.net/login` | Authenticate the platform owner |
+| Platform Dashboard | `https://platform.iotables.net/` | Overview of active tenants and platform health |
+| Tenant List | `https://platform.iotables.net/tenants` | List active tenants and their health state |
+| Create Tenant | `https://platform.iotables.net/tenants/new` | Create a new tenant business |
+| Tenant Detail | `https://platform.iotables.net/tenants/:tenantId` | Inspect tenant profile, domain, status, and setup state |
+| Tenant Settings | `https://platform.iotables.net/tenants/:tenantId/settings` | Manage editable platform-owned tenant fields |
+| Tenant Audit | `https://platform.iotables.net/tenants/:tenantId/audit` | Review platform-level changes for a tenant |
+
+Tenant runtime apps are served from tenant subdomains:
+
+```text
+https://[tenant].iotables.net
+```
+
+DNS records for tenant subdomains are managed manually by the platform owner outside the application.
 
 ## Core Workflows
+
+### Login
+
+1. Platform Owner opens `platform.iotables.net`.
+2. PlatformApp requires login before showing any tenant data.
+3. After successful login, PlatformApp opens the dashboard.
 
 ### Create Tenant
 
 1. Platform Owner opens Create Tenant.
-2. Platform Owner enters required tenant identity fields.
+2. Platform Owner enters the required tenant identity fields.
 3. PlatformApp validates uniqueness and required platform constraints.
-4. PlatformApp creates the tenant in draft or active state.
-5. PlatformApp starts the tenant provisioning flow.
+4. Platform Owner may enter optional restaurant metadata.
+5. PlatformApp creates the tenant in draft or active state.
+6. PlatformApp creates the initial tenant admin account.
+7. PlatformApp applies the selected sector starter data once.
+8. PlatformApp starts the tenant provisioning flow.
+9. Platform Owner manually creates or updates the DNS record for the tenant domain.
 
-The exact tenant creation requirements are not finalized yet.
+Required fields:
+
+| Field | Required | Mutable After Creation | Notes |
+| --- | --- | --- | --- |
+| Tenant name | Yes | No | Legal or platform-facing tenant identity |
+| Tenant subdomain | Yes | No | Publishes tenant at `https://[tenant].iotables.net` |
+| Tenant GSM number | Yes | Yes | Used for OTP SMS during first password setup and future sensitive account flows |
+
+Optional fields:
+
+| Field | Required | Mutable After Creation | Notes |
+| --- | --- | --- | --- |
+| Restaurant capacity | No | Yes | Capacity definition will be refined later |
+| Restaurant sector | No | Yes | Enum. If selected during tenant creation, it determines the one-time starter data template |
+| Address | No | Yes | Physical business address |
+
+Tenant name and tenant subdomain are permanent identity fields. If the business needs a different public display name later, that should be modeled as a separate editable field instead of mutating the tenant name.
+
+Changing restaurant sector after tenant creation does not re-run starter data. Sector is an editable profile/classification field after creation, not a provisioning trigger.
+
+### Apply Sector Starter Data
+
+Starter data is created only during tenant creation. It must never run on server startup, application restart, deployment, migration, or release upgrade.
+
+The provisioning process must record that starter data was applied to the tenant. Once recorded, the same tenant must never receive automatic starter data again unless an explicit, manual recovery tool is built for that purpose.
+
+Initial sector enum:
+
+| Sector | Starter Template |
+| --- | --- |
+| `cafe` | Cafe starter halls, tables, stations, products, and staff users |
+
+Initial `cafe` starter data:
+
+| Data Type | Created Records |
+| --- | --- |
+| Halls | `Salon 1`, `Salon 2` |
+| Tables per hall | `Masa 000`, `Masa 001`, `Masa 999` |
+| Stations | `Mutfak`, `Kahve` |
+| Mutfak products | `Sandviç`, `Tost`, `Kurabiye`, `Kek`, `Poğaça` |
+| Kahve products | `Kapuçino`, `Americano`, `Türk Kahvesi`, `Çay`, `Latte`, `Espresso` |
+| Staff users | `Kasiyer`, `Aşçı`, `Barista`, `Garson`, `Komi` |
+
+Starter data is editable by TenantApp after creation. It is a convenience template, not protected system data.
+
+Starter staff users are created with bootstrap credentials during tenant provisioning. They must change their password on first login.
+
+Initial `cafe` starter staff credentials:
+
+| Staff User | Username | Temporary Password | First Login Requirement |
+| --- | --- | --- | --- |
+| Kasiyer | `kasiyer` | `admin` | Must change password with OTP verification |
+| Aşçı | `asci` | `admin` | Must change password; OTP not required |
+| Barista | `barista` | `admin` | Must change password; OTP not required |
+| Garson | `garson` | `admin` | Must change password; OTP not required |
+| Komi | `komi` | `admin` | Must change password; OTP not required |
+
+These are temporary bootstrap credentials only. They must not allow continued access after the first login without password change.
+
+Cashier OTP uses the tenant GSM number during bootstrap.
+
+### Provision Tenant Admin
+
+1. PlatformApp creates the first tenant admin during tenant creation.
+2. Tenant admin username is the tenant subdomain.
+3. Tenant admin initial password is `admin`.
+4. Tenant admin must change the password on first login.
+5. First password setup must verify the tenant GSM number with an OTP SMS.
+
+The initial `admin` password is a temporary bootstrap credential only. It must not allow continued access after first login without password change and OTP verification.
+
+### List Active Tenants
+
+1. Platform Owner opens the dashboard or Tenant List.
+2. PlatformApp lists active tenants.
+3. Each tenant row shows identity, domain, status, and health summary.
+4. Platform Owner can open Tenant Detail for deeper inspection.
 
 ### Suspend Tenant
 
@@ -83,9 +188,17 @@ PlatformApp may display these concepts, but it does not necessarily own all futu
 | Concept | Visibility | Notes |
 | --- | --- | --- |
 | Tenant | Full | Primary platform object |
+| Tenant name | Full | Required and immutable |
+| Tenant subdomain | Full | Required and immutable |
+| Tenant GSM number | Full | Required, editable, sensitive operational contact |
+| Tenant address | Full | Optional and editable |
+| Tenant sector | Full | Optional and editable |
+| Tenant capacity | Full | Optional and editable |
 | Tenant status | Full | Platform lifecycle state |
+| Tenant health | Summary | High-level operational state shown in lists and detail screens |
 | Tenant setup state | Full | Tracks readiness/provisioning |
-| Tenant owner/admin | Partial | Created or linked during provisioning |
+| Tenant starter data state | Full | Records whether one-time starter data was applied |
+| Tenant owner/admin | Partial | Created during tenant provisioning; username is tenant subdomain |
 | Tenant limits/features | Full | Future package and entitlement model |
 | Tenant audit events | Full | Platform-level audit only |
 
@@ -97,22 +210,40 @@ PlatformApp will eventually interact with domain modules through explicit interf
 | --- | --- |
 | Platform / Tenant Registry | Create and manage tenant records |
 | Identity and Access | Create or link tenant admin users |
+| Tenant Domain / Routing | Resolve tenant subdomains and routing metadata |
+| OTP / Messaging | Send OTP SMS for tenant admin and cashier first password setup |
+| Sector Starter Templates | Provide one-time tenant starter data by sector |
 | Entitlements | Manage packages, features, and limits |
 | Audit | Record platform-level actions |
 | Support Tools | Inspect tenant operational state under controlled permissions |
 
+DNS automation is not part of PlatformApp for the initial product. Tenant DNS records are created manually by the platform owner.
+
 ## Security Rules
 
 - PlatformApp is private and must require platform-owner authentication.
+- PlatformApp is single-user in the first version.
 - Tenant users must never access PlatformApp.
 - Platform actions must be audited.
 - Destructive actions require explicit confirmation.
 - Support access to tenant runtime data must be intentional, visible, and permissioned.
+- Tenant name and tenant subdomain cannot be edited after creation.
+- Tenant GSM number changes must be audited.
+- Initial tenant admin password is temporary and must be changed on first login.
+- First tenant admin password setup requires OTP SMS verification.
+- Starter staff passwords are temporary and must be changed on first login.
+- Starter cashier password setup requires OTP SMS verification through the tenant GSM number.
+- Starter station and service staff password setup does not require OTP unless their role is later expanded with critical financial or administrative authority.
+- Sector starter data must be applied only once during tenant creation.
+- Sector starter data must not run during server startup, restart, deployment, migration, or release upgrade.
+- Changing tenant sector after creation must not re-run starter data.
 
 ## Open Questions
 
-- Which fields are required to create a tenant?
-- Is the first tenant admin created during tenant creation or in a separate invitation flow?
 - Does a new tenant start as `draft`, `trial`, or `active`?
 - Will tenant package/feature limits exist in the first version?
 - What support actions can Platform Owner perform inside tenant runtime data?
+- What exact signals define tenant health?
+- What authentication method protects the single-user PlatformApp login?
+- Which SMS provider will be used for OTP delivery?
+- Which sector enum values besides `cafe` will exist in the first version?
