@@ -9,7 +9,7 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
 | Hall | Entity | create, update, disable |
-| Table | Entity | create, update, position, disable |
+| Table | Entity | create, update, reorder, disable |
 | Table operational state | State/read model | empty, active, unavailable where needed |
 | Table display context | Association | link table to QR/display behavior |
 
@@ -43,6 +43,7 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 
 - Tables belong to halls.
 - Tables are managed in Hall Management, not a separate primary page in v1.
+- V1 uses an ordered table grid inside each hall, not a visual coordinate-based floor plan.
 - Disabled tables cannot accept new customer ordering.
 - Table identifiers should be tenant-scoped and human readable.
 - Table layout changes must not corrupt active TableSessions.
@@ -59,7 +60,7 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 | Model / Table | Purpose | Notes |
 | --- | --- | --- |
 | Hall | Tenant hall/salon | name, display order, enabled |
-| Table | Tenant table | hall, name/code, position, enabled |
+| Table | Tenant table | hall, name/code, display order, enabled |
 | TableState | Operational read model | derived from active session/order state |
 
 ## App Surfaces
@@ -73,7 +74,7 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 
 ## Future Service Boundary
 
-- Own data: halls, tables, layout metadata.
+- Own data: halls, tables, ordered table-grid metadata.
 - Own APIs: hall/table CRUD, table context lookup.
 - Published events: table.disabled, hall.updated.
 - Consumed events: table_session.opened, table_session.closed.
@@ -81,4 +82,4 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 
 ## Open Questions
 
-- Whether visual floor-plan positioning is required in v1.
+None currently.

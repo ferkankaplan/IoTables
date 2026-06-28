@@ -142,6 +142,10 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 
 - Payment creation must be idempotent.
 - Session closure must be idempotent.
+- V1 payment methods are `cash`, `card`, and `transfer`.
+- Mixed payment is recorded as multiple payment records against the same TableSession.
+- V1 payment splitting is amount-based only; splitting by item/person is out of scope.
+- External payment providers are out of scope for v1.
 - Payment and balance updates must run inside a transaction.
 - Balance must be calculated server-side from order item price snapshots, corrections, and payment records.
 - A payment request must not create duplicate payment records when submitted more than once.
@@ -178,8 +182,6 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 ## Open Questions
 
 - Are cashier users authenticated through `/cashier/login` only, or through a shared tenant staff login?
-- Which payment methods exist in the first version: cash, card, transfer, mixed?
-- Can a cashier split payments by item, by person, or only by amount?
 - Can a cashier cancel unpaid order items?
 - Can a cashier apply discounts or service fees?
 - Can a cashier add manual items to a session?

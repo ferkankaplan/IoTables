@@ -12,15 +12,15 @@ Apps call module interfaces. Modules own data, rules, state transitions, safety 
 | Identity and Access | Own users, roles, login, first password setup, app permissions, and tenant scoping | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp |
 | OTP / Messaging | Own OTP creation, delivery, verification, and provider integration | PlatformApp, TenantApp, CashierApp |
 | Sector Starter Templates | Own one-time sector-based starter data application | PlatformApp, TenantApp |
-| Venue Layout | Own halls, tables, table state, and table-to-device/display context | TenantApp, CustomerApp, CashierApp, ServiceStaffApp |
+| Venue Layout | Own halls, tables, ordered table-grid state, and table display context | TenantApp, CustomerApp, CashierApp, ServiceStaffApp |
 | Staff Access | Own staff roles, station assignments, service hall assignments, and app-level staff permissions | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp |
 | Menu Catalog | Own categories, products/services, prices, availability, modifiers/options, and station assignment | TenantApp, CustomerApp, CashierApp |
-| Table Access / QR | Own table access tokens, ESP32 display QR flow, token redemption, and fresh table presence | CustomerApp |
+| Table Access / QR | Own table display credentials, QR token generation, token redemption, and fresh table presence | TenantApp, CustomerApp |
 | Customer Ordering | Own customer carts, order submission, orders, order items, idempotency, and order-to-station routing | CustomerApp, CashierApp, StationStaffApp, ServiceStaffApp |
 | Table Session and Billing | Own active table sessions, bill totals, paid amount, remaining balance, and session closure rules | CustomerApp, CashierApp |
 | Preparation | Own station queues and preparation state transitions | StationStaffApp, CashierApp, CustomerApp |
 | Service Delivery | Own ready-item pickup/delivery transitions and customer delivery state | ServiceStaffApp, CustomerApp, CashierApp |
-| Payments | Own payment records, partial/full payments, payment method rules, and payment idempotency | CashierApp, CustomerApp read-only |
+| Payments | Own manual payment records, partial/full payments, payment method rules, and payment idempotency | CashierApp, CustomerApp read-only |
 | Audit | Own audit events for platform, tenant setup, staff actions, payment, correction, and operational transitions | All admin/staff apps |
 
 ## App to Module Usage
@@ -41,7 +41,7 @@ Apps call module interfaces. Modules own data, rules, state transitions, safety 
 - Frontend state is never an authority for prices, table session IDs, station IDs, permissions, totals, or order state.
 - Critical commands must be guarded, idempotent, transactional where possible, and backed by database constraints.
 - One-time operations must record durable completion and must not run on restart, deployment, migration, or release upgrade.
-- External side effects such as OTP, payment provider calls, DNS, and device communication need explicit retry and recovery rules.
+- External side effects such as OTP, DNS, and table display communication need explicit retry and recovery rules.
 
 ## Initial Dependency Direction
 
@@ -62,5 +62,4 @@ Mutate across module boundaries through commands or events.
 
 ## Open Questions
 
-- Should Payments support external providers in v1 or only manual cash/card records?
 - Which audit events are mandatory for v1?

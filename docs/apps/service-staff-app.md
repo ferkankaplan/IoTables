@@ -39,7 +39,7 @@ ServiceStaffApp can operate delivery state for order items that are ready for se
 | --- | --- |
 | Ready queue | Read items marked ready by stations |
 | Pickup state | Optionally mark ready items as picked up for delivery |
-| Delivery state | Mark ready or picked-up items as delivered to the table |
+| Delivery state | Mark PreparationItem.ready or picked-up items as delivered to the table |
 | Table context | Read hall/table context needed for delivery |
 | Delivery workload | View ready and picked-up item counts |
 
@@ -109,11 +109,11 @@ The service queue is the primary workspace. Item details should not be separate 
 Initial delivery state model:
 
 ```text
-ready -> delivered
-ready -> picked_up -> delivered
+PreparationItem.ready -> delivered
+PreparationItem.ready -> picked_up -> delivered
 ```
 
-`ready` is created by StationStaffApp. `picked_up` is optional and `delivered` is operated by ServiceStaffApp.
+`ready` is created by StationStaffApp as PreparationItem state. DeliveryState stores only ServiceStaffApp-owned `picked_up` and `delivered` states.
 
 State transitions must be controlled. An item must not jump backward or skip required states unless an explicit correction workflow exists.
 

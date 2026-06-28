@@ -439,13 +439,13 @@ Internal preparation and delivery states should be mapped to simple customer lan
 
 | Internal State | Customer Text |
 | --- | --- |
-| `pending` | `Hazırlanıyor` |
-| `preparing` | `Hazırlanıyor` |
-| `ready` | `Hazırlanıyor` |
-| `picked_up` | `Hazırlanıyor` |
-| `delivered` | `Teslim edildi` |
+| `PreparationItem.pending` | `Hazırlanıyor` |
+| `PreparationItem.preparing` | `Hazırlanıyor` |
+| `PreparationItem.ready` | `Hazırlanıyor` |
+| `DeliveryState.picked_up` | `Hazırlanıyor` |
+| `DeliveryState.delivered` | `Teslim edildi` |
 
-`ready` means station work is finished, not that the customer received the item. For table service, CustomerApp should show `Hazırlanıyor` until ServiceStaffApp marks the item as `delivered`.
+`PreparationItem.ready` means station work is finished, not that the customer received the item. For table service, CustomerApp should show `Hazırlanıyor` until ServiceStaffApp marks the item as `DeliveryState.delivered`.
 
 ### Repeat Order
 

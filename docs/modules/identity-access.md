@@ -49,6 +49,10 @@ It decides who a person is, which tenant they belong to, which app they may ente
 
 - Bootstrap password is temporary.
 - Bootstrap credentials must not allow continued access without first password change.
+- Platform Owner is a platform-scoped user with `tenantId = null` and role `platform_owner`.
+- The first Platform Owner must be created by an explicit one-time bootstrap command, not automatically on every server startup.
+- Platform Owner first login must force password change and TOTP enrollment before PlatformApp access.
+- PlatformApp login uses username/password plus TOTP after enrollment.
 - Tenant admin first password setup requires OTP.
 - Cashier first password setup requires OTP to tenant GSM during bootstrap.
 - Station and service staff first password setup does not require OTP in v1.
@@ -70,6 +74,7 @@ It decides who a person is, which tenant they belong to, which app they may ente
 | Credential | Password/bootstrap state | hashed secrets only |
 | LoginSession | Authenticated staff/admin session | app/tenant scoped |
 | UserRole | High-level role membership | role names and active flags |
+| TotpFactor | Platform Owner second factor | encrypted secret, enrollment state |
 
 ## App Surfaces
 
@@ -91,5 +96,4 @@ It decides who a person is, which tenant they belong to, which app they may ente
 
 ## Open Questions
 
-- PlatformApp login method for the single platform owner.
 - Password policy details.

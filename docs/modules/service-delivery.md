@@ -10,7 +10,7 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
-| Delivery status | State | ready, picked_up, delivered |
+| Delivery status | State | picked_up, delivered |
 | Delivery transition | Event | record service staff action |
 | Hall-scoped service queue | Read model | ready/delivery items for authorized halls |
 
@@ -44,7 +44,8 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 - `ready` is produced by Preparation.
 - `picked_up` is optional.
-- Valid v1 flows: `ready -> delivered` and `ready -> picked_up -> delivered`.
+- Valid v1 flows: `PreparationItem.ready -> delivered` and `PreparationItem.ready -> picked_up -> delivered`.
+- Service Delivery does not store a `ready` DeliveryState row; ready items are derived from PreparationItem.
 - `delivered` is the only state mapped to `Teslim edildi` in CustomerApp.
 - Service staff can only operate authorized halls.
 
@@ -61,9 +62,9 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 | Model / Table | Purpose | Notes |
 | --- | --- | --- |
-| DeliveryState | Current service state | orderItemId, status |
+| DeliveryState | Current service state after readiness | orderItemId, picked_up/delivered status |
 | DeliveryTransition | State history | actor, from, to, timestamp |
-| ServiceQueue | Read model | authorized hall/service view |
+| ServiceQueue | Read model | PreparationItem.ready plus delivery state for authorized hall/service view |
 
 ## App Surfaces
 

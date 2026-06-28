@@ -42,6 +42,9 @@ This document records the intended IoTables stack and the currently verified loc
 | --- | --- | --- |
 | Version control | Git | 2.54.0.windows.1 |
 | GitHub CLI | gh | 2.95.0 |
+| PostgreSQL service | `postgresql-x64-18` | PostgreSQL 18.4, running, automatic startup |
+| PostgreSQL CLI | `psql` | 18.4 |
+| PostgreSQL bin path | `C:\Program Files\PostgreSQL\18\bin` | Added to user PATH; reopen terminals to inherit |
 | Container runtime | Docker | 29.5.3 |
 | Container orchestration | Docker Compose | 5.1.4 |
 

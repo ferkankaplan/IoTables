@@ -18,8 +18,12 @@ It is not a final database schema. It is the shared domain contract that databas
 ```mermaid
 erDiagram
   Tenant ||--o{ User : owns
+  User ||--o{ PlatformRoleAssignment : may_have
+  User ||--o| TotpFactor : protects
   Tenant ||--o{ Hall : owns
   Hall ||--o{ Table : contains
+  Table ||--o{ TableDisplayClaim : provisions_display
+  Table ||--o| TableDisplayCredential : authenticates_display
   Tenant ||--o{ Station : owns
   Tenant ||--o{ MenuCategory : owns
   MenuCategory ||--o{ ProductService : contains
@@ -129,6 +133,38 @@ Invariants:
 - bootstrap password cannot continue after first login.
 - passwords and OTP values must never be logged.
 
+### PlatformRoleAssignment
+
+Owned by: Identity and Access
+
+| Field | Notes |
+| --- | --- |
+| `userId` | Platform-scoped user |
+| `role` | `platform_owner` in v1 |
+| `status` | active / disabled |
+
+Invariants:
+
+- only users with `tenantId = null` can hold `platform_owner`.
+- v1 allows exactly one active Platform Owner.
+- the first Platform Owner is created by explicit bootstrap, not automatic startup seed logic.
+
+### TotpFactor
+
+Owned by: Identity and Access
+
+| Field | Notes |
+| --- | --- |
+| `userId` | User protected by TOTP |
+| `secretCiphertext` | Encrypted TOTP secret |
+| `enrolledAt` | Enrollment timestamp |
+| `enabled` | Whether factor is required |
+
+Invariants:
+
+- Platform Owner must enroll TOTP before PlatformApp access.
+- TOTP secrets must never be logged or exposed after enrollment.
+
 ### StaffProfile
 
 Owned by: Staff Access
@@ -194,13 +230,14 @@ Owned by: Venue Layout
 | `id` | Table ID |
 | `hallId` | Parent hall |
 | `name` | Human-readable table label |
-| `position` | Optional layout metadata |
+| `displayOrder` | Ordered grid position inside the hall |
 | `enabled` | Disabled tables cannot accept new orders |
 
 Invariants:
 
 - tables belong to exactly one hall.
 - tables are managed inside Hall Management in TenantApp.
+- v1 tables are ordered within a hall grid; visual floor-plan coordinates are out of scope.
 - historical table records should not be hard-deleted when sessions/orders exist.
 
 ## Stations and Menu
@@ -274,6 +311,45 @@ Owned by: Menu Catalog
 | `available` | Orderability |
 
 ## Table Access and Customer Session
+
+### TableDisplayClaim
+
+Owned by: Table Access / QR
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `tableId` | Table being provisioned |
+| `claimHash` | Store hash, not raw claim |
+| `createdByUserId` | Tenant Admin actor |
+| `expiresAt` | Short lifetime |
+| `consumedAt` | Set atomically |
+
+Invariants:
+
+- claim is one-time use.
+- claim consumption creates or rotates the active TableDisplayCredential.
+- expired or consumed claims must fail closed.
+
+### TableDisplayCredential
+
+Owned by: Table Access / QR
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `tableId` | Table |
+| `credentialHash` | Store hash, not raw credential |
+| `status` | active / revoked |
+| `provisionedAt`, `revokedAt` | Lifecycle timestamps |
+| `lastSeenAt` | Last successful QR fetch |
+
+Invariants:
+
+- only one active display credential exists per tenant/table in v1.
+- credential is used only by the ESP32 table display to fetch QR payloads.
+- backend resolves table context from the credential, not from client-provided table IDs.
+- re-provisioning revokes the previous active credential.
 
 ### TableAccessToken
 
@@ -436,15 +512,15 @@ Owned by: Service Delivery
 | --- | --- |
 | `tenantId` | Tenant |
 | `orderItemId` | Delivered order item |
-| `status` | ready / picked_up / delivered |
+| `status` | picked_up / delivered |
 | `updatedBy`, `updatedAt` | Last transition |
 
 Customer mapping:
 
 | Internal State | Customer Text |
 | --- | --- |
-| pending / preparing / ready / picked_up | Hazırlanıyor |
-| delivered | Teslim edildi |
+| PreparationItem.pending / PreparationItem.preparing / PreparationItem.ready / DeliveryState.picked_up | Hazırlanıyor |
+| DeliveryState.delivered | Teslim edildi |
 
 ## Payments and Billing
 
@@ -458,7 +534,7 @@ Owned by: Payments
 | `id` | Payment ID |
 | `tableSessionId` | Settled session |
 | `amount` | Positive amount |
-| `method` | cash/card/transfer/mixed when defined |
+| `method` | cash / card / transfer |
 | `cashierUserId` | Actor |
 | `receivedAt` | Timestamp |
 
@@ -517,6 +593,9 @@ Owned by: Audit
 | --- | --- |
 | unique `Tenant.subdomain` | Prevent duplicate tenant domain |
 | immutable tenant name/subdomain by service rule | Preserve tenant identity |
+| unique active Platform Owner | Preserve single-user PlatformApp scope in v1 |
+| unique TableDisplayClaim hash | Prevent provisioning claim collision/replay ambiguity |
+| unique active TableDisplayCredential per tenant/table | Prevent multiple active display credentials |
 | unique active TableSession per tenant/table | Prevent double active table sessions |
 | unique starter template application per tenant/template version | Prevent seed reruns |
 | unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
@@ -553,7 +632,6 @@ One order submission transaction includes:
 - OrderItems,
 - price/modifier snapshots,
 - PreparationItems,
-- DeliveryState initialization when appropriate,
 - submitted CustomerCart close/clear.
 
 Failure must not expose partial orders to CustomerApp, CashierApp, StationStaffApp, or ServiceStaffApp.
@@ -572,6 +650,4 @@ Failure must not double-count paid amount.
 ## Open Questions
 
 - Exact tenant status enum.
-- Exact payment method enum.
 - Whether product/service can route to multiple stations.
-- Whether floor-plan positioning is part of v1.

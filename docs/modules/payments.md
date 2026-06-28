@@ -11,7 +11,7 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
 | Payment | Entity | create, read, void/reverse if introduced |
-| Payment method | Value | cash, card, transfer, mixed if supported |
+| Payment method | Value | cash, card, transfer |
 | Payment idempotency | Safety record | prevent duplicate payment records |
 | Payment summary | Read model | paid amount by TableSession |
 
@@ -43,6 +43,10 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 - Partial payments reduce remaining balance but do not close TableSession.
 - Full payment can enable session closure, but closure remains explicit CashierApp action.
+- V1 payment methods are `cash`, `card`, and `transfer`.
+- Mixed payment is represented by multiple Payment records, not a `mixed` enum value.
+- V1 payment splitting is amount-based only; item/person-level settlement is out of scope.
+- External payment providers are out of scope for v1.
 - CustomerApp cannot create or mutate payments.
 - Payment totals must be calculated server-side.
 - Payment cannot exceed allowed amount unless an explicit overpayment rule exists.
@@ -80,6 +84,4 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 ## Open Questions
 
-- Payment methods in v1: cash, card, transfer, mixed.
-- Whether external payment providers are out of scope for v1.
-- Whether payment can be split by item/person or only amount.
+None currently.

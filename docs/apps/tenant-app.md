@@ -34,7 +34,7 @@ TenantApp can manage tenant-owned setup and configuration records.
 | --- | --- |
 | Tenant profile | View tenant identity and edit allowed tenant fields |
 | Hall management | Create, update, organize, and disable halls |
-| Table management | Create, update, position, and disable tables within halls |
+| Table management | Create, update, reorder, and disable tables within halls |
 | Station management | Create, update, and disable preparation/service stations |
 | Menu management | Create, update, categorize, price, and disable products/services |
 | Station assignment | Assign products/services to the station responsible for fulfillment |
@@ -108,9 +108,11 @@ This should open the selected table in a contextual panel inside Hall Management
 3. Tenant Admin creates or edits halls.
 4. Tenant Admin selects a hall.
 5. TenantApp shows the hall's tables inside the same workspace.
-6. Tenant Admin creates, edits, positions, disables, or inspects tables from contextual panels.
+6. Tenant Admin creates, edits, reorders, disables, provisions the table display, or inspects tables from contextual panels.
 
 Tables are part of the hall management context. A table detail should open as a right-side panel, not as a separate primary page.
+
+V1 table layout is an ordered grid inside each hall. It does not include visual floor-plan coordinates. A later floor-plan editor must be introduced as a separate explicit layout capability, not by overloading the v1 table order field.
 
 ### Configure Stations
 
@@ -196,7 +198,5 @@ Starter data must not be recreated automatically after the tenant edits or delet
 
 - Which tenant fields are visible on the public tenant page?
 - Which tenant fields are editable in Tenant Settings?
-- What exact hall/table layout model will be used?
-- Do tables need visual floor-plan positioning in the first version?
 - Can one product/service belong to more than one station?
 - Which tenant admin actions require audit detail?
