@@ -1,0 +1,87 @@
+# Module: Audit
+
+## Purpose
+
+Audit owns immutable records of important platform, tenant setup, staff, financial, and operational actions.
+
+It provides traceability for sensitive changes and runtime corrections.
+
+## Ownership
+
+| Owned Concept | Type | Authority |
+| --- | --- | --- |
+| Audit event | Append-only record | create and query |
+| Actor reference | Metadata | user/app/system context |
+| Target reference | Metadata | tenant/table/session/order/item/payment |
+| Reason | Metadata | required for sensitive corrections |
+
+## Not Owned
+
+- Business state itself.
+- Authorization decisions.
+- Payment calculations.
+- Order or session mutation.
+
+## Users and App Access
+
+| App / Actor | Access | Limits |
+| --- | --- | --- |
+| PlatformApp | read platform-level audit | Platform scope |
+| TenantApp | read tenant setup audit | Own tenant |
+| CashierApp | write/read payment/correction/session audit where allowed | Own tenant |
+| Staff apps | write operational transition audit | Own tenant, own actions |
+
+## Public Interface
+
+| Interface | Purpose | Consumers |
+| --- | --- | --- |
+| Record audit event | Append immutable event | All modules |
+| Query tenant audit | Review tenant actions | TenantApp |
+| Query platform audit | Review platform actions | PlatformApp |
+| Query operational audit | Review payment/correction/session events | CashierApp |
+
+## Internal Rules
+
+- Audit events are append-only.
+- Sensitive actions must include actor, tenant, target, action, timestamp.
+- Corrections require reason.
+- Bootstrap, password setup, OTP verification result, tenant status changes, payments, session closure, delivery/preparation transitions, starter template application should be auditable.
+- Audit logs should avoid storing secrets or OTP codes.
+
+## Operational Safety
+
+- Audit recording should be part of the same transaction when auditing database state changes.
+- If external side effects happen, audit should capture request/response state safely without secrets.
+- Audit failure policy must be explicit for critical actions.
+- Audit event IDs should support reliable correlation.
+
+## Data Model
+
+| Model / Table | Purpose | Notes |
+| --- | --- | --- |
+| AuditEvent | Append-only event | tenant, actor, action, target, timestamp |
+| AuditMetadata | Structured details | no secrets |
+| AuditReason | Required reason | corrections/destructive actions |
+
+## App Surfaces
+
+| App | Usage |
+| --- | --- |
+| PlatformApp | Tenant lifecycle and platform changes |
+| TenantApp | Setup/staff/menu/layout changes |
+| CashierApp | Payments, corrections, closure |
+| StationStaffApp | Preparation transitions |
+| ServiceStaffApp | Delivery transitions |
+
+## Future Service Boundary
+
+- Own data: audit events and metadata.
+- Own APIs: record event, query audit streams.
+- Published events: audit.recorded if needed.
+- Consumed events: all sensitive domain events.
+- Must not leak: secrets, OTP codes, passwords, raw payment provider secrets.
+
+## Open Questions
+
+- Mandatory audit event list for v1.
+- Retention policy.

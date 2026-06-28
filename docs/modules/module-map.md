@@ -62,6 +62,5 @@ Mutate across module boundaries through commands or events.
 
 ## Open Questions
 
-- Which modules get detailed documentation first?
 - Should Payments support external providers in v1 or only manual cash/card records?
 - Which audit events are mandatory for v1?
