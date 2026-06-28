@@ -147,7 +147,7 @@ StationStaffApp updates live order item state, so transitions must be safe under
 
 ## Integration Expectations
 
-| Future Module | Expected Use |
+| Future Context / Module | Expected Use |
 | --- | --- |
 | Identity and Access | Station staff authentication and station permission enforcement |
 | Venue Layout | Read table context |

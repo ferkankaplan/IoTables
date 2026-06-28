@@ -11,6 +11,7 @@ It is not a final database schema. It is the shared domain contract that databas
 - Human-readable names are not trusted identifiers.
 - Frontend-provided prices, totals, table session IDs, station IDs, and permission scopes are never authoritative.
 - Critical invariants must be enforced in the backend and the database.
+- Mutable operational aggregates must define a concurrency strategy before implementation: transaction locks, version checks, or both.
 - Runtime records should be soft-disabled or lifecycle-transitioned when history exists; avoid destructive deletion of business history.
 
 ## High-Level ERD

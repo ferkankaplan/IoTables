@@ -156,7 +156,7 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 
 ## Integration Expectations
 
-| Future Module | Expected Use |
+| Future Context / Module | Expected Use |
 | --- | --- |
 | Identity and Access | Cashier authentication and role enforcement |
 | Venue Layout | Read halls and tables |

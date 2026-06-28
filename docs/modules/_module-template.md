@@ -4,6 +4,13 @@
 
 What business capability does this module own?
 
+## Context
+
+| Field | Value |
+| --- | --- |
+| Parent bounded context | Platform / Access / Tenant Setup / Ordering / Fulfillment / Settlement / Governance |
+| Module type | context module / internal module / cross-cutting support |
+
 ## Ownership
 
 | Owned Concept | Type | Authority |

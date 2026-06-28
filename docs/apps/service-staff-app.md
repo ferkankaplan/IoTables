@@ -145,7 +145,7 @@ ServiceStaffApp updates live delivery state, so transitions must be safe under d
 
 ## Integration Expectations
 
-| Future Module | Expected Use |
+| Future Context / Module | Expected Use |
 | --- | --- |
 | Identity and Access | Service staff authentication and service permission enforcement |
 | Venue Layout | Read hall and table context |

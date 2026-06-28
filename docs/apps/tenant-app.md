@@ -165,7 +165,7 @@ Starter data must not be recreated automatically after the tenant edits or delet
 
 ## Integration Expectations
 
-| Future Module | Expected Use |
+| Future Context / Module | Expected Use |
 | --- | --- |
 | Tenant Registry | Read tenant identity and editable tenant profile |
 | Identity and Access | Tenant admin authentication and first-login password setup |

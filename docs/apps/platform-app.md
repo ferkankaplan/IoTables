@@ -208,7 +208,7 @@ PlatformApp may display these concepts, but it does not necessarily own all futu
 
 PlatformApp will eventually interact with domain modules through explicit interfaces.
 
-| Future Module | Expected Use |
+| Future Context / Module | Expected Use |
 | --- | --- |
 | Platform / Tenant Registry | Create and manage tenant records |
 | Identity and Access | Create or link tenant admin users |
