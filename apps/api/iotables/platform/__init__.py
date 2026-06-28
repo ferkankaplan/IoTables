@@ -1,0 +1,1 @@
+"""Platform-owned tenant management."""
