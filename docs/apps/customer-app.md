@@ -8,6 +8,21 @@ It is the core customer experience of IoTables. It lets a customer prove fresh t
 
 CustomerApp is not an admin, cashier, or station staff interface. It must optimize for customer experience while protecting the tenant from fake, stale, duplicated, or cross-table orders.
 
+## V1 Scope
+
+CustomerApp supports only dine-in table QR ordering in v1.
+
+Out of scope for CustomerApp v1:
+
+- customer payment or pay-at-table;
+- payment provider checkout;
+- waiter-entered orders;
+- pickup, package service, courier, delivery, phone order, marketplace order, or counter-sale channels;
+- customer cancellation or modification of submitted orders;
+- fiscal/e-Adisyon/ÖKC document creation.
+
+CustomerApp may show read-only table bill and balance information, but it must not create payment intents, record payments, close sessions, or initiate fiscal receipt flows.
+
 ## Locked Session Model
 
 CustomerApp uses three separate concepts. These must not be merged.
@@ -186,6 +201,8 @@ Product detail should support:
 - add to cart.
 
 CustomerApp may show an estimated price, but the backend is the pricing authority. Final order pricing is calculated server-side at submission time.
+
+V1 does not have a separate price preview or customer price-confirmation step. Menu prices are expected to be stable during normal customer ordering. If the cart is no longer valid at submission time because a product, modifier, availability, or tenant/table state changed, CustomerApp rejects the affected submission and keeps the cart editable instead of asking the customer to approve a new price.
 
 ### Modifiers and Options
 
@@ -437,6 +454,8 @@ CustomerApp must not allow customers to mark payments, close sessions, apply dis
 
 Internal preparation and delivery states should be mapped to simple customer language.
 
+When service delivery tracking is enabled:
+
 | Internal State | Customer Text |
 | --- | --- |
 | `PreparationItem.pending` | `Hazırlanıyor` |
@@ -446,6 +465,16 @@ Internal preparation and delivery states should be mapped to simple customer lan
 | `DeliveryState.delivered` | `Teslim edildi` |
 
 `PreparationItem.ready` means station work is finished, not that the customer received the item. For table service, CustomerApp should show `Hazırlanıyor` until ServiceStaffApp marks the item as `DeliveryState.delivered`.
+
+When service delivery tracking is disabled for the tenant:
+
+| Internal State | Customer Text |
+| --- | --- |
+| `PreparationItem.pending` | `Hazırlanıyor` |
+| `PreparationItem.preparing` | `Hazırlanıyor` |
+| `PreparationItem.ready` | `Teslim edildi` |
+
+This disabled mode intentionally gives up item-level delivery proof. It exists for small operations that do not run ServiceStaffApp.
 
 ### Repeat Order
 
@@ -472,7 +501,7 @@ CustomerApp must preserve customer trust when order submission cannot continue.
 | --- | --- | --- |
 | Fresh presence expired | Reject submit until QR is refreshed | Preserve cart and ask for current QR scan |
 | Product unavailable | Reject affected item server-side | Show item-level message and keep cart editable |
-| Price changed | Reject silent submit and return server-calculated price | Show updated total and ask customer to confirm again |
+| Cart pricing invalid | Reject affected item/server-side cart state | Keep cart editable and ask customer to review affected items |
 | Required modifier missing | Reject item | Open item editor with missing requirement |
 | Invalid modifier combination | Reject item | Show item-level correction message |
 | TableSession closed | Do not attach to closed session | Require fresh QR and retry against current table state |

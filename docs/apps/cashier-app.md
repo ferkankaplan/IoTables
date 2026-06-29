@@ -30,6 +30,7 @@ CashierApp can operate tenant runtime records related to table sessions and paym
 | --- | --- |
 | Active table view | Read halls, tables, and table states |
 | Table session view | Read active session details for each table |
+| Single check/adisyon view | Read the single v1 check/adisyon attached to the table session |
 | Order inspection | Read orders and order items attached to a session |
 | Payment collection | Create partial or full payment records |
 | Balance tracking | Display total, paid, and remaining balance |
@@ -46,6 +47,9 @@ CashierApp must always be tenant-scoped. Every action belongs to the current ten
 - It does not prepare station tickets.
 - It does not create customer QR access tokens.
 - It does not directly mutate station fulfillment state unless a specific correction workflow allows it.
+- It does not create customer payment links or pay-at-table flows in v1.
+- It does not issue fiscal/e-Adisyon/ÖKC receipts or external fiscal documents in v1.
+- It does not split checks, merge checks, move items between checks, or perform item/person-based split payment in v1.
 
 ## UX Principle
 
@@ -90,6 +94,24 @@ Table sessions are created by customer ordering, not by CashierApp. The first cu
 3. CashierApp shows session orders, order items, station status where relevant, payments, and remaining balance.
 4. Cashier can start a payment or correction flow from the same panel.
 
+### Single Check / Adisyon
+
+In v1, every active TableSession has exactly one operational Check/Adisyon.
+
+The Check/Adisyon is the cashier-facing bill for the table visit. It groups all submitted orders, order items, price snapshots, payments, and remaining balance for the active TableSession.
+
+V1 does not support:
+
+- multiple checks under the same TableSession;
+- split checks;
+- merging checks;
+- moving items between checks;
+- item/person-based payment splitting;
+- customer-initiated payment;
+- fiscal/e-Adisyon/ÖKC receipt issuance.
+
+Partial payments are still allowed, but they are amount-based payments against the single Check/Adisyon.
+
 ### Receive Partial Payment
 
 1. Cashier opens the session detail panel.
@@ -122,6 +144,30 @@ Session closure is an explicit cashier action. A zero balance alone does not sil
 
 Correction actions must be narrowly defined before implementation. They must not become an unrestricted way to rewrite order history.
 
+### V1 Correction Rules
+
+Allowed CashierApp corrections in v1:
+
+- add an internal cashier note to the active TableSession;
+- cancel/void an order item only while its preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the TableSession;
+- void a payment on an open TableSession when no external payment provider is involved.
+
+Not allowed in v1:
+
+- manual order items;
+- manual discounts;
+- service fees;
+- refunds after session closure;
+- cancellation of items already in `preparing`, `ready`, `picked_up`, or `delivered` state;
+- changing item price snapshots directly;
+- moving items between checks or sessions.
+
+All v1 correction actions are cashier-authorized, reason-required, idempotent, and audited. Tenant Admin approval is not part of v1 correction flow. Broader override workflows must be introduced explicitly later instead of extending cashier correction silently.
+
+Payment History shows the current business day by default. Historical reporting across arbitrary date ranges is out of v1 unless a reporting workspace is introduced.
+
+More than one cashier may operate the same tenant at the same time. CashierApp must rely on backend transactions, row/version checks, idempotency keys, and actor-specific audit records instead of assuming a single active cashier.
+
 ## Data Concepts Visible in CashierApp
 
 | Concept | Visibility | Notes |
@@ -130,10 +176,12 @@ Correction actions must be narrowly defined before implementation. They must not
 | Hall | Read | Used to group tables |
 | Table | Read | Shows current operational state |
 | Table session | Full runtime view | Active operational/billing session for a table |
+| Check/Adisyon | Full runtime view | Single v1 bill attached to the active TableSession |
 | Order | Read | Customer order attached to the session |
 | Order item | Read | Includes item status and price snapshot |
 | Payment | Create/read | Partial and full payment records |
 | Balance | Full runtime view | Total, paid, and remaining amount |
+| Correction | Create/read | Narrow v1 correction records with reason and actor |
 | Session audit | Read | Shows cashier-visible corrections and closure events |
 
 ## Operational Safety
@@ -146,6 +194,7 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 - Mixed payment is recorded as multiple payment records against the same TableSession.
 - V1 payment splitting is amount-based only; splitting by item/person is out of scope.
 - External payment providers are out of scope for v1.
+- Fiscal/e-Adisyon/ÖKC receipt issuance is out of scope for v1.
 - Payment and balance updates must run inside a transaction.
 - Balance must be calculated server-side from order item price snapshots, corrections, and payment records.
 - A payment request must not create duplicate payment records when submitted more than once.
@@ -181,10 +230,4 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 
 ## Open Questions
 
-- Are cashier users authenticated through `/cashier/login` only, or through a shared tenant staff login?
-- Can a cashier cancel unpaid order items?
-- Can a cashier apply discounts or service fees?
-- Can a cashier add manual items to a session?
-- What correction actions are allowed without tenant admin approval?
-- Should payment history be visible only for the current day or across all history?
-- Can more than one cashier operate the same tenant at the same time?
+None currently.

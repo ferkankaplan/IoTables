@@ -40,6 +40,7 @@ StationStaffApp can operate preparation state for order items assigned to author
 | Station queue | Read order items assigned to authorized stations |
 | Preparation status | Move assigned items through allowed preparation states |
 | Item readiness | Mark assigned items as ready |
+| Preparation exception | Report an assigned item as `cannot_prepare` with a reason |
 | Item notes | Read customer or cashier-visible preparation notes when available |
 | Station workload | View active item counts and age of waiting items |
 
@@ -90,9 +91,32 @@ The station queue is the primary workspace. Item details should not be separate 
 1. Staff opens the station queue.
 2. StationStaffApp shows active order items assigned to the selected station.
 3. Items show table, order time, product/service name, quantity, notes, and current status.
-4. Staff can filter or group items by status when needed.
+4. Items are grouped by preparation status and sorted by age inside each group.
+5. Staff can filter by table, order, and product when needed.
 
 StationStaffApp works on order items, not whole orders. One customer order may create work for multiple stations.
+
+### Queue Defaults and Metrics
+
+One staff user may operate multiple authorized stations. If the staff user has more than one station, StationStaffApp opens Station Selector before the queue.
+
+V1 queue grouping:
+
+- primary grouping: preparation status;
+- secondary ordering: oldest item first;
+- available filters: table, order, product/service, and status.
+
+Station staff can see customer item notes that are relevant to preparation. StationStaffApp must not expose cashier-only notes, payment data, customer billing summary, or tenant admin configuration.
+
+Ready items remain visible in the station queue until they are picked up by ServiceStaffApp, delivered, or moved out by the tenant's disabled-service-tracking mode. After that, they leave the active queue and may appear only in same-day recent history.
+
+Minimum v1 station metrics:
+
+- pending item count;
+- preparing item count;
+- ready waiting item count;
+- oldest pending item age;
+- average preparation time for the current business day when enough data exists.
 
 ### Start Preparing Item
 
@@ -108,15 +132,29 @@ StationStaffApp works on order items, not whole orders. One customer order may c
 3. StationStaffApp records the status transition.
 4. The item becomes visible as ready to the appropriate operational views.
 
+### Report Cannot Prepare
+
+1. Staff selects an item in `pending` or `preparing` state.
+2. Staff marks the item as `cannot_prepare`.
+3. StationStaffApp requires a reason.
+4. StationStaffApp records the exception and actor.
+5. CashierApp can see the exception and handle any customer/account correction through an allowed cashier workflow.
+
+`cannot_prepare` does not cancel the order item, refund money, change price snapshots, or close the table session. It is an operational exception that requires cashier attention.
+
 ## Preparation States
 
 Initial state model:
 
 ```text
 pending -> preparing -> ready
+pending -> cannot_prepare
+preparing -> cannot_prepare
 ```
 
 `ready` means station work is finished and the item is ready for service staff. It does not mean the item was delivered to the customer.
+
+`cannot_prepare` means the station cannot fulfill the item as ordered. It is not a financial correction.
 
 State transitions must be controlled. An item must not jump backward or skip required states unless an explicit correction workflow exists.
 
@@ -131,7 +169,9 @@ State transitions must be controlled. An item must not jump backward or skip req
 | Table | Summary | Shows where the item belongs |
 | Product/service | Summary | Name, quantity, and preparation-relevant metadata |
 | Preparation status | Full | Station-owned status for assigned item |
+| Preparation exception reason | Full for affected item | Required when item is marked `cannot_prepare` |
 | Item note | Read | Customer or operational note if available |
+| Station metrics | Summary | Current business-day workload and age counters |
 
 ## Operational Safety
 
@@ -142,6 +182,8 @@ StationStaffApp updates live order item state, so transitions must be safe under
 - A staff user must not update items outside authorized stations.
 - Two staff users updating the same item concurrently must not corrupt state.
 - Every status transition should record who changed it and when.
+- `cannot_prepare` must require a reason and must be visible to CashierApp.
+- StationStaffApp cannot use `cannot_prepare` to cancel, discount, refund, or remove billable records.
 - Completed or closed-session items must not be modified except through explicit recovery workflows.
 - StationStaffApp must not trust frontend-visible station IDs as authorization proof.
 
@@ -171,9 +213,4 @@ StationStaffApp updates live order item state, so transitions must be safe under
 
 ## Open Questions
 
-- Can one staff user operate multiple stations at the same time?
-- Should station items be grouped by order, by product, by table, or by age?
-- Can station staff reject or report an item they cannot prepare?
-- Can station staff see customer notes?
-- Should ready items remain visible after handoff to service staff?
-- Which station metrics are needed in the first version?
+None currently.

@@ -48,6 +48,8 @@ PlatformApp must not silently bypass tenant boundaries.
 - It does not close table sessions as a normal cashier flow.
 - It does not take payments on behalf of tenant cashiers.
 - It does not mutate tenant runtime data unless an explicit support or recovery workflow exists.
+- It does not configure fiscal/e-Adisyon/ÖKC integrations in v1.
+- It does not configure external payment providers, printer integrations, hardware terminals, or offline POS mode in v1.
 
 ## Screens and URLs
 
@@ -85,7 +87,7 @@ DNS records for tenant subdomains are managed manually by the platform owner out
 2. Platform Owner enters the required tenant identity fields.
 3. PlatformApp validates uniqueness and required platform constraints.
 4. Platform Owner may enter optional restaurant metadata.
-5. PlatformApp creates the tenant in draft or active state.
+5. PlatformApp creates the tenant in `provisioning` state.
 6. PlatformApp creates the initial tenant admin account.
 7. PlatformApp applies the selected sector starter data once.
 8. PlatformApp starts the tenant provisioning flow.
@@ -110,6 +112,55 @@ Optional fields:
 Tenant name and tenant subdomain are permanent identity fields. If the business needs a different public display name later, that should be modeled as a separate editable field instead of mutating the tenant name.
 
 Changing restaurant sector after tenant creation does not re-run starter data. Sector is an editable profile/classification field after creation, not a provisioning trigger.
+
+### V1 Tenant Scope
+
+PlatformApp creates single-location restaurant tenants in v1.
+
+V1 tenant creation implies these product boundaries:
+
+- one tenant represents one restaurant/location;
+- ordering channel is dine-in table QR only;
+- DNS is manual outside the application;
+- CustomerApp cannot take payments;
+- CashierApp records operational payments only;
+- no fiscal/e-Adisyon/ÖKC integration;
+- no external payment provider integration;
+- no waiter-entered order channel;
+- no pickup, package service, courier, phone order, marketplace order, or counter-sale channel;
+- no offline-first local POS mode.
+
+These limits must be visible to the Platform Owner during tenant creation or tenant review so the created tenant is not misrepresented as a full POS/fiscal system.
+
+### Tenant Lifecycle and Health
+
+V1 tenant lifecycle states:
+
+| State | Meaning |
+| --- | --- |
+| `provisioning` | Tenant creation is running or waiting for completion of initial setup records |
+| `active` | Tenant runtime apps may serve normal traffic |
+| `suspended` | Tenant runtime apps are intentionally unavailable by platform decision |
+| `provisioning_failed` | Tenant creation failed and requires platform recovery or deletion tooling |
+
+New tenants start as `provisioning`. PlatformApp moves the tenant to `active` only after the tenant registry record, first tenant admin, starter data record, and required setup metadata are committed successfully.
+
+Manual DNS setup is tracked as an explicit setup checklist field such as `dnsReady`, because DNS records are managed outside the application. PlatformApp does not automate DNS in v1.
+
+V1 does not enforce tenant packages, trials, feature limits, or billing entitlements. Restaurant capacity is informational in v1 unless a later entitlement model explicitly gives it enforcement meaning.
+
+V1 tenant health summary is limited to high-level signals:
+
+- lifecycle state;
+- setup/provisioning state;
+- starter template applied or failed state;
+- tenant admin bootstrap pending or completed state;
+- manual DNS readiness state;
+- latest platform-visible runtime error summary when available.
+
+Tenant health must not require PlatformApp to inspect or mutate live tenant runtime data such as orders, payments, table sessions, or station queues.
+
+V1 platform support actions are limited to platform-owned control surfaces: inspect tenant metadata, inspect platform audit events, suspend/reactivate tenant, edit tenant GSM number, mark DNS readiness, and retry or inspect failed provisioning through explicit recovery tooling. PlatformApp does not directly rewrite tenant runtime records.
 
 ### Apply Sector Starter Data
 
@@ -198,6 +249,7 @@ PlatformApp may display these concepts, but it does not necessarily own all futu
 | Tenant capacity | Full | Optional and editable |
 | Tenant status | Full | Platform lifecycle state |
 | Tenant health | Summary | High-level operational state shown in lists and detail screens |
+| Tenant DNS setup state | Full | Manual DNS readiness tracked by Platform Owner |
 | Tenant setup state | Full | Tracks readiness/provisioning |
 | Tenant starter data state | Full | Records whether one-time starter data was applied |
 | Tenant owner/admin | Partial | Created during tenant provisioning; username is tenant subdomain |
@@ -220,6 +272,8 @@ PlatformApp will eventually interact with domain modules through explicit interf
 | Support Tools | Inspect tenant operational state under controlled permissions |
 
 DNS automation is not part of PlatformApp for the initial product. Tenant DNS records are created manually by the platform owner.
+
+SMS provider selection is not a PlatformApp product decision. PlatformApp depends on the OTP / Messaging contract; the concrete SMS provider should be selected later behind that adapter.
 
 ## Security Rules
 
@@ -245,9 +299,4 @@ DNS automation is not part of PlatformApp for the initial product. Tenant DNS re
 
 ## Open Questions
 
-- Does a new tenant start as `draft`, `trial`, or `active`?
-- Will tenant package/feature limits exist in the first version?
-- What support actions can Platform Owner perform inside tenant runtime data?
-- What exact signals define tenant health?
-- Which SMS provider will be used for OTP delivery?
-- Which sector enum values besides `cafe` will exist in the first version?
+None currently.

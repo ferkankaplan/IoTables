@@ -40,6 +40,7 @@ TenantApp can manage tenant-owned setup and configuration records.
 | Station assignment | Assign products/services to the station responsible for fulfillment |
 | Staff management | Manage staff users, roles, and app access |
 | Service hall assignment | Assign service staff to the halls they can operate |
+| Service delivery tracking | Enable or disable ServiceStaffApp item-delivery tracking for the tenant |
 | Starter data editing | Edit or remove sector-based starter records after tenant creation |
 | Tenant settings | Manage tenant-scoped operational preferences |
 
@@ -53,6 +54,9 @@ TenantApp must always be tenant-scoped. Every action belongs to the current tena
 - It does not directly operate customer table sessions as a cashier.
 - It does not prepare station tickets as station staff.
 - It does not create customer QR ordering sessions.
+- It does not configure fiscal/e-Adisyon/ÖKC integrations in v1.
+- It does not configure kitchen printers, receipt printers, cash drawers, payment terminals, or other hardware integrations in v1.
+- It does not configure waiter-entered orders, package service, courier delivery, pickup, phone orders, marketplace orders, counter sales, stock/recipe, cost accounting, or multi-location operations in v1.
 
 ## UX Principle
 
@@ -93,6 +97,15 @@ This should open the selected table in a contextual panel inside Hall Management
 3. TenantApp displays basic tenant information.
 4. Admin actions are not shown unless the user goes to `/login` and authenticates.
 
+Public Tenant Page visible fields in v1:
+
+- public display name, falling back to immutable tenant name when no display name exists;
+- restaurant sector label when present;
+- address when present;
+- customer-facing open/available message when later introduced.
+
+The public page must not expose tenant GSM number, platform status internals, staff users, operational health details, table/session state, order data, or setup checklist internals.
+
 ### Tenant Admin Login
 
 1. Tenant Admin opens `https://[tenant].iotables.net/login`.
@@ -114,6 +127,32 @@ Tables are part of the hall management context. A table detail should open as a 
 
 V1 table layout is an ordered grid inside each hall. It does not include visual floor-plan coordinates. A later floor-plan editor must be introduced as a separate explicit layout capability, not by overloading the v1 table order field.
 
+### Configure Service Delivery Tracking
+
+ServiceStaffApp is enabled by default for the initial cafe starter template.
+
+Tenant Admin may disable service delivery tracking for small operations that do not want a separate service queue.
+
+When service delivery tracking is disabled:
+
+- ServiceStaffApp routes should not be shown to staff;
+- station `ready` becomes the final fulfillment signal for customer/cashier visibility;
+- `picked_up` and `delivered` item tracking is not available;
+- the tenant accepts that IoTables will not record who physically delivered the item.
+
+### Configure Tenant Settings
+
+TenantApp may edit these tenant settings in v1:
+
+- public display name;
+- tenant GSM number;
+- address;
+- restaurant capacity;
+- restaurant sector classification;
+- service delivery tracking setting.
+
+TenantApp cannot edit immutable tenant name or tenant subdomain. Editing restaurant sector after tenant creation does not re-run starter data.
+
 ### Configure Stations
 
 1. Tenant Admin opens Station Management.
@@ -130,6 +169,8 @@ V1 table layout is an ordered grid inside each hall. It does not include visual 
 4. Tenant Admin sets prices.
 5. Tenant Admin assigns each product/service to the station responsible for fulfillment.
 6. Disabled products/services remain historical but cannot be ordered.
+
+In v1, each product/service belongs to exactly one fulfillment station. Multi-station routing for the same product is out of v1 unless a later workflow explicitly introduces routing rules.
 
 ### Configure Staff and Service Access
 
@@ -162,6 +203,7 @@ Starter data must not be recreated automatically after the tenant edits or delet
 | Station assignment | Full | Determines where order items are routed |
 | Staff user | Full | Starter users such as cashier, cook, barista, waiter, and busser may be created during provisioning with first-login password change required |
 | Service hall assignment | Full | Defines which halls service staff can operate |
+| Service delivery tracking setting | Full | Controls whether ServiceStaffApp is active for the tenant |
 
 ## Integration Expectations
 
@@ -176,6 +218,23 @@ Starter data must not be recreated automatically after the tenant edits or delet
 | Sector Starter Templates | Read whether initial tenant data came from a starter template |
 | OTP / Messaging | Verify first password setup with SMS |
 | Audit | Record tenant admin configuration changes |
+
+## Audit Rules
+
+TenantApp must audit tenant-admin configuration changes that affect access, ordering, fulfillment, or customer-visible identity.
+
+Minimum v1 TenantApp audit actions:
+
+- tenant GSM changed;
+- public display name changed;
+- address, sector, or capacity changed;
+- service delivery tracking enabled or disabled;
+- hall created, updated, disabled, or reordered;
+- table created, updated, disabled, reordered, or display-provisioning state changed;
+- station created, updated, or disabled;
+- menu category created, updated, disabled, or reordered;
+- product/service created, updated, disabled, price-changed, or station assignment changed;
+- staff user created, role changed, hall/station scope changed, disabled, or re-enabled.
 
 ## Security Rules
 
@@ -193,10 +252,9 @@ Starter data must not be recreated automatically after the tenant edits or delet
 - Starter cashier first password setup requires OTP SMS verification.
 - Starter station and service staff first password setup does not require OTP.
 - Service staff must be authorized per hall.
+- Service delivery tracking can be disabled only as an explicit tenant setting.
+- Fiscal/e-Adisyon/ÖKC, printer, hardware, stock/recipe, package service, courier, pickup, counter sale, and multi-location features are out of v1 scope.
 
 ## Open Questions
 
-- Which tenant fields are visible on the public tenant page?
-- Which tenant fields are editable in Tenant Settings?
-- Can one product/service belong to more than one station?
-- Which tenant admin actions require audit detail?
+None currently.

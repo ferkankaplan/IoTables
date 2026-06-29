@@ -14,6 +14,15 @@ ServiceStaffApp closes the operational gap between station preparation and custo
 
 ServiceStaffApp is not a tenant setup interface, customer ordering interface, station preparation console, or cashier console. It does not manage products, prices, payments, table settlement, or station preparation state.
 
+ServiceStaffApp is enabled by default for the initial cafe starter template. Tenant Admin may disable service delivery tracking for tenants that do not want a separate service queue.
+
+When service delivery tracking is disabled:
+
+- ServiceStaffApp routes are not shown to staff;
+- `PreparationItem.ready` is treated as the final fulfillment signal for customer/cashier visibility;
+- `picked_up` and `delivered` are not tracked;
+- IoTables does not record who physically delivered the item.
+
 ## Users and Access
 
 | User | Scope | Allowed Capabilities | Limits |
@@ -44,6 +53,8 @@ ServiceStaffApp can operate delivery state for order items that are ready for se
 | Delivery workload | View ready and picked-up item counts |
 
 ServiceStaffApp must always be tenant-scoped and hall-scoped. Staff can only see and operate delivery items for halls they are authorized for.
+
+If service delivery tracking is disabled for the tenant, ServiceStaffApp has no active runtime authority for that tenant.
 
 ## Not Authorized
 
@@ -80,15 +91,37 @@ The service queue is the primary workspace. Item details should not be separate 
 
 1. Staff opens `https://[tenant].iotables.net/service/login`.
 2. ServiceStaffApp authenticates against the current tenant.
-3. If the staff user is using a temporary bootstrap password, ServiceStaffApp forces password change.
-4. ServiceStaffApp opens the service queue.
+3. ServiceStaffApp checks whether service delivery tracking is enabled for the tenant.
+4. If the staff user is using a temporary bootstrap password, ServiceStaffApp forces password change.
+5. ServiceStaffApp opens the service queue.
+
+If service delivery tracking is disabled, ServiceStaffApp should not show an operational queue. It should direct the user back to the tenant's available staff apps without exposing delivery controls.
 
 ### Monitor Ready Items
 
 1. Staff opens the service queue.
 2. ServiceStaffApp shows items marked `ready` by stations for the staff member's authorized halls.
 3. Items show table, station, product/service name, quantity, notes, and age.
-4. Staff can group or filter items by table, station, and age.
+4. Items are grouped by table and sorted by oldest ready item inside each table group.
+5. Staff can filter by station, hall, table, and age when needed.
+
+### Queue Defaults and Metrics
+
+V1 service queue grouping:
+
+- primary grouping: table;
+- secondary ordering: oldest ready item first;
+- available filters: hall, table, station, and status.
+
+Service staff may bulk-mark items delivered only for selected items on the same table. Bulk delivery must use one idempotency key, record one actor, and validate every selected item server-side.
+
+Minimum v1 service metrics:
+
+- ready item count;
+- picked-up item count;
+- oldest ready item age;
+- delivered item count for the current business day;
+- average ready-to-delivered time for the current business day when enough data exists.
 
 ### Pick Up Item
 
@@ -115,6 +148,8 @@ PreparationItem.ready -> picked_up -> delivered
 
 `ready` is created by StationStaffApp as PreparationItem state. DeliveryState stores only ServiceStaffApp-owned `picked_up` and `delivered` states.
 
+When service delivery tracking is disabled, this DeliveryState flow does not run. `PreparationItem.ready` is the final tracked fulfillment state.
+
 State transitions must be controlled. An item must not jump backward or skip required states unless an explicit correction workflow exists.
 
 ## Data Concepts Visible in ServiceStaffApp
@@ -130,6 +165,7 @@ State transitions must be controlled. An item must not jump backward or skip req
 | Product/service | Summary | Name, quantity, and delivery-relevant metadata |
 | Delivery status | Full | Service-owned status after station readiness |
 | Item note | Read | Customer or operational note if available |
+| Service metrics | Summary | Current business-day delivery workload and age counters |
 
 ## Operational Safety
 
@@ -166,9 +202,8 @@ ServiceStaffApp updates live delivery state, so transitions must be safe under d
 - Starter service staff passwords are temporary and must be changed on first login.
 - Service staff first-login password change does not require OTP.
 - ServiceStaffApp must not expose TenantApp configuration, StationStaffApp preparation controls, or CashierApp payment capabilities.
+- ServiceStaffApp must not expose delivery controls when service delivery tracking is disabled for the tenant.
 
 ## Open Questions
 
-- Should ready items be grouped by table, station, age, or order?
-- Can service staff mark multiple items delivered in bulk?
-- Which service metrics are needed in the first version?
+None currently.

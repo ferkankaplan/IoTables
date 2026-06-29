@@ -24,23 +24,23 @@ It is not a feature wishlist. A finding appears here only if it affects one of t
 
 ### 0. Close app-level scenario gaps first
 
-Decision needed:
+Status:
 
-- Update the six app docs before deeper module design continues.
-- Treat app docs as the semantic source for modules, contexts, schemas, and APIs.
-- Do not implement or further split modules until the affected app scenarios are clear.
+- The six app docs are the semantic source for modules, contexts, schemas, and APIs.
+- App-level v1 scenario gaps are closed at documentation level.
+- Deeper module and data-model updates should now merge into these app decisions instead of introducing parallel concepts.
 
-Required app revisions:
+Locked app decisions:
 
-- CustomerApp needs server-calculated price preview/confirmation before order submission.
-- CustomerApp must state that customer payment/pay-at-table is out of v1.
-- CashierApp needs explicit single Check/Adisyon behavior or a deliberate no-check decision.
-- CashierApp must state that split checks, item/person-based split, item move, merge checks, fiscal receipt, and customer payment are out of v1 unless explicitly added.
-- TenantApp must state that fiscal/e-Adisyon/ÖKC, kitchen printers, receipt printers, cash drawers, and hardware integration settings are out of v1.
-- TenantApp must state that waiter-entered orders, package service, courier, pickup, delivery, counter sale, stock/recipe, and multi-location operations are out of v1.
-- PlatformApp tenant creation must make v1 scope visible: single location, dine-in QR ordering, manual DNS, no fiscal integration, no external payment provider, no offline POS.
-- StationStaffApp must decide whether `cannot_prepare` / report-impossible-item exists in v1.
-- ServiceStaffApp remains a valid app, but tenant-level enable/disable should be considered because small cafes may not track delivery separately.
+- CustomerApp has no separate price preview or customer price-confirmation step in v1; backend pricing still remains authoritative.
+- CustomerApp cannot receive customer payment or start pay-at-table flows in v1.
+- CashierApp uses one operational Check/Adisyon per active TableSession in v1.
+- CashierApp does not support split checks, item/person-based split, item move, merge checks, fiscal receipt issuance, or customer payment in v1.
+- TenantApp does not configure fiscal/e-Adisyon/ÖKC, kitchen printers, receipt printers, cash drawers, or hardware integrations in v1.
+- TenantApp does not configure waiter-entered orders, package service, courier, pickup, delivery, counter sale, stock/recipe, or multi-location operations in v1.
+- PlatformApp tenant creation makes v1 scope visible: single location, dine-in QR ordering, manual DNS, no fiscal integration, no external payment provider, no offline POS.
+- StationStaffApp supports `cannot_prepare` as an operational exception with a required reason; it does not cancel, refund, discount, or remove billable records.
+- ServiceStaffApp is enabled by default for the cafe starter template but can be disabled per tenant. When disabled, `PreparationItem.ready` is the final tracked fulfillment state.
 
 Why:
 
@@ -48,12 +48,11 @@ The architecture is app-first. PlatformApp, TenantApp, CustomerApp, StationStaff
 
 Output:
 
-- Update all affected app docs.
-- Only then update module docs and data model.
+- Update module docs and data model from the locked app decisions.
 
 ### 1. Lock v1 operating scope
 
-Decision needed:
+App-level decision:
 
 - `tenant = one restaurant/location` in v1.
 - `OrderChannel = dine_in_qr` only in v1.
@@ -74,13 +73,12 @@ Output:
 - Add `orderChannel` to order data model with only `dine_in_qr` enabled.
 - Keep multi-location and non-QR channels out of v1 migrations.
 
-### 2. Decide Check / Adisyon model
+### 2. Implement Check / Adisyon model in schema and module docs
 
-Decision needed:
+App-level decision:
 
-- Add a `Check` / `Adisyon` aggregate under Settlement, or explicitly state that `TableSession` acts as the single check in v1.
-- Recommended direction: keep `TableSession` as the table visit/session and add one `Check` per TableSession in v1.
-- V1 should not support split checks, merge checks, item/person-based payment splitting, or moving items between checks unless explicitly added.
+- V1 uses exactly one operational Check/Adisyon per active TableSession.
+- Split checks, merge checks, item/person-based payment splitting, and moving items between checks are out of v1.
 
 Why:
 
@@ -93,21 +91,21 @@ Output:
 - Update `payments.md`.
 - Update CashierApp docs.
 
-### 3. Add pricing contract
+### 3. Add pricing and adjustment contract
 
 Decision needed:
 
-- Add an order price preview/quote endpoint before order submission.
+- Do not add a separate order price preview/quote endpoint in v1.
 - Add `PriceAdjustment` model for tax, discount, service charge, campaign, and future correction adjustments.
 - Keep frontend totals informational only.
+- Backend submission still recalculates prices and creates price snapshots.
 
 Why:
 
-Square, Toast, Clover, Oracle Simphony, and Revel treat calculated prices, taxes, discounts, and service charges as explicit server-side order/check concepts. IoTables currently has price snapshots, but not a complete adjustment/quote contract.
+Square, Toast, Clover, Oracle Simphony, and Revel treat calculated prices, taxes, discounts, and service charges as explicit server-side order/check concepts. IoTables v1 does not need a separate price preview UX because menu prices are stable during ordering, but it still needs server-side price snapshots and a future-safe adjustment model.
 
 Output:
 
-- Define `OrderQuote` or `PricePreview` API.
 - Define `PriceAdjustment` data model.
 - Decide v1 tax behavior: disabled, fixed-rate, or configurable.
 - Decide v1 discount/service charge behavior: out of scope or cashier-only.
@@ -133,7 +131,7 @@ Output:
 
 ### 5. Lock tenant lifecycle enum
 
-Decision needed:
+App-level decision:
 
 Minimum v1 enum:
 
@@ -141,6 +139,8 @@ Minimum v1 enum:
 - `active`
 - `suspended`
 - `provisioning_failed`
+
+New tenants start as `provisioning`. They move to `active` after required tenant setup records commit successfully. Manual DNS readiness is tracked as a setup checklist field, not as DNS automation.
 
 Why:
 
@@ -244,11 +244,11 @@ Output:
 
 ### 10. Define fiscal / e-Adisyon / ÖKC scope
 
-Decision needed:
+App-level decision:
 
-- Decide whether v1 creates any fiscal/adisyon document record.
-- Recommended direction: add a `Fiscal` or `Fiscal Documents` follow-up context, but keep actual e-Adisyon/ÖKC integration out of v1 unless legally required.
-- If v1 is non-fiscal, explicitly state that CashierApp records operational payments only.
+- Fiscal/e-Adisyon/ÖKC document creation and receipt issuance are out of v1.
+- CashierApp records operational payments only in v1.
+- Fiscal Documents remains a future context candidate.
 
 Why:
 
@@ -257,18 +257,17 @@ Akınsoft, DİA, GoPOS, Menulux, and Logo GastroPOS treat e-Adisyon, ÖKC, fisca
 Output:
 
 - Add Fiscal context candidate to module map follow-up.
-- Define `AdisyonDocument` / `FiscalDocumentLink` only when scope is approved.
+- Do not add `FiscalDocument` / `FiscalDocumentLink` to v1 schema unless legal scope changes.
 
 ### 11. Define correction/reversal model
 
-Decision needed:
+App-level decision:
 
-- Which v1 corrections are allowed?
-- Recommended v1 minimum:
-  - cashier note-only correction,
-  - payment reversal/void only if no external provider exists,
-  - order item cancellation only before preparation starts.
-- All corrections require reason and audit.
+- V1 allows cashier note-only corrections.
+- V1 allows order item cancellation/void only while preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the TableSession.
+- V1 allows payment void only on an open TableSession when no external payment provider is involved.
+- V1 does not allow manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, or cancellation of items already in active preparation/delivery states.
+- All corrections require reason, idempotency, authorization, and audit.
 
 Why:
 
@@ -330,8 +329,8 @@ These should be documented as deliberate v1 exclusions so the architecture does 
 
 1. Close app-level scenario gaps first.
 2. Lock v1 operating scope.
-3. Decide Check / Adisyon model.
-4. Add pricing contract: quote and price adjustments.
+3. Implement Check / Adisyon model in schema and module docs.
+4. Add pricing contract: server-side snapshots and price adjustments.
 5. Split QR/display ownership.
 6. Lock tenant lifecycle enum.
 7. Define mandatory audit events.
