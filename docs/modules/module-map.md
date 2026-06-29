@@ -139,6 +139,8 @@ Rules:
 
 ## Architecture Review Findings
 
+Detailed execution order is tracked in [v1-architecture-backlog.md](../v1-architecture-backlog.md).
+
 ### Resolved by This Map
 
 | Finding | Risk | Decision |
@@ -162,8 +164,4 @@ Rules:
 
 ## Open Questions
 
-- Which audit events are mandatory for v1?
-- Exact v1 tenant status enum.
-- Can one product/service route to more than one station in v1?
-- Exact menu image storage strategy.
-- Which cashier corrections are allowed in v1?
+The authoritative v1 open question and execution list is [v1-architecture-backlog.md](../v1-architecture-backlog.md).
