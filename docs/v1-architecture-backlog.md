@@ -22,6 +22,35 @@ It is not a feature wishlist. A finding appears here only if it affects one of t
 
 ## P0: Schema and Boundary Blockers
 
+### 0. Close app-level scenario gaps first
+
+Decision needed:
+
+- Update the six app docs before deeper module design continues.
+- Treat app docs as the semantic source for modules, contexts, schemas, and APIs.
+- Do not implement or further split modules until the affected app scenarios are clear.
+
+Required app revisions:
+
+- CustomerApp needs server-calculated price preview/confirmation before order submission.
+- CustomerApp must state that customer payment/pay-at-table is out of v1.
+- CashierApp needs explicit single Check/Adisyon behavior or a deliberate no-check decision.
+- CashierApp must state that split checks, item/person-based split, item move, merge checks, fiscal receipt, and customer payment are out of v1 unless explicitly added.
+- TenantApp must state that fiscal/e-Adisyon/ÖKC, kitchen printers, receipt printers, cash drawers, and hardware integration settings are out of v1.
+- TenantApp must state that waiter-entered orders, package service, courier, pickup, delivery, counter sale, stock/recipe, and multi-location operations are out of v1.
+- PlatformApp tenant creation must make v1 scope visible: single location, dine-in QR ordering, manual DNS, no fiscal integration, no external payment provider, no offline POS.
+- StationStaffApp must decide whether `cannot_prepare` / report-impossible-item exists in v1.
+- ServiceStaffApp remains a valid app, but tenant-level enable/disable should be considered because small cafes may not track delivery separately.
+
+Why:
+
+The architecture is app-first. PlatformApp, TenantApp, CustomerApp, StationStaffApp, ServiceStaffApp, and CashierApp define the semantic foundation. Modules exist to implement those app scenarios, not to create independent domain complexity.
+
+Output:
+
+- Update all affected app docs.
+- Only then update module docs and data model.
+
 ### 1. Lock v1 operating scope
 
 Decision needed:
@@ -299,18 +328,19 @@ These should be documented as deliberate v1 exclusions so the architecture does 
 
 ## Recommended Execution Order
 
-1. Lock v1 operating scope.
-2. Decide Check / Adisyon model.
-3. Add pricing contract: quote and price adjustments.
-4. Split QR/display ownership.
-5. Lock tenant lifecycle enum.
-6. Define mandatory audit events.
-7. Define availability/sold-out model.
-8. Define menu variant/portion pricing.
-9. Define hardware adapter boundary.
-10. Define fiscal scope.
-11. Define correction/reversal model.
-12. Define event/outbox strategy.
-13. Update `data-model.md`.
-14. Update affected module docs.
-15. Start backend schema and API contracts.
+1. Close app-level scenario gaps first.
+2. Lock v1 operating scope.
+3. Decide Check / Adisyon model.
+4. Add pricing contract: quote and price adjustments.
+5. Split QR/display ownership.
+6. Lock tenant lifecycle enum.
+7. Define mandatory audit events.
+8. Define availability/sold-out model.
+9. Define menu variant/portion pricing.
+10. Define hardware adapter boundary.
+11. Define fiscal scope.
+12. Define correction/reversal model.
+13. Define event/outbox strategy.
+14. Update `data-model.md`.
+15. Update affected module docs.
+16. Start backend schema and API contracts.

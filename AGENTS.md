@@ -11,6 +11,10 @@ The core principle is merge, not append.
 ## Architectural Principles
 
 - Preserve system integrity above local convenience.
+- Treat the six apps as the semantic foundation of the product: PlatformApp, TenantApp, CustomerApp, StationStaffApp, ServiceStaffApp, and CashierApp.
+- Build every module, bounded context, database model, API, workflow, and document to serve those six apps and their defined user scenarios.
+- Do not design or expand modules before the relevant app scenario is understood, documented, and checked for scope, UX, security, and data ownership implications.
+- When module design and app semantics conflict, resolve the app-level product scenario first, then reshape the internal module boundary around it.
 - Search for existing equivalents, similar patterns, duplicated concepts, extension points, naming conventions, and prior decisions before adding anything new.
 - If a capability already exists in another form, merge with or replace the existing design instead of creating a parallel implementation.
 - Place new logic where it architecturally belongs, not where it is easiest to attach.
