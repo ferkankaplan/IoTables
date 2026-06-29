@@ -55,6 +55,10 @@ It is the pricing and orderability authority for CustomerApp.
 - Availability must be rechecked during order submission.
 - Required modifiers must be selected before a cart item is valid.
 - Product-to-station assignment determines initial preparation routing.
+- V1 routes each product/service to exactly one station.
+- Multi-station routing for one product/service is out of v1 until a concrete routing workflow exists.
+- Product images are referenced by opaque `imageRef` metadata. Menu Catalog owns the reference and display metadata, not binary storage implementation.
+- Products without images must remain valid and render with a fallback state in CustomerApp.
 
 ## Operational Safety
 
@@ -72,7 +76,7 @@ It is the pricing and orderability authority for CustomerApp.
 | ProductService | Orderable item/service | active, description, image, base price |
 | ModifierGroup | Required/optional customization group | min/max selection |
 | ModifierOption | Customization option | price delta, availability |
-| ProductStationAssignment | Fulfillment routing | station id |
+| ProductStationAssignment | Fulfillment routing | one station id per product/service in v1 |
 
 ## App Surfaces
 
@@ -93,5 +97,4 @@ It is the pricing and orderability authority for CustomerApp.
 
 ## Open Questions
 
-- Whether a product/service can belong to more than one station.
-- Exact image storage strategy.
+None currently.

@@ -2,26 +2,29 @@
 
 ## Purpose
 
-Table Access / QR owns the secure physical table presence mechanism.
+Table Access / QR documents the end-to-end QR flow across two internal owners:
 
-It proves that an anonymous browser recently scanned the current QR displayed on a table's ESP32 screen. It does not create orders, manage carts, or own table billing sessions.
+- Tenant Setup / Table Display Provisioning owns ESP32 table display claims and credentials.
+- Ordering / Table Presence owns short-lived customer QR tokens and fresh table presence.
+
+Together they prove that an anonymous browser recently scanned the current QR displayed on a table's ESP32 screen. This document keeps the full flow visible while preserving separate ownership for implementation.
 
 ## Ownership
 
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
-| TableAccessToken | Token | generate, expire, consume |
-| Table display credential | Credential | authenticate a table-bound ESP32 display |
-| Fresh table presence | State | grant and refresh presence window |
-| Table display QR flow | Workflow | provide current QR to the table display |
-| QR replay prevention | Safety rule | reject reused, expired, or wrong-table tokens |
+| TableDisplayClaim | Tenant Setup / Table Display Provisioning | one-time display provisioning claim |
+| TableDisplayCredential | Tenant Setup / Table Display Provisioning | authenticate a table-bound ESP32 display |
+| TableAccessToken | Ordering / Table Presence | generate, expire, consume |
+| Fresh table presence | Ordering / Table Presence | grant and refresh CustomerOrderingSession presence window |
+| QR replay prevention | Ordering / Table Presence | reject reused, expired, or wrong-table tokens |
 
 ## Not Owned
 
 - Customer cart.
 - Order creation.
 - TableSession billing.
-- Tenant setup.
+- Hall/table setup data, owned by Venue Layout.
 - Product/menu data.
 - Payment or session closure.
 
@@ -66,6 +69,7 @@ Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodicall
 
 ## Internal Rules
 
+- Table display provisioning and table presence must be implemented as separate internal modules/packages even if this documentation remains one end-to-end file.
 - QR token must be short-lived.
 - QR token must be one-time use.
 - Token redemption must be atomic.
@@ -87,10 +91,10 @@ Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodicall
 
 | Model / Table | Purpose | Notes |
 | --- | --- | --- |
-| TableDisplayClaim | One-time provisioning claim for a table display | tenant, table, claim hash, expiresAt, consumedAt |
-| TableDisplayCredential | Authenticates the ESP32 display for a table | tenant, table, credential hash, active/revoked state |
-| TableAccessToken | Stores generated token metadata | token hash, tenant, table, expiresAt, consumedAt |
-| CustomerOrderingSession presence fields | Stores `presenceValidUntil` | Owned by Customer Ordering, updated through this module's redeem flow |
+| TableDisplayClaim | One-time provisioning claim for a table display | Owned by Tenant Setup / Table Display Provisioning |
+| TableDisplayCredential | Authenticates the ESP32 display for a table | Owned by Tenant Setup / Table Display Provisioning |
+| TableAccessToken | Stores generated token metadata | Owned by Ordering / Table Presence |
+| CustomerOrderingSession presence fields | Stores `presenceValidUntil` | Owned by Customer Ordering, updated by Ordering / Table Presence |
 
 ## App Surfaces
 
@@ -101,8 +105,8 @@ Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodicall
 
 ## Future Service Boundary
 
-- Own data: table display claims, display credentials, table access tokens, and display token state.
-- Own APIs: table display provisioning, token generation, display QR fetch, token redemption.
+- Tenant Setup owns data/APIs for table display claims and credentials.
+- Ordering owns data/APIs for table access tokens, token generation, display QR fetch, and token redemption.
 - Published events: table_access_token.redeemed.
 - Consumed events: table disabled, tenant suspended.
 - Must not leak: raw token secrets or device credentials.

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Payments owns payment records, partial/full payment rules, payment method tracking, and payment idempotency.
+Payments owns payment records, partial/full payment rules, payment method tracking, payment idempotency, and non-provider payment void records.
 
 In v1, payments are cashier-recorded settlement records unless an external payment provider is explicitly introduced.
 
@@ -10,14 +10,14 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
-| Payment | Entity | create, read, void/reverse if introduced |
+| Payment | Entity | create, read, void when v1 rules allow |
 | Payment method | Value | cash, card, transfer |
 | Payment idempotency | Safety record | prevent duplicate payment records |
-| Payment summary | Read model | paid amount by TableSession |
+| Payment summary | Read model | paid amount by Check |
 
 ## Not Owned
 
-- TableSession closure rules, owned by Table Session and Billing.
+- TableSession and Check closure rules, owned by Table Session and Billing.
 - Order item pricing snapshots.
 - External provider settlement unless added later.
 - CustomerApp payment actions.
@@ -34,10 +34,11 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 | Interface | Purpose | Consumers |
 | --- | --- | --- |
-| Record payment | Add payment to TableSession | CashierApp |
+| Record payment | Add payment to Check/Adisyon | CashierApp |
 | List payments | Payment history/summary | CashierApp |
 | Get paid amount | Billing calculation | Table Session and Billing |
 | Get customer-visible summary | Read-only balance | CustomerApp |
+| Void payment | Void a non-provider payment on an open Check | CashierApp |
 
 ## Internal Rules
 
@@ -49,13 +50,17 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 - External payment providers are out of scope for v1.
 - CustomerApp cannot create or mutate payments.
 - Payment totals must be calculated server-side.
-- Payment cannot exceed allowed amount unless an explicit overpayment rule exists.
+- Payment cannot exceed the current remaining balance in v1.
+- Payments attach to the single Check/Adisyon in v1.
+- Payment void is allowed only while the Check is open and only for non-provider payments.
+- Refunds after session closure are out of v1.
 
 ## Operational Safety
 
 - Payment creation must be idempotent.
 - Payment updates must run in a transaction with billing read model updates if materialized.
 - Duplicate cashier clicks must not create duplicate payments.
+- Payment void must be idempotent and reason-required.
 - External payment providers require retry, reconciliation, and compensating-action rules before use.
 - Payment records and corrections must be audited.
 
@@ -63,9 +68,9 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 | Model / Table | Purpose | Notes |
 | --- | --- | --- |
-| Payment | Payment record | tableSessionId, amount, method, cashier |
-| PaymentIdempotency | Duplicate payment protection | scoped key |
-| PaymentCorrection | Future reversal/void record | reason and actor |
+| Payment | Payment record | checkId, amount, method, cashier, status |
+| PaymentIdempotency | Duplicate payment protection | scoped by tenant/check/key |
+| PaymentVoid | Void record or payment void fields | reason and actor |
 
 ## App Surfaces
 
@@ -76,8 +81,8 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 ## Future Service Boundary
 
-- Own data: payments, payment idempotency, payment corrections.
-- Own APIs: record payment, list payments, get paid amount.
+- Own data: payments, payment idempotency, payment void state.
+- Own APIs: record payment, list payments, get paid amount, void payment.
 - Published events: payment.recorded, payment.voided.
 - Consumed events: table_session.closed.
 - Must not leak: payment mutation to CustomerApp.

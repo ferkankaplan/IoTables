@@ -52,7 +52,9 @@ Output:
 
 ### 1. Lock v1 operating scope
 
-App-level decision:
+Status: documented in app docs, module docs, and `data-model.md`.
+
+Decision:
 
 - `tenant = one restaurant/location` in v1.
 - `OrderChannel = dine_in_qr` only in v1.
@@ -69,13 +71,15 @@ Square, Toast, Olo, Simpra, Menulux, GoPOS, and similar systems model locations 
 
 Output:
 
-- Add explicit v1 scope section to app/module docs.
-- Add `orderChannel` to order data model with only `dine_in_qr` enabled.
-- Keep multi-location and non-QR channels out of v1 migrations.
+- Explicit v1 scope exists in app/module docs.
+- `Order.orderChannel` exists in the data model with only `dine_in_qr` enabled.
+- Multi-location and non-QR channels stay out of v1 migrations.
 
 ### 2. Implement Check / Adisyon model in schema and module docs
 
-App-level decision:
+Status: documented in app docs, Settlement module docs, Payments module docs, and `data-model.md`.
+
+Decision:
 
 - V1 uses exactly one operational Check/Adisyon per active TableSession.
 - Split checks, merge checks, item/person-based payment splitting, and moving items between checks are out of v1.
@@ -86,19 +90,21 @@ Toast, TouchBistro, SambaPOS, DİA, GoPOS, OxyMenu, and local e-Adisyon workflow
 
 Output:
 
-- Update `data-model.md`.
-- Update `table-session-billing.md`.
-- Update `payments.md`.
-- Update CashierApp docs.
+- `Check` / Adisyon is defined in `data-model.md`.
+- `table-session-billing.md`, `payments.md`, and CashierApp docs are aligned.
 
 ### 3. Add pricing and adjustment contract
 
-Decision needed:
+Status: documented in CustomerApp, Customer Ordering, Settlement module docs, and `data-model.md`.
+
+Decision:
 
 - Do not add a separate order price preview/quote endpoint in v1.
 - Add `PriceAdjustment` model for tax, discount, service charge, campaign, and future correction adjustments.
 - Keep frontend totals informational only.
 - Backend submission still recalculates prices and creates price snapshots.
+- V1 menu prices are VAT/tax-inclusive operational prices.
+- Separate tax calculation, manual discounts, service fees, and campaigns are out of v1.
 
 Why:
 
@@ -106,13 +112,15 @@ Square, Toast, Clover, Oracle Simphony, and Revel treat calculated prices, taxes
 
 Output:
 
-- Define `PriceAdjustment` data model.
-- Decide v1 tax behavior: disabled, fixed-rate, or configurable.
-- Decide v1 discount/service charge behavior: out of scope or cashier-only.
+- `PriceAdjustment` data model is defined.
+- V1 tax behavior is tax-inclusive menu pricing without separate tax calculation.
+- V1 discount/service charge behavior is out of scope.
 
 ### 4. Split QR/display ownership before implementation
 
-Decision needed:
+Status: ownership split is documented in module map, `table-access-qr.md`, and `data-model.md`.
+
+Decision:
 
 - Split current `Table Access / QR` ownership into two internal modules:
   - `Tenant Setup / Table Display Provisioning`
@@ -125,13 +133,16 @@ Table display credentials are tenant setup/provisioning. Fresh QR presence is or
 
 Output:
 
-- Create or split docs before code layout is created.
-- Keep `TableDisplayClaim` and `TableDisplayCredential` under Tenant Setup.
-- Keep `TableAccessToken` redemption and `presenceValidUntil` under Ordering.
+- `table-access-qr.md` remains the end-to-end flow document.
+- Implementation must use separate internal packages/modules for Tenant Setup / Table Display Provisioning and Ordering / Table Presence.
+- `TableDisplayClaim` and `TableDisplayCredential` are under Tenant Setup.
+- `TableAccessToken` redemption and `presenceValidUntil` are under Ordering.
 
 ### 5. Lock tenant lifecycle enum
 
-App-level decision:
+Status: documented in PlatformApp, Platform / Tenant Registry, and `data-model.md`.
+
+Decision:
 
 Minimum v1 enum:
 
@@ -148,13 +159,13 @@ Tenant creation, starter data, DNS/manual readiness, runtime availability, and f
 
 Output:
 
-- Update PlatformApp docs.
-- Update Platform / Tenant Registry module.
-- Update `data-model.md`.
+- PlatformApp docs, Platform / Tenant Registry, and `data-model.md` are aligned.
 
 ### 6. Define mandatory audit events
 
-Decision needed:
+Status: documented in Audit module and `data-model.md`.
+
+Decision:
 
 Minimum v1 event list:
 
@@ -176,6 +187,7 @@ Minimum v1 event list:
 - `preparation.status_changed`
 - `delivery.status_changed`
 - `payment.recorded`
+- `payment.voided`
 - `session.closed`
 - `cashier.correction_applied`
 
@@ -185,8 +197,8 @@ Audit cannot be a vague utility. Platform, access, money, customer orders, QR/di
 
 Output:
 
-- Update `audit.md`.
-- Add audit event names to affected transaction boundaries.
+- `audit.md` and `data-model.md` contain the v1 list.
+- Affected transaction boundaries reference audit requirements.
 
 ## P1: First End-to-End Flow Blockers
 
@@ -264,8 +276,8 @@ Output:
 App-level decision:
 
 - V1 allows cashier note-only corrections.
-- V1 allows order item cancellation/void only while preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the TableSession.
-- V1 allows payment void only on an open TableSession when no external payment provider is involved.
+- V1 allows order item cancellation/void only while preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the Check.
+- V1 allows payment void only on an open Check when no external payment provider is involved.
 - V1 does not allow manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, or cancellation of items already in active preparation/delivery states.
 - All corrections require reason, idempotency, authorization, and audit.
 
@@ -275,9 +287,7 @@ Commercial systems support void, refund, ikram, zayi, item move, split, and disc
 
 Output:
 
-- Update CashierApp docs.
-- Update Settlement context docs.
-- Update Audit mandatory event list.
+- CashierApp, Settlement, Payments, Audit, and `data-model.md` are aligned.
 
 ### 12. Define event/outbox strategy
 
@@ -327,18 +337,18 @@ These should be documented as deliberate v1 exclusions so the architecture does 
 
 ## Recommended Execution Order
 
-1. Close app-level scenario gaps first.
-2. Lock v1 operating scope.
-3. Implement Check / Adisyon model in schema and module docs.
-4. Add pricing contract: server-side snapshots and price adjustments.
-5. Split QR/display ownership.
-6. Lock tenant lifecycle enum.
-7. Define mandatory audit events.
+1. Close app-level scenario gaps first. Done in docs.
+2. Lock v1 operating scope. Done in docs.
+3. Implement Check / Adisyon model in schema and module docs. Done in docs.
+4. Add pricing contract: server-side snapshots and price adjustments. Done in docs.
+5. Split QR/display ownership. Done in docs; code packages still need to follow this split.
+6. Lock tenant lifecycle enum. Done in docs.
+7. Define mandatory audit events. Done in docs.
 8. Define availability/sold-out model.
 9. Define menu variant/portion pricing.
 10. Define hardware adapter boundary.
 11. Define fiscal scope.
-12. Define correction/reversal model.
+12. Define correction/reversal model. Done in docs.
 13. Define event/outbox strategy.
 14. Update `data-model.md`.
 15. Update affected module docs.

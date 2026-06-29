@@ -57,6 +57,8 @@ It decides who a person is, which tenant they belong to, which app they may ente
 - Cashier first password setup requires OTP to tenant GSM during bootstrap.
 - Station and service staff first password setup does not require OTP in v1.
 - Users can access only their tenant unless explicitly platform scoped.
+- V1 password policy: minimum 12 characters for user-chosen passwords, reject known bootstrap/default passwords, and store only strong password hashes.
+- Platform Owner must use TOTP after enrollment. Tenant admin and cashier use OTP only for first password setup in v1.
 
 ## Operational Safety
 
@@ -96,4 +98,4 @@ It decides who a person is, which tenant they belong to, which app they may ente
 
 ## Open Questions
 
-- Password policy details.
+None currently.

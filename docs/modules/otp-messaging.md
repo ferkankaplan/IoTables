@@ -47,6 +47,10 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 - OTP verification is required for cashier first password setup and is sent to tenant GSM in v1.
 - Station and service staff do not require OTP in v1.
 - OTP retries must be rate-limited.
+- V1 OTP lifetime is 5 minutes.
+- V1 allows at most 5 verification attempts per challenge.
+- V1 allows at most 3 send attempts per challenge with cooldown between sends.
+- Concrete SMS provider selection is an adapter/configuration decision, not an app/module contract. The module depends on a provider interface and records delivery attempts regardless of provider.
 
 ## Operational Safety
 
@@ -81,5 +85,4 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 
 ## Open Questions
 
-- SMS provider for v1.
-- OTP lifetime and retry limits.
+None currently.

@@ -15,7 +15,8 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | Tenant subdomain | Immutable identity | create only |
 | Tenant GSM number | Sensitive contact | create, update, audit |
 | Tenant sector | Classification | create, update without re-provisioning |
-| Tenant lifecycle status | State | draft, active, suspended, closed if introduced |
+| Tenant lifecycle status | State | provisioning, active, suspended, provisioning_failed |
+| Tenant DNS setup state | Checklist state | track manual DNS readiness |
 | Tenant health summary | Read model | expose high-level platform health |
 
 ## Not Owned
@@ -52,7 +53,13 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 - Tenant GSM number is required and editable, but every change must be audited.
 - Tenant subdomain must be unique.
 - Tenant sector can change after creation but must not re-run starter data.
+- New tenants start as `provisioning`.
+- Tenants become `active` only after required setup records commit successfully.
+- `provisioning_failed` tenants require explicit recovery or deletion tooling.
 - Suspended tenants must block tenant runtime actions.
+- Manual DNS setup is tracked as readiness metadata; v1 does not automate DNS.
+- V1 tenant health is limited to lifecycle state, setup/provisioning state, starter template state, tenant admin bootstrap state, manual DNS readiness, and platform-visible runtime error summary when available.
+- Platform support actions in v1 are limited to tenant metadata inspection, platform audit inspection, suspend/reactivate, tenant GSM update, DNS readiness update, and failed-provisioning recovery tooling. PlatformApp does not directly rewrite tenant runtime records.
 
 ## Operational Safety
 
@@ -67,7 +74,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | Model / Table | Purpose | Notes |
 | --- | --- | --- |
 | Tenant | Platform tenant record | immutable name/subdomain, GSM, status, sector |
-| TenantHealth | Health/read model | derived from runtime signals |
+| TenantHealth | Health/read model | high-level platform/setup signals only in v1 |
 | TenantLifecycleEvent | Lifecycle history | status changes and reasons |
 
 ## App Surfaces
@@ -88,5 +95,4 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 
 ## Open Questions
 
-- Exact v1 tenant status model: `draft`, `active`, `suspended`, others.
-- Exact tenant health signals.
+None currently.

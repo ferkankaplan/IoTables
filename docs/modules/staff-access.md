@@ -48,6 +48,10 @@ Identity and Access authenticates users; Staff Access decides what tenant operat
 - Service staff can only view/update assigned halls.
 - Tenant admin manages staff access from TenantApp.
 - Starter staff are normal tenant staff after provisioning.
+- A user may hold multiple operational roles in v1 when Tenant Admin explicitly assigns them.
+- App actions still require the specific permission for that app and operation.
+- A user with both station and service roles must pass station scope checks for StationStaffApp and hall scope checks for ServiceStaffApp independently.
+- Cashier permission does not imply tenant admin, station, or service permission.
 
 ## Operational Safety
 
@@ -84,4 +88,4 @@ Identity and Access authenticates users; Staff Access decides what tenant operat
 
 ## Open Questions
 
-- Whether a user can hold multiple operational roles simultaneously in v1.
+None currently.

@@ -11,7 +11,7 @@ It is a provisioning helper, not a runtime seeding mechanism.
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
 | Sector enum | Classification | define supported starter sectors |
-| Starter template | Template | define starter halls, tables, stations, products, staff |
+| Starter template | Template | define starter halls, tables, stations, products, staff, default tenant settings |
 | Starter application record | Safety record | record one-time application per tenant |
 
 ## Not Owned
@@ -44,6 +44,10 @@ It is a provisioning helper, not a runtime seeding mechanism.
 - Changing tenant sector after creation must not re-run starter data.
 - Resulting records are normal tenant-owned editable data.
 - A durable application record must exist before the operation is considered complete.
+- V1 supports only the `cafe` sector starter template.
+- Starter template versions use monotonic semantic identifiers such as `cafe.v1`.
+- A later template version must not apply automatically to an existing tenant.
+- Initial `cafe` starter data enables service delivery tracking by default.
 
 ## Operational Safety
 
@@ -77,5 +81,4 @@ It is a provisioning helper, not a runtime seeding mechanism.
 
 ## Open Questions
 
-- Sector enum values beyond `cafe`.
-- Exact template versioning strategy.
+None currently.

@@ -25,6 +25,7 @@ erDiagram
   Hall ||--o{ Table : contains
   Table ||--o{ TableDisplayClaim : provisions_display
   Table ||--o| TableDisplayCredential : authenticates_display
+  Tenant ||--o| TenantOperationalSettings : configures
   Tenant ||--o{ Station : owns
   Tenant ||--o{ MenuCategory : owns
   MenuCategory ||--o{ ProductService : contains
@@ -42,11 +43,14 @@ erDiagram
   CustomerOrderingSession ||--o{ OrderSubmitIdempotency : guards
   OrderSubmitIdempotency }o--o| Order : returns
   TableSession ||--o{ Order : groups
+  TableSession ||--|| Check : bills
+  Check ||--o{ PriceAdjustment : adjusts
   Order ||--o{ OrderItem : contains
   OrderItem ||--o| PreparationItem : routes_to
   OrderItem ||--o| DeliveryState : delivered_by
 
-  TableSession ||--o{ Payment : settles
+  Check ||--o{ Payment : settles
+  Check ||--o{ CashierCorrection : records
   Tenant ||--o{ AuditEvent : records
 ```
 
@@ -65,7 +69,9 @@ Owned by: Platform / Tenant Registry
 | `sector` | Editable classification; does not re-run starter data |
 | `capacity` | Optional, editable |
 | `address` | Optional, editable |
-| `status` | Tenant lifecycle state |
+| `status` | `provisioning` / `active` / `suspended` / `provisioning_failed` |
+| `dnsReady` | Manual DNS setup checklist flag |
+| `provisioningError` | Safe error summary when provisioning fails |
 | `createdAt`, `updatedAt` | Timestamps |
 
 Invariants:
@@ -74,6 +80,27 @@ Invariants:
 - `name` and `subdomain` cannot change after creation.
 - changing `sector` after creation must not apply starter data again.
 - suspended tenants cannot perform runtime operations.
+- new tenants start as `provisioning`.
+- tenants become `active` only after required setup records commit successfully.
+- manual DNS setup is tracked, not automated, in v1.
+- capacity is informational in v1 and does not enforce package limits.
+
+### TenantOperationalSettings
+
+Owned by: Tenant Setup
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `publicDisplayName` | Optional customer-visible name; falls back to immutable tenant name |
+| `serviceDeliveryTrackingEnabled` | Enables ServiceStaffApp delivery tracking |
+| `createdAt`, `updatedAt` | Timestamps |
+
+Invariants:
+
+- initial `cafe` starter template enables service delivery tracking by default.
+- disabling service delivery tracking disables ServiceStaffApp runtime authority.
+- when disabled, `PreparationItem.ready` is the final tracked fulfillment state.
 
 ### StarterTemplateApplication
 
@@ -288,6 +315,8 @@ Invariants:
 - current price changes do not alter existing OrderItem snapshots.
 - unavailable or disabled products cannot be ordered.
 - availability is rechecked during order submission.
+- v1 routes each product/service to exactly one station.
+- multi-station routing for one product/service is out of v1.
 
 ### ModifierGroup
 
@@ -315,7 +344,7 @@ Owned by: Menu Catalog
 
 ### TableDisplayClaim
 
-Owned by: Table Access / QR
+Owned by: Tenant Setup / Table Display Provisioning
 
 | Field | Notes |
 | --- | --- |
@@ -334,7 +363,7 @@ Invariants:
 
 ### TableDisplayCredential
 
-Owned by: Table Access / QR
+Owned by: Tenant Setup / Table Display Provisioning
 
 | Field | Notes |
 | --- | --- |
@@ -354,7 +383,7 @@ Invariants:
 
 ### TableAccessToken
 
-Owned by: Table Access / QR
+Owned by: Ordering / Table Presence
 
 | Field | Notes |
 | --- | --- |
@@ -455,6 +484,12 @@ Owned by: Customer Ordering
 | `tableSessionId` | Table bill/session ownership |
 | `submittedAt` | Order time |
 | `status` | Submitted/operational aggregate status if needed |
+| `orderChannel` | `dine_in_qr` in v1 |
+
+Invariants:
+
+- v1 creates only `dine_in_qr` orders.
+- waiter-entered, pickup, delivery, package, marketplace, phone, and counter-sale channels are out of v1.
 
 ### OrderSubmitIdempotency
 
@@ -492,6 +527,15 @@ Owned by: Customer Ordering
 | `modifierSnapshot` | Selected modifiers and price deltas |
 | `quantity` | Quantity |
 | `note` | Customer note |
+| `voidedAt` | Nullable cashier correction timestamp |
+| `voidedByUserId` | Nullable cashier actor |
+| `voidReason` | Required when voided |
+
+Invariants:
+
+- price snapshots are created server-side at submission time.
+- direct snapshot edits are not allowed.
+- v1 cashier item void is allowed only while preparation status is `pending` or `cannot_prepare` and before any payment is recorded for the Check.
 
 ### PreparationItem
 
@@ -502,8 +546,23 @@ Owned by: Preparation
 | `tenantId` | Tenant |
 | `orderItemId` | Routed order item |
 | `stationId` | Station queue |
-| `status` | pending / preparing / ready |
+| `status` | pending / preparing / ready / cannot_prepare |
+| `cannotPrepareReason` | Required when status is `cannot_prepare` |
 | `updatedBy`, `updatedAt` | Last transition |
+
+Valid v1 transitions:
+
+```text
+pending -> preparing -> ready
+pending -> cannot_prepare
+preparing -> cannot_prepare
+```
+
+Invariants:
+
+- `cannot_prepare` is an operational exception, not a financial correction.
+- `cannot_prepare` does not cancel, discount, refund, remove, or reprice an OrderItem.
+- CashierApp must handle account/customer correction through allowed cashier workflows.
 
 ### DeliveryState
 
@@ -518,12 +577,64 @@ Owned by: Service Delivery
 
 Customer mapping:
 
+When service delivery tracking is enabled:
+
 | Internal State | Customer Text |
 | --- | --- |
 | PreparationItem.pending / PreparationItem.preparing / PreparationItem.ready / DeliveryState.picked_up | Hazırlanıyor |
 | DeliveryState.delivered | Teslim edildi |
 
+When service delivery tracking is disabled:
+
+| Internal State | Customer Text |
+| --- | --- |
+| PreparationItem.pending / PreparationItem.preparing | Hazırlanıyor |
+| PreparationItem.ready | Teslim edildi |
+
 ## Payments and Billing
+
+### Check
+
+Owned by: Table Session and Billing
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `id` | Check/Adisyon ID |
+| `tableSessionId` | Parent TableSession |
+| `status` | open / closed |
+| `openedAt`, `closedAt` | Lifecycle timestamps |
+
+Invariants:
+
+- v1 has exactly one Check per TableSession.
+- split checks, merged checks, item/person-based split payment, and moving items between checks are out of v1.
+- Check total is calculated server-side from OrderItem snapshots, void/correction records, and PriceAdjustment records.
+- CustomerApp can read Check summary with fresh table presence but cannot mutate it.
+- CashierApp closes a TableSession through the Check settlement workflow.
+
+### PriceAdjustment
+
+Owned by: Table Session and Billing
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `id` | Adjustment ID |
+| `checkId` | Check/Adisyon being adjusted |
+| `orderItemId` | Nullable affected order item |
+| `type` | tax / discount / service_charge / campaign / correction |
+| `amount` | Signed amount |
+| `reason` | Required for correction |
+| `createdByUserId` | Actor or system |
+| `createdAt` | Timestamp |
+
+V1 rules:
+
+- menu prices are VAT/tax-inclusive operational prices.
+- separate tax calculation, manual discounts, service fees, campaigns, and customer price confirmation are out of v1.
+- `PriceAdjustment` exists to keep future pricing structure explicit, not to expose broad cashier discount power.
+- V1 item void is represented by `OrderItem` void fields plus `CashierCorrection`, not by a separate negative price adjustment.
 
 ### Payment
 
@@ -533,17 +644,22 @@ Owned by: Payments
 | --- | --- |
 | `tenantId` | Tenant |
 | `id` | Payment ID |
-| `tableSessionId` | Settled session |
+| `checkId` | Settled Check/Adisyon |
 | `amount` | Positive amount |
 | `method` | cash / card / transfer |
+| `status` | recorded / voided |
 | `cashierUserId` | Actor |
 | `receivedAt` | Timestamp |
+| `voidedAt`, `voidedByUserId`, `voidReason` | Nullable void fields |
 
 Invariants:
 
 - payment creation is idempotent.
 - CustomerApp is read-only for bill/payment data.
 - remaining balance is calculated server-side.
+- v1 payment void is allowed only on an open Check when no external payment provider is involved.
+- external payment providers and customer payment flows are out of v1.
+- overpayment is out of v1; payment amount cannot exceed the current remaining balance.
 
 ### PaymentIdempotency
 
@@ -552,9 +668,31 @@ Owned by: Payments
 | Field | Notes |
 | --- | --- |
 | `tenantId` | Tenant |
-| `tableSessionId` | Session |
+| `checkId` | Check/Adisyon |
 | `idempotencyKey` | Request key |
 | `paymentId` | Created payment |
+
+### CashierCorrection
+
+Owned by: Table Session and Billing
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `id` | Correction ID |
+| `checkId` | Affected Check/Adisyon |
+| `type` | note / item_void / payment_void |
+| `targetType`, `targetId` | Affected entity |
+| `reason` | Required |
+| `createdByUserId` | Cashier actor |
+| `createdAt` | Timestamp |
+
+V1 rules:
+
+- note-only correction is allowed.
+- item void is allowed only while preparation state is `pending` or `cannot_prepare` and before any payment is recorded.
+- payment void is allowed only on an open Check and only for non-provider payments.
+- manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, and moving items between checks/sessions are out of v1.
 
 ## OTP and Audit
 
@@ -588,6 +726,32 @@ Owned by: Audit
 | `metadata` | Structured, no secrets |
 | `createdAt` | Timestamp |
 
+Minimum v1 action names:
+
+| Action | Scope |
+| --- | --- |
+| `platform_owner.created` | Platform |
+| `platform_owner.totp_enrolled` | Platform |
+| `tenant.created` | Platform |
+| `tenant.provisioning_failed` | Platform |
+| `tenant.activated` | Platform |
+| `tenant.suspended` | Platform |
+| `tenant.gsm_changed` | Platform/Tenant |
+| `starter_template.applied` | Platform |
+| `user.created` | Access |
+| `user.disabled` | Access |
+| `password.changed` | Access |
+| `otp.verified` | Access |
+| `table_display.provisioned` | Tenant Setup |
+| `table_display.revoked` | Tenant Setup |
+| `order.submitted` | Ordering |
+| `preparation.status_changed` | Fulfillment |
+| `delivery.status_changed` | Fulfillment |
+| `payment.recorded` | Settlement |
+| `payment.voided` | Settlement |
+| `session.closed` | Settlement |
+| `cashier.correction_applied` | Settlement |
+
 ## Required Database Constraints
 
 | Constraint | Purpose |
@@ -595,13 +759,15 @@ Owned by: Audit
 | unique `Tenant.subdomain` | Prevent duplicate tenant domain |
 | immutable tenant name/subdomain by service rule | Preserve tenant identity |
 | unique active Platform Owner | Preserve single-user PlatformApp scope in v1 |
+| Tenant status enum check | Preserve exact v1 lifecycle |
 | unique TableDisplayClaim hash | Prevent provisioning claim collision/replay ambiguity |
 | unique active TableDisplayCredential per tenant/table | Prevent multiple active display credentials |
 | unique active TableSession per tenant/table | Prevent double active table sessions |
+| unique Check per TableSession in v1 | Preserve single-adisyon v1 model |
 | unique starter template application per tenant/template version | Prevent seed reruns |
 | unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
 | unique order submit idempotency key per tenant/customer session/key | Prevent duplicate orders |
-| unique payment idempotency key per tenant/table session/key | Prevent duplicate payments |
+| unique payment idempotency key per tenant/check/key | Prevent duplicate payments |
 | foreign keys for tenant-owned records | Preserve tenant data integrity |
 | check positive payment amount | Prevent invalid payments |
 | check positive order item quantity | Prevent invalid orders |
@@ -633,6 +799,7 @@ One order submission transaction includes:
 - OrderItems,
 - price/modifier snapshots,
 - PreparationItems,
+- single Check creation when a new TableSession is opened,
 - submitted CustomerCart close/clear.
 
 Failure must not expose partial orders to CustomerApp, CashierApp, StationStaffApp, or ServiceStaffApp.
@@ -648,7 +815,19 @@ One payment transaction includes:
 
 Failure must not double-count paid amount.
 
+### Cashier Correction
+
+One cashier correction transaction includes:
+
+- correction authorization check,
+- target state validation,
+- CashierCorrection,
+- affected OrderItem, Payment, or PriceAdjustment record,
+- billing read model update if materialized,
+- audit event.
+
+Failure must not partially mutate billable records.
+
 ## Open Questions
 
-- Exact tenant status enum.
-- Whether product/service can route to multiple stations.
+None currently.

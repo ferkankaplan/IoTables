@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Customer Ordering owns anonymous customer carts, order submission, orders, order items, idempotency, and order routing to preparation/service workflows.
+Customer Ordering owns anonymous customer sessions, carts, order submission, orders, order items, idempotency, and order routing to preparation/service workflows.
 
-It converts a validated CustomerOrderingSession cart into billable order records attached to a TableSession.
+It converts a validated CustomerOrderingSession cart into billable order records attached to Settlement's active TableSession and single v1 Check/Adisyon.
 
 ## Ownership
 
@@ -16,12 +16,14 @@ It converts a validated CustomerOrderingSession cart into billable order records
 | OrderItem | Entity | create with price/modifier/note snapshots |
 | Order idempotency record | Safety record | create and resolve duplicate submissions |
 | Order-to-station routing | Workflow | create station queue records from order items |
+| Order channel | Value | `dine_in_qr` only in v1 |
 
 ## Not Owned
 
 - Menu product definitions and prices.
 - TableAccessToken generation.
 - TableSession settlement.
+- TableSession and Check ownership.
 - Payment records.
 - Station preparation state after queue creation.
 - Service delivery state.
@@ -53,13 +55,18 @@ It converts a validated CustomerOrderingSession cart into billable order records
 - Order must link to both CustomerOrderingSession and TableSession.
 - Customer cart is not billable until successful order submission.
 - Backend recalculates prices and validates availability/modifiers at submission.
+- V1 does not have a separate order price preview/quote endpoint or customer price-confirmation step.
+- Frontend totals are informational only; final price snapshots are created server-side during submission.
+- V1 creates only `dine_in_qr` orders.
+- Waiter-entered, pickup, delivery, package, phone, marketplace, and counter-sale channels are out of v1.
 - Submitted orders cannot be modified/cancelled by CustomerApp in v1.
+- Customer Ordering calls Settlement's public open-session/check command during submission. It does not own TableSession or Check.
 
 ## Operational Safety
 
 - Order submission must be idempotent.
 - Idempotency key is scoped by at least `tenantId + customerOrderingSessionId + idempotencyKey`.
-- TableSession selection/creation, order creation, order items, snapshots, routing records, and idempotency record are one transaction.
+- Settlement session/check selection or creation, order creation, order items, snapshots, routing records, and idempotency record are one transaction.
 - Failed order submission preserves cart.
 - Successful order submission clears only the submitted cart.
 - Duplicate submit returns original order result.
@@ -95,4 +102,4 @@ It converts a validated CustomerOrderingSession cart into billable order records
 
 ## Open Questions
 
-- Whether customers can cancel or modify submitted orders after v1.
+None currently.

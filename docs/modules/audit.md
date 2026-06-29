@@ -45,8 +45,35 @@ It provides traceability for sensitive changes and runtime corrections.
 - Audit events are append-only.
 - Sensitive actions must include actor, tenant, target, action, timestamp.
 - Corrections require reason.
-- Bootstrap, password setup, OTP verification result, tenant status changes, payments, session closure, delivery/preparation transitions, starter template application should be auditable.
+- Bootstrap, password setup, OTP verification result, tenant status changes, payments, session closure, delivery/preparation transitions, starter template application, and cashier corrections must be auditable.
 - Audit logs should avoid storing secrets or OTP codes.
+- V1 audit retention is indefinite. Automated deletion/archival requires an explicit retention policy later.
+
+Minimum v1 action names:
+
+| Action | Required For |
+| --- | --- |
+| `platform_owner.created` | One-time platform owner bootstrap |
+| `platform_owner.totp_enrolled` | Platform Owner TOTP enrollment |
+| `tenant.created` | Tenant creation |
+| `tenant.provisioning_failed` | Failed tenant provisioning |
+| `tenant.activated` | Tenant activation after setup |
+| `tenant.suspended` | Tenant suspension |
+| `tenant.gsm_changed` | Tenant GSM update |
+| `starter_template.applied` | One-time starter template application |
+| `user.created` | Tenant/platform user creation |
+| `user.disabled` | User disable |
+| `password.changed` | First password setup or later password change |
+| `otp.verified` | Successful OTP verification |
+| `table_display.provisioned` | ESP32/table display provisioning |
+| `table_display.revoked` | Display credential revoke/rotation |
+| `order.submitted` | Accepted customer order |
+| `preparation.status_changed` | Station preparation transition |
+| `delivery.status_changed` | Service delivery transition |
+| `payment.recorded` | Cashier payment record |
+| `payment.voided` | Cashier payment void |
+| `session.closed` | Cashier table session closure |
+| `cashier.correction_applied` | Any v1 cashier correction |
 
 ## Operational Safety
 
@@ -83,5 +110,4 @@ It provides traceability for sensitive changes and runtime corrections.
 
 ## Open Questions
 
-- Mandatory audit event list for v1.
-- Retention policy.
+None currently.

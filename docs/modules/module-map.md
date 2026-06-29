@@ -25,7 +25,7 @@ These references are not copied as architecture. They are evidence used to avoid
 | Platform | Platform tenant lifecycle, provisioning, sector starter application | PlatformApp, TenantApp read | Platform-only decisions; tenant runtime must not leak in as direct mutation |
 | Access | Human accounts, roles, app access, login sessions, OTP/TOTP | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Security boundary; CustomerOrderingSession is not a human identity |
 | Tenant Setup | Tenant-operational configuration: venue, staff assignment, menu/catalog, table display provisioning | TenantApp, CustomerApp read, staff/cashier read | Configuration source for runtime contexts |
-| Ordering | Customer physical presence, anonymous customer session, cart, order submission, order records, table session opening | CustomerApp, CashierApp read, staff read | The core customer-order lifecycle |
+| Ordering | Customer physical presence, anonymous customer session, cart, order submission, order records, Settlement session/check command usage | CustomerApp, CashierApp read, staff read | The core customer-order lifecycle |
 | Fulfillment | Preparation and service delivery state after order submission | StationStaffApp, ServiceStaffApp, CustomerApp read, CashierApp read | Operational execution of accepted order items |
 | Settlement | Billing summary, payments, cashier corrections, table session closure | CashierApp, CustomerApp read-only | Financial/runtime settlement boundary |
 | Governance | Audit and policy evidence | All admin/staff apps | Cross-cutting record of critical actions |
@@ -64,7 +64,6 @@ These references are not copied as architecture. They are evidence used to avoid
 | Table Presence | `table-access-qr.md` | TableAccessToken redemption and fresh table presence | CustomerApp |
 | Customer Session and Cart | `customer-ordering.md` | CustomerOrderingSession, active customer cart, cart validation | CustomerApp |
 | Order Submission | `customer-ordering.md` | Order transaction, order items, idempotency, price/modifier snapshots | CustomerApp, CashierApp read |
-| Table Session | `table-session-billing.md` | Opening/selecting the active table session for accepted orders | CustomerApp, CashierApp, Settlement |
 
 ### Fulfillment
 
@@ -77,9 +76,9 @@ These references are not copied as architecture. They are evidence used to avoid
 
 | Internal Module | Existing Doc | Owns | Public Consumers |
 | --- | --- | --- | --- |
-| Billing | `table-session-billing.md` | Bill totals, paid amount, remaining balance, close-session eligibility | CashierApp, CustomerApp read |
-| Payments | `payments.md` | Manual payment records and payment idempotency | CashierApp, CustomerApp read |
-| Corrections | `payments.md`, `table-session-billing.md`, `audit.md` | Future cashier correction workflows with reason and audit | CashierApp |
+| Table Session and Billing | `table-session-billing.md` | TableSession, single v1 Check/Adisyon, bill totals, remaining balance, close-session eligibility | CustomerApp read, CashierApp, Ordering command |
+| Payments | `payments.md` | Manual payment records, payment idempotency, non-provider payment void | CashierApp, CustomerApp read |
+| Corrections | `payments.md`, `table-session-billing.md`, `audit.md` | Narrow v1 cashier correction workflows with reason and audit | CashierApp |
 
 ### Governance
 
@@ -127,6 +126,7 @@ Rules:
 - One context must own each aggregate.
 - A child module must not expose another child module's tables as its own API.
 - Context names are stable architecture; internal module names may evolve while preserving ownership.
+- Order submission may call Settlement's public `open session/check if needed` command inside the order transaction; Ordering still does not own TableSession or Check.
 
 ## Cross-Cutting Rules
 
@@ -150,18 +150,20 @@ Detailed execution order is tracked in [v1-architecture-backlog.md](../v1-archit
 | Preparation and Service Delivery were separate top-level modules | Operational workflow was split too early | Group both under Fulfillment |
 | Table Session, Billing, Payments, and Corrections were scattered | Cashier settlement risked cross-module leakage | Group them under Settlement |
 | Audit was listed beside business modules | Audit could become a noisy utility without policy ownership | Move it under Governance |
+| Product/service station routing was open | Menu and fulfillment ownership would change if one product routed to many stations | V1 keeps exactly one station per product/service |
+| Tenant lifecycle status was open | Provisioning and runtime availability needed exact states | V1 uses `provisioning`, `active`, `suspended`, `provisioning_failed` |
+| Correction workflows were broad | Cashier corrections could become history rewrite | V1 allows only cashier note, pending/cannot_prepare item void before payment, and non-provider payment void on open Check |
+| Mandatory audit events were vague | Critical commands needed consistent event names | V1 mandatory event list is defined in `audit.md` and `data-model.md` |
 
 ### Still Needs Follow-Up
 
 | Finding | Why It Matters | Recommended Direction |
 | --- | --- | --- |
-| Table Access / QR currently mixes table display provisioning and customer presence | Provisioning is tenant setup; fresh presence is ordering security | Split the doc before implementation into `tenant_setup.table_display` and `ordering.table_presence`, while keeping one end-to-end QR flow document if useful |
-| Mandatory audit event list is not locked | Governance cannot be implemented consistently without required event names | Define v1 mandatory audit events before coding critical commands |
-| Product/service station routing is still open | Menu Catalog and Fulfillment boundaries change if products can route to multiple stations | Keep v1 single-station unless a concrete workflow requires multi-station routing |
-| Tenant lifecycle status is still open | Platform provisioning and runtime availability need exact states | Define v1 enum before tenant migrations |
-| Image storage strategy is open | Menu UX expects images, but storage ownership is undefined | Keep metadata in Menu Catalog; decide local/object storage before frontend implementation |
-| Correction workflows are still broad | Cashier corrections can become an unrestricted history rewrite path | Define allowed v1 corrections narrowly, with reason and audit |
+| Table Access / QR is still one document | Provisioning is tenant setup; fresh presence is ordering security | The ownership is split in the doc; implementation should use separate packages/modules before code starts |
+| Availability/sold-out model is still minimal | Live menus need temporary sold-out without disabling catalog history | Add `AvailabilityOverride` before first live menu implementation |
+| Variant/portion pricing is not modeled yet | Size/portion pricing is common in cafes/restaurants | Add `ProductVariant` if first tenant needs priced sizes or portions |
+| Event/outbox strategy is not locked | Future printers, fiscal integrations, and notifications need reliable side effects | Keep in-process domain events for pure v1 flows; add persistent outbox before external side effects beyond OTP |
 
 ## Open Questions
 
-The authoritative v1 open question and execution list is [v1-architecture-backlog.md](../v1-architecture-backlog.md).
+None currently. Remaining sequencing and future follow-ups are tracked in [v1-architecture-backlog.md](../v1-architecture-backlog.md).
