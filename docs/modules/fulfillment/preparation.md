@@ -18,7 +18,7 @@ It starts when Customer Ordering routes order items to stations and ends when st
 
 ## Not Owned
 
-- Station definitions, owned by TenantApp/Station Management data.
+- Station definitions, owned by Tenant Setup / Station Setup.
 - Product-to-station assignment, owned by Menu Catalog.
 - Customer delivery state after `ready`.
 - Payments and table billing.

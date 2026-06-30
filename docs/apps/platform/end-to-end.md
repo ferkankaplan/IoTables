@@ -10,15 +10,16 @@ See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-en
    - tenant name,
    - tenant subdomain,
    - tenant GSM number.
-3. PlatformApp creates the tenant in `provisioning` state.
-4. PlatformApp creates the first tenant admin:
+3. PlatformApp submits the create-tenant command to Provisioning.
+4. Provisioning registers the tenant in `provisioning` state.
+5. Provisioning creates the first tenant admin through Access:
    - username: tenant subdomain,
    - temporary password: `admin`,
    - first password setup requires OTP SMS to tenant GSM.
-5. PlatformApp applies the selected sector starter template exactly once.
-6. PlatformApp records starter template completion.
-7. PlatformApp moves tenant to `active` after required setup records commit.
-8. Platform Owner marks manual DNS readiness when DNS is configured outside the app.
+6. Provisioning applies the selected sector starter template exactly once.
+7. Governance records starter template completion.
+8. Provisioning moves tenant to `active` after required setup records commit.
+9. Platform Owner marks manual DNS readiness when DNS is configured outside the app.
 
 Acceptance criteria:
 

@@ -189,16 +189,17 @@ StationStaffApp updates live order item state, so transitions must be safe under
 
 ## Integration Expectations
 
-| Future Context / Module | Expected Use |
+| Context / Module | Expected Use |
 | --- | --- |
-| Identity and Access | Station staff authentication and station permission enforcement |
-| Venue Layout | Read table context |
-| Menu Catalog | Read product/service station assignment |
-| Ordering | Read order items assigned to stations |
-| Preparation | Manage preparation queues and status transitions |
-| Service Delivery | Consume ready items and mark delivery state |
-| Cashier / Session View | Expose preparation status to cashier context |
-| Audit | Record station status transitions |
+| Platform / Tenant Registry | Resolve tenant availability from subdomain |
+| Access / Identity and Access | Station staff authentication |
+| Access / Staff Access | Station role and station assignment enforcement |
+| Tenant Setup / Venue Layout | Read table context |
+| Tenant Setup / Station Setup | Read assigned station labels and context |
+| Tenant Setup / Menu Catalog | Read product/service station assignment |
+| Ordering / Customer Ordering | Read order items assigned to stations |
+| Fulfillment / Preparation | Manage preparation queues and status transitions |
+| Governance / Audit | Record station status transitions |
 
 ## Security Rules
 

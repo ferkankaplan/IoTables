@@ -1,17 +1,19 @@
-# Module: Table Access / QR
+# Table Access QR Flow
 
 ## Purpose
 
-Table Access / QR documents the end-to-end QR flow across two internal owners:
+This document describes the end-to-end QR flow across two internal modules:
 
-- Tenant Setup / Table Display Provisioning owns ESP32 table display claims and credentials.
-- Ordering / Table Presence owns short-lived customer QR tokens and fresh table presence.
+- [Tenant Setup / Table Display Provisioning](../tenant-setup/table-display-provisioning.md) owns ESP32 table display claims and credentials.
+- [Ordering / Table Presence](../ordering/table-presence.md) owns short-lived customer QR tokens and fresh table presence.
 
-Together they prove that an anonymous browser recently scanned the current QR displayed on a table's ESP32 screen. This document keeps the full flow visible while preserving separate ownership for implementation.
+Together they prove that an anonymous browser recently scanned the current QR displayed on a table's ESP32 screen.
 
-## Ownership
+This is not an owning module. The owning modules above define data ownership and implementation boundaries.
 
-| Owned Concept | Type | Authority |
+## Cross-Module Responsibilities
+
+| Concept | Owning Module | Authority |
 | --- | --- | --- |
 | TableDisplayClaim | Tenant Setup / Table Display Provisioning | one-time display provisioning claim |
 | TableDisplayCredential | Tenant Setup / Table Display Provisioning | authenticate a table-bound ESP32 display |
@@ -67,15 +69,12 @@ Auth rules:
 
 Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodically, and after a customer redeems a QR the next fetch returns a fresh token. Push, SSE, or WebSocket display updates are out of scope for v1.
 
-## Internal Rules
+## Flow Rules
 
-- Table display provisioning and table presence must be implemented as separate internal modules/packages even if this documentation remains one end-to-end file.
-- QR token must be short-lived.
-- QR token must be one-time use.
-- Token redemption must be atomic.
-- Token must not expose trusted table IDs directly.
+- Table display provisioning and table presence are separate internal modules/packages.
+- QR token safety rules are owned by [Table Presence](../ordering/table-presence.md).
+- ESP32 credential safety rules are owned by [Table Display Provisioning](../tenant-setup/table-display-provisioning.md).
 - Fresh table presence is required for CustomerApp order submission and table-order/balance visibility.
-- Redeeming a token refreshes an existing compatible CustomerOrderingSession when possible.
 
 ## Operational Safety
 

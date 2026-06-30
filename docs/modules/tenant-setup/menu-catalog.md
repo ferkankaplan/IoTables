@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Menu Catalog owns tenant menu structure, categories, products/services, prices, availability, modifiers/options, and product-to-station assignment.
+Menu Catalog owns tenant menu structure, categories, products/services, variants/portions, prices, availability overrides, modifiers/options, and product-to-station assignment.
 
 It is the pricing and orderability authority for CustomerApp.
 
@@ -12,8 +12,9 @@ It is the pricing and orderability authority for CustomerApp.
 | --- | --- | --- |
 | Menu category | Entity | create, update, disable |
 | Product/service | Entity | create, update, disable |
-| Price | Value | define current price |
-| Availability | State | orderable/unavailable |
+| Product variant / portion | Entity | define orderable size/portion and current price |
+| Price | Value | define current variant price |
+| Availability override | State | temporarily mark product or variant unavailable/available |
 | Modifier group | Configuration | define required/optional choices |
 | Modifier option | Configuration | define choices and price effects |
 | Station assignment | Routing config | assign fulfillment station |
@@ -22,6 +23,7 @@ It is the pricing and orderability authority for CustomerApp.
 
 - Customer cart.
 - Order item price snapshots after submission.
+- Station definitions and lifecycle, owned by Station Setup.
 - Station preparation state.
 - Payments or bill settlement.
 - Staff station permissions.
@@ -41,17 +43,21 @@ It is the pricing and orderability authority for CustomerApp.
 | --- | --- | --- |
 | Manage category | Tenant menu structure | TenantApp |
 | Manage product/service | Tenant item setup | TenantApp |
+| Manage product variants | Tenant size/portion and current price setup | TenantApp |
 | Manage modifiers | Product customization | TenantApp |
 | Set availability | Control orderability | TenantApp |
 | Get customer menu | Render CustomerApp menu | CustomerApp |
-| Validate cart item | Validate selected product/modifiers | Customer Ordering |
+| Validate cart item | Validate selected product, variant, modifiers, and availability | Customer Ordering |
 | Price cart item | Server-side price calculation | Customer Ordering |
 
 ## Internal Rules
 
-- Current prices live here; submitted order price snapshots live in Customer Ordering.
+- Current variant prices live here; submitted order price snapshots live in Customer Ordering.
 - CustomerApp estimated prices are not authoritative.
 - Disabled products remain historical but cannot be ordered.
+- Every orderable product/service must have at least one enabled ProductVariant. Simple single-price products use one default variant.
+- The selected ProductVariant is required for cart validation and order submission.
+- Availability can be product-level or variant-level. Temporary sold-out states use AvailabilityOverride and do not disable catalog history.
 - Availability must be rechecked during order submission.
 - Required modifiers must be selected before a cart item is valid.
 - Product-to-station assignment determines initial preparation routing.
@@ -62,8 +68,9 @@ It is the pricing and orderability authority for CustomerApp.
 
 ## Operational Safety
 
-- Price changes must not alter existing order item snapshots.
+- Variant price changes must not alter existing order item snapshots.
 - Product disabling must not corrupt existing orders.
+- Variant disabling must not corrupt existing orders.
 - Modifier changes must not invalidate already submitted orders.
 - Cart validation must use server-side current catalog data.
 - Menu mutations should be audited.
@@ -73,10 +80,12 @@ It is the pricing and orderability authority for CustomerApp.
 | Model / Table | Purpose | Notes |
 | --- | --- | --- |
 | MenuCategory | Organizes products/services | tenant-scoped |
-| ProductService | Orderable item/service | active, description, image, base price |
+| ProductService | Menu item/service family | active, description, image |
+| ProductVariant | Orderable variant/portion | product, name, price, default flag |
+| AvailabilityOverride | Temporary orderability override | product or variant target, state, reason, optional expiry |
 | ModifierGroup | Required/optional customization group | min/max selection |
 | ModifierOption | Customization option | price delta, availability |
-| ProductStationAssignment | Fulfillment routing | one station id per product/service in v1 |
+| ProductService.stationId | Fulfillment routing | one station id per product/service in v1 |
 
 ## App Surfaces
 
@@ -89,7 +98,7 @@ It is the pricing and orderability authority for CustomerApp.
 
 ## Future Service Boundary
 
-- Own data: categories, products/services, prices, modifiers, availability, station assignment.
+- Own data: categories, products/services, variants/portions, prices, modifiers, availability overrides, ProductService station assignment.
 - Own APIs: menu CRUD, customer menu query, cart validation/pricing.
 - Published events: product.updated, product.disabled, availability.changed.
 - Consumed events: station.disabled, tenant.suspended.

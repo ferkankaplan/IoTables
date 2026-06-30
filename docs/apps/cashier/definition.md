@@ -205,16 +205,19 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 
 ## Integration Expectations
 
-| Future Context / Module | Expected Use |
+| Context / Module | Expected Use |
 | --- | --- |
-| Identity and Access | Cashier authentication and role enforcement |
-| Venue Layout | Read halls and tables |
-| Ordering | Read orders and order items |
-| Preparation | Read station/order item preparation state |
-| Service Delivery | Read item delivery state |
-| Session and Billing | Read sessions, calculate balances, close sessions |
-| Payments | Record partial and full payments |
-| Audit | Record payments, corrections, and session closures |
+| Platform / Tenant Registry | Resolve tenant availability from subdomain |
+| Access / Identity and Access | Cashier authentication |
+| Access / Staff Access | Cashier role enforcement |
+| Tenant Setup / Venue Layout | Read halls and tables |
+| Tenant Setup / Station Setup | Read station labels and context |
+| Ordering / Customer Ordering | Read orders and order items |
+| Fulfillment / Preparation | Read station/order item preparation state |
+| Fulfillment / Service Delivery | Read item delivery state |
+| Settlement / Table Session and Billing | Read sessions, calculate balances, close sessions |
+| Settlement / Payments | Record partial and full payments |
+| Governance / Audit | Record payments, corrections, and session closures |
 
 ## Security Rules
 

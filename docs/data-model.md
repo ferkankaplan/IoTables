@@ -21,6 +21,9 @@ erDiagram
   Tenant ||--o{ User : owns
   User ||--o{ PlatformRoleAssignment : may_have
   User ||--o| TotpFactor : protects
+  User ||--o{ OtpChallenge : verifies
+  OtpChallenge ||--o{ OtpAttempt : records
+  OtpChallenge ||--o{ MessageDelivery : sends
   Tenant ||--o{ Hall : owns
   Hall ||--o{ Table : contains
   Table ||--o{ TableDisplayClaim : provisions_display
@@ -29,6 +32,9 @@ erDiagram
   Tenant ||--o{ Station : owns
   Tenant ||--o{ MenuCategory : owns
   MenuCategory ||--o{ ProductService : contains
+  ProductService ||--o{ ProductVariant : has
+  ProductService ||--o{ AvailabilityOverride : may_have
+  ProductVariant ||--o{ AvailabilityOverride : may_have
   ProductService ||--o{ ModifierGroup : has
   ModifierGroup ||--o{ ModifierOption : contains
   ProductService }o--|| Station : routes_to
@@ -52,6 +58,7 @@ erDiagram
   Check ||--o{ Payment : settles
   Check ||--o{ CashierCorrection : records
   Tenant ||--o{ AuditEvent : records
+  Tenant ||--o{ OutboxMessage : emits
 ```
 
 ## Platform and Tenant
@@ -272,13 +279,14 @@ Invariants:
 
 ### Station
 
-Owned by: Tenant setup / Staff Access boundary; used by Menu Catalog and Preparation
+Owned by: Tenant Setup / Station Setup; used by Menu Catalog, Staff Access, and Preparation
 
 | Field | Notes |
 | --- | --- |
 | `tenantId` | Tenant |
 | `id` | Station ID |
 | `name` | Example: Mutfak, Kahve |
+| `displayOrder` | TenantApp and staff UI order |
 | `enabled` | Disabled stations cannot receive new items |
 
 ### MenuCategory
@@ -306,17 +314,59 @@ Owned by: Menu Catalog
 | `name` | Customer-visible name |
 | `description` | Optional |
 | `imageRef` | Optional |
-| `basePrice` | Current price authority |
-| `available` | Orderability flag |
 | `enabled` | Historical disable flag |
 
 Invariants:
 
-- current price changes do not alter existing OrderItem snapshots.
-- unavailable or disabled products cannot be ordered.
+- disabled products cannot be ordered.
+- every orderable product/service has at least one enabled ProductVariant.
 - availability is rechecked during order submission.
 - v1 routes each product/service to exactly one station.
 - multi-station routing for one product/service is out of v1.
+
+### ProductVariant
+
+Owned by: Menu Catalog
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `productServiceId` | Parent product/service |
+| `id` | Variant ID |
+| `name` | Example: Small, Large, Single Portion |
+| `price` | Current price authority |
+| `displayOrder` | UI order |
+| `isDefault` | Default variant for simple products |
+| `enabled` | Historical disable flag |
+
+Invariants:
+
+- simple single-price products still use one default ProductVariant.
+- current variant price changes do not alter existing OrderItem snapshots.
+- disabled variants cannot be ordered.
+- at most one default variant exists per product/service.
+- at least one enabled variant is required for a product/service to be orderable.
+
+### AvailabilityOverride
+
+Owned by: Menu Catalog
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `productServiceId` | Target product/service |
+| `productVariantId` | Optional target variant |
+| `state` | available / unavailable |
+| `reason` | Optional staff-visible reason |
+| `startsAt`, `expiresAt` | Optional validity window |
+| `createdByUserId` | Tenant Admin actor |
+
+Invariants:
+
+- temporary sold-out must use AvailabilityOverride instead of disabling the historical product or variant.
+- variant-level override affects only that variant.
+- product-level unavailable override blocks all variants unless a more specific future rule is introduced.
+- expired overrides must not affect order submission.
 
 ### ModifierGroup
 
@@ -448,6 +498,7 @@ Owned by: Customer Ordering
 | `cartId` | Cart owner |
 | `clientCartItemId` | Client-generated stable item ID |
 | `productServiceId` | Product |
+| `productVariantId` | Selected product variant |
 | `quantity` | Quantity |
 | `selectedModifiers` | Modifier option selections |
 | `note` | Customer note |
@@ -521,8 +572,10 @@ Owned by: Customer Ordering
 | `id` | Order item ID |
 | `orderId` | Parent order |
 | `productServiceId` | Source product |
+| `productVariantId` | Source variant |
 | `stationId` | Routing snapshot |
 | `nameSnapshot` | Product name at order time |
+| `variantNameSnapshot` | Variant name at order time |
 | `unitPriceSnapshot` | Server-calculated price |
 | `modifierSnapshot` | Selected modifiers and price deltas |
 | `quantity` | Quantity |
@@ -535,6 +588,7 @@ Invariants:
 
 - price snapshots are created server-side at submission time.
 - direct snapshot edits are not allowed.
+- existing order item snapshots do not change when variants are renamed, disabled, or repriced.
 - v1 cashier item void is allowed only while preparation status is `pending` or `cannot_prepare` and before any payment is recorded for the Check.
 
 ### PreparationItem
@@ -694,7 +748,7 @@ V1 rules:
 - payment void is allowed only on an open Check and only for non-provider payments.
 - manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, and moving items between checks/sessions are out of v1.
 
-## OTP and Audit
+## OTP, Audit, and Side Effects
 
 ### OtpChallenge
 
@@ -711,6 +765,47 @@ Owned by: OTP / Messaging
 | `expiresAt` | Short lifetime |
 | `verifiedAt` | Completion |
 
+Invariants:
+
+- OTP values are stored hashed or otherwise non-recoverable.
+- V1 OTP lifetime is 5 minutes.
+- V1 allows at most 5 verification attempts per challenge.
+- V1 allows at most 3 send attempts per challenge with cooldown between sends.
+- OTP verification is idempotent after success.
+
+### OtpAttempt
+
+Owned by: OTP / Messaging
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `otpChallengeId` | Challenge being attempted |
+| `attemptNo` | Monotonic attempt number |
+| `result` | success / failed / locked / expired |
+| `createdAt` | Attempt timestamp |
+
+### MessageDelivery
+
+Owned by: OTP / Messaging
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `otpChallengeId` | Challenge being delivered |
+| `deliveryNo` | Monotonic send attempt number |
+| `provider` | SMS provider adapter name |
+| `providerMessageRef` | Nullable provider message reference |
+| `status` | queued / sent / failed |
+| `errorSummary` | Redacted provider error summary |
+| `createdAt`, `completedAt` | Attempt timestamps |
+
+Invariants:
+
+- Provider responses must be recorded without OTP codes, provider secrets, or sensitive raw payloads.
+- Delivery failure does not rollback the source identity/password setup transaction automatically.
+- A new delivery attempt must use the current target GSM at challenge creation time; existing challenges must not silently retarget.
+
 ### AuditEvent
 
 Owned by: Audit
@@ -725,6 +820,34 @@ Owned by: Audit
 | `reason` | Required for corrections/destructive actions |
 | `metadata` | Structured, no secrets |
 | `createdAt` | Timestamp |
+
+### OutboxMessage
+
+Owned by: Reliable Side Effects
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Nullable for platform-global effects |
+| `id` | Outbox message ID |
+| `effectType` | sms / printer / fiscal / payment_provider / dns / notification / device |
+| `aggregateType`, `aggregateId` | Source business decision |
+| `payloadRef` | Structured payload reference or redacted payload |
+| `idempotencyRef` | Stable duplicate-protection reference |
+| `status` | pending / claimed / completed / failed |
+| `nextAttemptAt` | Retry scheduling |
+| `createdAt`, `completedAt` | Lifecycle timestamps |
+
+### ExternalEffectAttempt
+
+Owned by: Reliable Side Effects
+
+| Field | Notes |
+| --- | --- |
+| `outboxMessageId` | Parent outbox message |
+| `attemptNo` | Monotonic attempt number |
+| `startedAt`, `completedAt` | Attempt timestamps |
+| `result` | success / retryable_failure / permanent_failure / timeout |
+| `resultSummary` | Redacted provider response summary |
 
 Minimum v1 action names:
 
@@ -768,6 +891,16 @@ Minimum v1 action names:
 | unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
 | unique order submit idempotency key per tenant/customer session/key | Prevent duplicate orders |
 | unique payment idempotency key per tenant/check/key | Prevent duplicate payments |
+| unique outbox idempotency reference per effect type | Prevent duplicate external side effects |
+| unique default ProductVariant per tenant/product | Prevent multiple default orderable variants |
+| orderable ProductService requires at least one enabled ProductVariant | Prevent products without an orderable unit from entering customer ordering |
+| ProductService.stationId foreign key to Station | Preserve v1 single-station routing integrity |
+| foreign key CustomerCartItem.productVariantId to ProductVariant | Preserve cart variant integrity |
+| foreign key OrderItem.productVariantId to ProductVariant | Preserve order variant history source |
+| check positive ProductVariant price | Prevent invalid current menu prices |
+| check AvailabilityOverride target consistency | Require product-level or product+variant-level target |
+| OtpAttempt attempt number unique per challenge | Preserve retry/rate-limit accounting |
+| MessageDelivery delivery number unique per challenge | Preserve SMS send attempt accounting |
 | foreign keys for tenant-owned records | Preserve tenant data integrity |
 | check positive payment amount | Prevent invalid payments |
 | check positive order item quantity | Prevent invalid orders |
@@ -797,7 +930,7 @@ One order submission transaction includes:
 - CustomerOrderingSession join,
 - Order,
 - OrderItems,
-- price/modifier snapshots,
+- product/variant/price/modifier snapshots,
 - PreparationItems,
 - single Check creation when a new TableSession is opened,
 - submitted CustomerCart close/clear.
@@ -814,6 +947,17 @@ One payment transaction includes:
 - audit event.
 
 Failure must not double-count paid amount.
+
+### External Side Effect
+
+One external side-effect workflow includes:
+
+- committed source business decision,
+- OutboxMessage with stable idempotency reference,
+- one or more ExternalEffectAttempt records,
+- completed or failed terminal state.
+
+Failure must not pretend the side effect rolled back with the source transaction. Retry and recovery must be explicit.
 
 ### Cashier Correction
 

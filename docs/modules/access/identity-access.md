@@ -41,7 +41,7 @@ It decides who a person is, which tenant they belong to, which app they may ente
 | --- | --- | --- |
 | Authenticate user | Login to app | All authenticated apps |
 | Require app role | Guard routes/actions | App backends |
-| Create bootstrap user | Provision tenant admin/starter staff | PlatformApp, Sector Starter Templates |
+| Create bootstrap user | Provision tenant admin/starter staff or tenant-created staff | Provisioning, TenantApp |
 | Force first password change | Complete bootstrap credential setup | Tenant/staff apps |
 | Disable user | Remove access | TenantApp |
 

@@ -36,7 +36,7 @@ TenantApp can manage tenant-owned setup and configuration records.
 | Hall management | Create, update, organize, and disable halls |
 | Table management | Create, update, reorder, and disable tables within halls |
 | Station management | Create, update, and disable preparation/service stations |
-| Menu management | Create, update, categorize, price, and disable products/services |
+| Menu management | Create, update, categorize, price, temporarily mark unavailable, and disable products/services and variants/portions |
 | Station assignment | Assign products/services to the station responsible for fulfillment |
 | Staff management | Manage staff users, roles, and app access |
 | Service hall assignment | Assign service staff to the halls they can operate |
@@ -75,7 +75,7 @@ Primary pages should represent stable workspaces. Secondary objects should usual
 | Tenant Admin Dashboard | `https://[tenant].iotables.net/admin` | Tenant setup overview and operational readiness |
 | Hall Management | `https://[tenant].iotables.net/admin/halls` | Manage halls and their tables in one workspace |
 | Station Management | `https://[tenant].iotables.net/admin/stations` | Manage preparation/service stations |
-| Menu Management | `https://[tenant].iotables.net/admin/menu` | Manage products, services, pricing, categories, and station assignments |
+| Menu Management | `https://[tenant].iotables.net/admin/menu` | Manage products, services, variants/portions, pricing, availability, categories, and station assignments |
 | Tenant Settings | `https://[tenant].iotables.net/admin/settings` | Manage editable tenant settings |
 
 Tables may have addressable internal routes for deep linking if needed, but they should not have a primary standalone management page in the first version.
@@ -199,7 +199,9 @@ Starter data must not be recreated automatically after the tenant edits or delet
 | Table | Full | Managed inside hall context |
 | Station | Full | Fulfillment location for products/services |
 | Menu category | Full | Organizes tenant menu |
-| Product/service | Full | Orderable item or service |
+| Product/service | Full | Menu item/service family |
+| Product variant/portion | Full | Orderable unit and current price |
+| Availability override | Full | Temporary sold-out/orderability state without disabling catalog history |
 | Station assignment | Full | Determines where order items are routed |
 | Staff user | Full | Starter users such as cashier, cook, barista, waiter, and busser may be created during provisioning with first-login password change required |
 | Service hall assignment | Full | Defines which halls service staff can operate |
@@ -207,17 +209,17 @@ Starter data must not be recreated automatically after the tenant edits or delet
 
 ## Integration Expectations
 
-| Future Context / Module | Expected Use |
+| Context / Module | Expected Use |
 | --- | --- |
-| Tenant Registry | Read tenant identity and editable tenant profile |
-| Identity and Access | Tenant admin authentication and first-login password setup |
-| Staff Access | Manage staff roles and hall-based service permissions |
-| Venue Layout | Manage halls and tables |
-| Station Management | Manage fulfillment stations |
-| Menu Catalog | Manage categories, products, services, prices, and station assignments |
-| Sector Starter Templates | Read whether initial tenant data came from a starter template |
-| OTP / Messaging | Verify first password setup with SMS |
-| Audit | Record tenant admin configuration changes |
+| Platform / Tenant Registry | Read tenant identity and update allowed tenant profile fields such as GSM, address, capacity, sector classification, and public display metadata |
+| Access / Identity and Access | Tenant admin authentication and first-login password setup |
+| Access / Staff Access | Manage staff roles, station assignments, and hall-based service permissions |
+| Tenant Setup / Venue Layout | Manage halls and tables |
+| Tenant Setup / Station Setup | Manage fulfillment station definitions |
+| Tenant Setup / Menu Catalog | Manage categories, products, services, variants/portions, prices, availability overrides, and station assignments |
+| Platform / Sector Starter Templates | Read whether initial tenant data came from a starter template |
+| Access / OTP Messaging | Verify first password setup with SMS |
+| Governance / Audit | Record tenant admin configuration changes |
 
 ## Audit Rules
 
@@ -233,7 +235,7 @@ Minimum v1 TenantApp audit actions:
 - table created, updated, disabled, reordered, or display-provisioning state changed;
 - station created, updated, or disabled;
 - menu category created, updated, disabled, or reordered;
-- product/service created, updated, disabled, price-changed, or station assignment changed;
+- product/service or variant created, updated, disabled, price-changed, availability override changed, or station assignment changed;
 - staff user created, role changed, hall/station scope changed, disabled, or re-enabled.
 
 ## Security Rules

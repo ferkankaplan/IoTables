@@ -20,7 +20,7 @@ Identity and Access authenticates users; Staff Access decides what tenant operat
 - Passwords and login sessions.
 - Tenant identity.
 - Halls/tables themselves.
-- Stations themselves.
+- Station definitions and lifecycle, owned by Tenant Setup / Station Setup.
 - Payments, orders, or delivery state.
 
 ## Users and App Access

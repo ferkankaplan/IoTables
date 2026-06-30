@@ -26,6 +26,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 - Staff role assignment details.
 - QR token generation.
 - Menu/product definitions.
+- Tenant creation orchestration, owned by Provisioning.
 - DNS record creation, which is manual in v1.
 
 ## Users and App Access
@@ -33,14 +34,14 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | App / Actor | Access | Limits |
 | --- | --- | --- |
 | PlatformApp / Platform Owner | create and manage tenants | Global platform scope |
-| TenantApp | read current tenant identity and editable tenant profile | Own tenant only |
+| TenantApp | read current tenant identity and update allowed tenant profile fields | Own tenant only; cannot change name, subdomain, lifecycle, DNS readiness, or platform-only health |
 | CustomerApp and staff apps | resolve tenant by subdomain | Read-only availability check |
 
 ## Public Interface
 
 | Interface | Purpose | Consumers |
 | --- | --- | --- |
-| Create tenant | Register tenant identity and initial metadata | PlatformApp |
+| Register tenant identity | Create tenant identity and initial platform metadata | Provisioning |
 | Resolve tenant by subdomain | Route tenant apps safely | All tenant apps |
 | Update tenant profile | Edit allowed tenant metadata | PlatformApp, TenantApp |
 | Change tenant status | Suspend/reactivate tenant | PlatformApp |
@@ -63,9 +64,9 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 
 ## Operational Safety
 
-- Tenant creation must be idempotent or protected by unique constraints.
+- Tenant identity registration must be idempotent or protected by unique constraints.
 - Tenant subdomain uniqueness must be enforced in the database.
-- Tenant creation and initial provisioning must have explicit rollback/recovery behavior.
+- Tenant creation orchestration and rollback/recovery behavior are owned by Provisioning.
 - Tenant status changes must be audited.
 - Manual DNS is outside the app; PlatformApp must not claim DNS automation in v1.
 
@@ -81,14 +82,14 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 
 | App | Usage |
 | --- | --- |
-| PlatformApp | Primary tenant creation and lifecycle surface |
-| TenantApp | Reads own tenant profile and edits allowed fields |
+| PlatformApp | Primary tenant lifecycle surface; create-tenant command enters Provisioning |
+| TenantApp | Reads own tenant profile and updates allowed profile fields through Tenant Registry commands |
 | CustomerApp/staff apps | Resolve tenant and enforce availability |
 
 ## Future Service Boundary
 
 - Own data: tenant identity, tenant lifecycle, tenant platform metadata.
-- Own APIs: create tenant, resolve tenant, update profile, suspend/reactivate.
+- Own APIs: register tenant identity, resolve tenant, update profile, suspend/reactivate.
 - Published events: tenant.created, tenant.updated, tenant.suspended, tenant.reactivated.
 - Consumed events: health signals from runtime modules.
 - Must not leak: platform-only controls into tenant apps.

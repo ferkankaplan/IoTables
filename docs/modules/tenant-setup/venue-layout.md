@@ -11,10 +11,10 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 | Hall | Entity | create, update, disable |
 | Table | Entity | create, update, reorder, disable |
 | Table operational state | State/read model | empty, active, unavailable where needed |
-| Table display context | Association | link table to QR/display behavior |
 
 ## Not Owned
 
+- Table display claims and credentials, owned by Table Display Provisioning.
 - TableAccessToken generation.
 - TableSession billing lifecycle.
 - Customer carts/orders.

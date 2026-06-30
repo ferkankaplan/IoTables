@@ -33,12 +33,13 @@ Happy path:
 
 1. Platform Owner enters tenant name, subdomain, GSM number, and optional profile fields.
 2. PlatformApp validates required fields and subdomain uniqueness.
-3. PlatformApp creates Tenant in `provisioning`.
-4. PlatformApp creates tenant admin and starter staff users.
-5. Sector Starter Templates applies `cafe.v1` once.
-6. Starter data creates halls, tables, stations, products, staff, and default service delivery tracking.
-7. PlatformApp records `starter_template.applied`.
-8. PlatformApp activates tenant after required setup records commit.
+3. PlatformApp submits the create-tenant command to Provisioning.
+4. Provisioning registers Tenant in `provisioning`.
+5. Provisioning creates tenant admin and starter staff users through Access.
+6. Provisioning applies `cafe.v1` through Sector Starter Templates once.
+7. Starter data creates halls, tables, stations, products, staff, and default service delivery tracking.
+8. Governance records `starter_template.applied`.
+9. Provisioning activates tenant after required setup records commit.
 
 Branches:
 
@@ -62,7 +63,7 @@ Result:
 
 Ownership:
 
-- PlatformApp + Platform + Access + Sector Starter Templates + Governance.
+- PlatformApp + Platform/Provisioning + Tenant Registry + Access + Sector Starter Templates + Tenant Setup + Governance.
 
 ### P-03: Manual DNS Readiness
 

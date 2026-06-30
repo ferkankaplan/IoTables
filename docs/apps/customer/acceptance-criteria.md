@@ -4,6 +4,8 @@ CustomerApp is accepted for v1 when:
 - a customer can scan a fresh QR and reach the menu;
 - expired, reused, or wrong-table QR tokens fail without exposing internals;
 - cart survives fresh QR re-verification while the CustomerOrderingSession remains recoverable;
+- required variants and modifiers block add-to-cart until valid;
+- unavailable products or variants are not orderable;
 - order submit requires fresh table presence;
 - duplicate submit does not create duplicate orders;
 - failed submit keeps cart editable;

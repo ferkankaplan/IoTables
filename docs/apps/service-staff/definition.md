@@ -181,16 +181,17 @@ ServiceStaffApp updates live delivery state, so transitions must be safe under d
 
 ## Integration Expectations
 
-| Future Context / Module | Expected Use |
+| Context / Module | Expected Use |
 | --- | --- |
-| Identity and Access | Service staff authentication and service permission enforcement |
-| Venue Layout | Read hall and table context |
-| Ordering | Read order items |
-| Preparation | Consume station-ready items |
-| Service Delivery | Manage pickup and delivery status transitions |
-| CustomerApp | Expose delivered status to customer views |
-| Cashier / Session View | Expose delivery status to cashier context |
-| Audit | Record service delivery transitions |
+| Platform / Tenant Registry | Resolve tenant availability from subdomain |
+| Access / Identity and Access | Service staff authentication |
+| Access / Staff Access | Service role and hall assignment enforcement |
+| Tenant Setup / Venue Layout | Read hall and table context |
+| Tenant Setup / Station Setup | Read source station labels and context |
+| Ordering / Customer Ordering | Read order items |
+| Fulfillment / Preparation | Consume station-ready items |
+| Fulfillment / Service Delivery | Manage pickup and delivery status transitions |
+| Governance / Audit | Record service delivery transitions |
 
 ## Security Rules
 

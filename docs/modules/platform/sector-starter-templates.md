@@ -26,7 +26,7 @@ It is a provisioning helper, not a runtime seeding mechanism.
 
 | App / Actor | Access | Limits |
 | --- | --- | --- |
-| PlatformApp | apply selected starter template during tenant creation | One time per tenant |
+| Provisioning | apply selected starter template during tenant creation | One time per tenant |
 | TenantApp | edit resulting starter data | Normal tenant-owned data after creation |
 
 ## Public Interface
@@ -34,7 +34,7 @@ It is a provisioning helper, not a runtime seeding mechanism.
 | Interface | Purpose | Consumers |
 | --- | --- | --- |
 | Get sector options | Show sector enum | PlatformApp |
-| Apply starter template | Create starter tenant data | PlatformApp provisioning |
+| Apply starter template | Create starter tenant data | Provisioning |
 | Get starter application state | Prevent reruns | PlatformApp, TenantApp |
 
 ## Internal Rules
@@ -68,7 +68,7 @@ It is a provisioning helper, not a runtime seeding mechanism.
 
 | App | Usage |
 | --- | --- |
-| PlatformApp | Select sector and apply starter template |
+| PlatformApp | Select sector as part of tenant creation |
 | TenantApp | Edit created starter data |
 
 ## Future Service Boundary

@@ -31,8 +31,8 @@ PlatformApp can manage platform-owned records and platform-level lifecycle decis
 | Tenant status | Control platform-level availability |
 | Tenant domain | Define the immutable tenant subdomain |
 | Tenant profile | Define required and optional restaurant metadata |
-| Tenant admin bootstrap | Create the first tenant admin credentials |
-| Tenant starter data | Apply sector-based starter data once during tenant creation |
+| Tenant admin bootstrap | Request first tenant admin credentials through Provisioning and Access |
+| Tenant starter data | Request sector-based starter data once through Provisioning |
 | Tenant health | View high-level tenant health and operational status |
 | Tenant limits | Define package, capacity, or feature limits when those concepts exist |
 | Platform audit | View platform-level operational history when available |
@@ -87,11 +87,12 @@ DNS records for tenant subdomains are managed manually by the platform owner out
 2. Platform Owner enters the required tenant identity fields.
 3. PlatformApp validates uniqueness and required platform constraints.
 4. Platform Owner may enter optional restaurant metadata.
-5. PlatformApp creates the tenant in `provisioning` state.
-6. PlatformApp creates the initial tenant admin account.
-7. PlatformApp applies the selected sector starter data once.
-8. PlatformApp starts the tenant provisioning flow.
-9. Platform Owner manually creates or updates the DNS record for the tenant domain.
+5. PlatformApp submits the create-tenant command to Provisioning.
+6. Provisioning registers the tenant in `provisioning` state through Tenant Registry.
+7. Provisioning creates the initial tenant admin and starter staff users through Access.
+8. Provisioning applies the selected sector starter template once and creates required tenant setup records.
+9. Provisioning activates the tenant only after required records commit.
+10. Platform Owner manually creates or updates the DNS record for the tenant domain.
 
 Required fields:
 
@@ -205,7 +206,7 @@ Cashier OTP uses the tenant GSM number during bootstrap.
 
 ### Provision Tenant Admin
 
-1. PlatformApp creates the first tenant admin during tenant creation.
+1. Provisioning creates the first tenant admin through Access during tenant creation.
 2. Tenant admin username is the tenant subdomain.
 3. Tenant admin initial password is `admin`.
 4. Tenant admin must change the password on first login.
@@ -258,18 +259,16 @@ PlatformApp may display these concepts, but it does not necessarily own all futu
 
 ## Integration Expectations
 
-PlatformApp will eventually interact with domain modules through explicit interfaces.
+PlatformApp interacts with domain modules through explicit interfaces.
 
-| Future Context / Module | Expected Use |
+| Context / Module | Expected Use |
 | --- | --- |
-| Platform / Tenant Registry | Create and manage tenant records |
-| Identity and Access | Create or link tenant admin users |
-| Tenant Domain / Routing | Resolve tenant subdomains and routing metadata |
-| OTP / Messaging | Send OTP SMS for tenant admin and cashier first password setup |
-| Sector Starter Templates | Provide one-time tenant starter data by sector |
-| Entitlements | Manage packages, features, and limits |
-| Audit | Record platform-level actions |
-| Support Tools | Inspect tenant operational state under controlled permissions |
+| Platform / Provisioning | Start tenant creation, inspect provisioning state, retry explicit recovery |
+| Platform / Tenant Registry | Manage tenant identity, lifecycle, profile, subdomain, GSM, DNS readiness, and tenant health summary |
+| Platform / Sector Starter Templates | List sector options and record one-time starter application through Provisioning |
+| Access / Identity and Access | Create platform owner, tenant admin, and starter staff accounts through controlled bootstrap flows |
+| Access / OTP Messaging | Support first-password OTP flows for tenant admin and cashier |
+| Governance / Audit | Record platform-level actions |
 
 DNS automation is not part of PlatformApp for the initial product. Tenant DNS records are created manually by the platform owner.
 

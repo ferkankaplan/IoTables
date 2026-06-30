@@ -8,7 +8,7 @@ TenantApp is accepted for v1 when:
 - v1 table layout is an ordered grid, not floor-plan coordinates;
 - table display provisioning is available from table detail;
 - stations can be created/disabled;
-- menu categories, products/services, modifiers, prices, availability, and one station assignment can be managed;
+- menu categories, products/services, variants/portions, modifiers, prices, availability overrides, and one station assignment can be managed;
 - each product/service has exactly one station in v1;
 - service delivery tracking can be explicitly enabled/disabled;
 - staff roles, station scopes, and service hall scopes can be managed;

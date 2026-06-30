@@ -144,7 +144,7 @@ Happy path:
 
 1. Tenant Admin creates categories.
 2. Tenant Admin creates product/services.
-3. Tenant Admin sets prices, descriptions, modifiers, availability, and one station assignment.
+3. Tenant Admin sets descriptions, variants/portions, prices, modifiers, availability overrides, and one station assignment.
 4. CustomerApp reads available menu.
 5. Ordering validates cart against current menu at submit time.
 

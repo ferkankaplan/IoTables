@@ -4,8 +4,8 @@
 | Workspace | Required States |
 | --- | --- |
 | QR Entry / Session Start | loading, QR expired, QR already used, wrong table, tenant unavailable, table unavailable |
-| Menu | loading, empty menu, category empty, product unavailable, image missing fallback |
-| Product Detail | loading, required modifier missing, invalid combination, unavailable option |
+| Menu | loading, empty menu, category empty, product unavailable, variant unavailable, image missing fallback |
+| Product Detail | loading, required variant missing, required modifier missing, invalid combination, unavailable option |
 | Cart | empty cart, editable cart, stale item, invalid item, fresh presence expired, submitting |
 | Order Confirmation | accepted, duplicate submit returned, submit failed preserving cart |
 | My Orders | loading, empty, session expired/lost |
@@ -28,6 +28,8 @@
 | Fresh presence expired before submit | Preserve cart and require current QR |
 | CustomerOrderingSession expired | Create/refresh after valid QR; cart may be lost |
 | Product unavailable at submit | Keep cart editable and highlight affected item |
+| Variant unavailable at submit | Keep cart editable and highlight affected item |
+| Required variant missing | Open affected item editor |
 | Modifier invalid at submit | Open affected item editor |
 | Tenant suspended | Show tenant unavailable |
 | Table disabled or closed to ordering | Reject order and preserve cart where useful |
@@ -51,7 +53,7 @@
 
 - Current table context must be visible without exposing trusted table IDs.
 - Cart submit readiness must be obvious when fresh presence has expired.
-- Unavailable products and invalid cart items must be visible at item level.
+- Unavailable products, unavailable variants, and invalid cart items must be visible at item level.
 - Order confirmation should clearly separate accepted order from editable cart state.
 
 ### Copy Requirements

@@ -80,7 +80,7 @@ Result:
 
 Ownership:
 
-- StationStaffApp + Preparation + Service Delivery read.
+- StationStaffApp + Preparation + Tenant Setup setting read.
 
 ### S-04: Report Cannot Prepare
 

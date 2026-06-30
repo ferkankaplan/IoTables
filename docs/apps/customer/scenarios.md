@@ -38,9 +38,9 @@ Happy path:
 
 1. Customer browses categories and products.
 2. Customer opens product detail panel.
-3. Customer selects required modifiers/options.
+3. Customer selects required variant/portion when applicable and required modifiers/options.
 4. Customer adds item to cart.
-5. Customer edits quantity, note, and modifiers before submission.
+5. Customer edits quantity, note, variant, and modifiers before submission.
 
 Branches:
 
@@ -48,6 +48,9 @@ Branches:
 | --- | --- |
 | Product unavailable | Product is not orderable |
 | Product disabled | Product is not orderable |
+| Variant unavailable | Variant is not orderable |
+| Variant disabled | Variant is not orderable |
+| Required variant missing | Add-to-cart is blocked |
 | Required modifier missing | Add-to-cart is blocked |
 | Invalid modifier combination | Add-to-cart is blocked |
 | Quantity invalid | Add-to-cart/update is blocked |
@@ -68,10 +71,10 @@ Ownership:
 Happy path:
 
 1. Customer submits cart with idempotency key.
-2. Backend validates session, fresh presence, cart, menu, table, and tenant.
+2. Backend validates session, fresh presence, cart, menu product variants/modifiers/availability, table, and tenant.
 3. Backend creates new TableSession because no active session exists.
 4. Backend creates one Check/Adisyon for the TableSession.
-5. Backend creates Order, OrderItems, snapshots, and PreparationItems.
+5. Backend creates Order, OrderItems, product/variant/price/modifier snapshots, and PreparationItems.
 6. Backend commits transaction.
 7. CustomerApp clears submitted cart and shows confirmation.
 
@@ -82,6 +85,7 @@ Branches:
 | Fresh presence expired | Preserve cart and require fresh QR |
 | Cart empty | Reject submit |
 | Product unavailable at submit | Reject affected item and preserve cart |
+| Variant unavailable at submit | Reject affected item and preserve cart |
 | Modifier invalid at submit | Reject affected item and preserve cart |
 | Table disabled at submit | Reject and preserve cart where useful |
 | Tenant suspended at submit | Reject and show unavailable |

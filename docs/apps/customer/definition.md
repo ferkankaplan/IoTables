@@ -176,6 +176,7 @@ The menu should support:
 - product images,
 - product descriptions,
 - prices,
+- variants/portions,
 - availability state,
 - modifiers/options,
 - per-item customer notes,
@@ -193,6 +194,7 @@ Product detail should support:
 
 - larger image,
 - full description,
+- variant/portion selection when the product has more than one orderable variant,
 - quantity,
 - required modifiers,
 - optional modifiers,
@@ -202,15 +204,18 @@ Product detail should support:
 
 CustomerApp may show an estimated price, but the backend is the pricing authority. Final order pricing is calculated server-side at submission time.
 
-V1 does not have a separate price preview or customer price-confirmation step. Menu prices are expected to be stable during normal customer ordering. If the cart is no longer valid at submission time because a product, modifier, availability, or tenant/table state changed, CustomerApp rejects the affected submission and keeps the cart editable instead of asking the customer to approve a new price.
+V1 does not have a separate price preview or customer price-confirmation step. Menu prices are expected to be stable during normal customer ordering. If the cart is no longer valid at submission time because a product, variant, modifier, availability, or tenant/table state changed, CustomerApp rejects the affected submission and keeps the cart editable instead of asking the customer to approve a new price.
 
 ### Modifiers and Options
 
-Products/services may have modifiers/options.
+Products/services may have variants/portions and modifiers/options.
+
+Variants/portions define the orderable unit and current price, such as small/large coffee or single/double portion. A simple single-price product still uses one default variant behind the scenes.
 
 Examples:
 
 - coffee size,
+- portion size,
 - milk type,
 - extra shot,
 - sugar preference,
@@ -228,13 +233,13 @@ Modifier rules must support at least:
 - price-changing modifiers,
 - zero-price preferences.
 
-The UI must clearly show required choices before allowing add-to-cart. Invalid product configurations must not enter the cart.
+The UI must clearly show required variant and modifier choices before allowing add-to-cart. Invalid product configurations must not enter the cart.
 
 ### Availability
 
-CustomerApp must respect product availability.
+CustomerApp must respect product and variant availability.
 
-Unavailable products should remain visible only if that helps the tenant UX, but they must not be orderable. Availability must be checked again server-side during order submission.
+Unavailable products or variants should remain visible only if that helps the tenant UX, but they must not be orderable. Availability must be checked again server-side during order submission.
 
 ## Cart Experience
 
@@ -251,13 +256,14 @@ The cart should persist across browser refresh while the CustomerOrderingSession
 Each cart item should include:
 
 - product/service id,
+- product variant id,
 - quantity,
 - selected modifiers/options,
 - per-item customer note,
 - client-visible estimated price,
 - idempotency-safe client cart item id.
 
-The cart must not be treated as trusted order data. The backend must revalidate all products, modifiers, availability, prices, and tenant/table context at order submission.
+The cart must not be treated as trusted order data. The backend must revalidate all products, variants, modifiers, availability, prices, and tenant/table context at order submission.
 
 ### Cart Controls
 
@@ -336,12 +342,12 @@ The whole operation must be backend-owned, idempotent, and transactionally consi
 2. Frontend sends the current cart with an idempotency key.
 3. Backend validates CustomerOrderingSession.
 4. Backend validates fresh table presence.
-5. Backend validates tenant, table, products, modifiers, availability, and quantities.
+5. Backend validates tenant, table, products, variants, modifiers, availability, and quantities.
 6. Backend calculates final prices server-side.
 7. Backend checks or creates the current active TableSession atomically.
 8. Backend joins CustomerOrderingSession to the current TableSession.
 9. Backend creates Order with both `customerOrderingSessionId` and `tableSessionId`.
-10. Backend creates OrderItems with price snapshots, modifiers, notes, and station assignments.
+10. Backend creates OrderItems with product, variant, price, modifier, note, and station snapshots.
 11. Backend creates station queue records for the OrderItems.
 12. Backend commits the transaction.
 13. CustomerApp clears the submitted cart and shows the order confirmation.
@@ -363,6 +369,7 @@ These records must be created in one transaction:
 - CustomerOrderingSession to TableSession join,
 - Order,
 - OrderItems,
+- product/variant snapshots,
 - price snapshots,
 - modifier snapshots,
 - station queue records,
@@ -501,7 +508,9 @@ CustomerApp must preserve customer trust when order submission cannot continue.
 | --- | --- | --- |
 | Fresh presence expired | Reject submit until QR is refreshed | Preserve cart and ask for current QR scan |
 | Product unavailable | Reject affected item server-side | Show item-level message and keep cart editable |
+| Variant unavailable | Reject affected item server-side | Open item editor or show item-level message and keep cart editable |
 | Cart pricing invalid | Reject affected item/server-side cart state | Keep cart editable and ask customer to review affected items |
+| Required variant missing | Reject item | Open item editor with missing requirement |
 | Required modifier missing | Reject item | Open item editor with missing requirement |
 | Invalid modifier combination | Reject item | Show item-level correction message |
 | TableSession closed | Do not attach to closed session | Require fresh QR and retry against current table state |
@@ -510,7 +519,7 @@ CustomerApp must preserve customer trust when order submission cannot continue.
 | Duplicate submit | Return original order result | Do not create duplicate order |
 | Network failure after submit | Retry by idempotency key | Show pending/retry state without duplicating order |
 
-Price, availability, table state, and station state must be rechecked server-side during order submission.
+Price, variant, availability, table state, and station state must be rechecked server-side during order submission.
 
 ## Operational Safety
 
@@ -524,7 +533,7 @@ Price, availability, table state, and station state must be rechecked server-sid
 - Only one active TableSession may exist per tenant/table.
 - Order item price snapshots must be created server-side at submission time.
 - Product modifiers/options must be validated server-side.
-- Product availability must be checked server-side at submission time.
+- Product and variant availability must be checked server-side at submission time.
 - Cart item notes must be persisted with the order item when allowed.
 - If order creation fails halfway, no partial order should leak into station queues.
 - If station queue creation is part of the same operation, it must be transactionally consistent with order creation.
@@ -532,6 +541,20 @@ Price, availability, table state, and station state must be rechecked server-sid
 - CustomerApp may show table orders only after fresh table presence verification.
 - CustomerApp may show table bill and balance only after fresh table presence verification.
 - Customer-visible totals must be calculated server-side.
+
+## Integration Expectations
+
+| Context / Module | Expected Use |
+| --- | --- |
+| Platform / Tenant Registry | Resolve tenant availability from subdomain |
+| Tenant Setup / Venue Layout | Read table context after trusted QR/session resolution |
+| Tenant Setup / Menu Catalog | Read customer menu, product variants/options, availability, and server-side price data |
+| Ordering / Table Presence | Redeem QR and require fresh table presence |
+| Ordering / Customer Ordering | Own CustomerOrderingSession, cart, idempotent order submission, My Orders, and Table Orders |
+| Fulfillment / Preparation | Read customer-visible preparation state |
+| Fulfillment / Service Delivery | Read delivered state when service delivery tracking is enabled |
+| Settlement / Table Session and Billing | Read active table session, table bill, and remaining balance |
+| Settlement / Payments | Read payment effects through bill/balance only; CustomerApp cannot create payments |
 
 ## Open Questions
 

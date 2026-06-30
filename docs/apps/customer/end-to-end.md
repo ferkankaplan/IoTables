@@ -24,11 +24,11 @@ Acceptance criteria:
 ### 5. Customer Submits Order
 1. Customer taps order submit.
 2. Frontend sends cart with an idempotency key.
-3. Backend validates CustomerOrderingSession, tenant, table, fresh presence, cart, products, modifiers, availability, and quantities.
+3. Backend validates CustomerOrderingSession, tenant, table, fresh presence, cart, products, variants, modifiers, availability, and quantities.
 4. Backend recalculates prices server-side.
 5. Backend opens or selects the active TableSession and single Check/Adisyon through Settlement.
 6. Backend joins CustomerOrderingSession to the current TableSession.
-7. Backend creates Order and OrderItems with price/modifier/station snapshots.
+7. Backend creates Order and OrderItems with product/variant/price/modifier/station snapshots.
 8. Backend creates PreparationItems for station queues.
 9. Backend commits all order submission records in one transaction.
 10. CustomerApp clears only the submitted cart and shows confirmation.

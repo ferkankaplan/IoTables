@@ -30,15 +30,16 @@ V1 excludes customer payment, waiter-entered orders, pickup/package/courier/phon
    - tenant name,
    - tenant subdomain,
    - tenant GSM number.
-3. PlatformApp creates the tenant in `provisioning` state.
-4. PlatformApp creates the first tenant admin:
+3. PlatformApp submits the create-tenant command to Provisioning.
+4. Provisioning registers the tenant in `provisioning` state.
+5. Provisioning creates the first tenant admin through Access:
    - username: tenant subdomain,
    - temporary password: `admin`,
    - first password setup requires OTP SMS to tenant GSM.
-5. PlatformApp applies the selected sector starter template exactly once.
-6. PlatformApp records starter template completion.
-7. PlatformApp moves tenant to `active` after required setup records commit.
-8. Platform Owner marks manual DNS readiness when DNS is configured outside the app.
+6. Provisioning applies the selected sector starter template exactly once.
+7. Governance records starter template completion.
+8. Provisioning moves tenant to `active` after required setup records commit.
+9. Platform Owner marks manual DNS readiness when DNS is configured outside the app.
 
 Acceptance criteria:
 
@@ -108,11 +109,11 @@ Acceptance criteria:
 
 1. Customer taps order submit.
 2. Frontend sends cart with an idempotency key.
-3. Backend validates CustomerOrderingSession, tenant, table, fresh presence, cart, products, modifiers, availability, and quantities.
+3. Backend validates CustomerOrderingSession, tenant, table, fresh presence, cart, products, variants, modifiers, availability, and quantities.
 4. Backend recalculates prices server-side.
 5. Backend opens or selects the active TableSession and single Check/Adisyon through Settlement.
 6. Backend joins CustomerOrderingSession to the current TableSession.
-7. Backend creates Order and OrderItems with price/modifier/station snapshots.
+7. Backend creates Order and OrderItems with product/variant/price/modifier/station snapshots.
 8. Backend creates PreparationItems for station queues.
 9. Backend commits all order submission records in one transaction.
 10. CustomerApp clears only the submitted cart and shows confirmation.

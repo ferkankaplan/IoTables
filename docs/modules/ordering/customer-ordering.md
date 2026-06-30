@@ -13,14 +13,14 @@ It converts a validated CustomerOrderingSession cart into billable order records
 | CustomerOrderingSession | Session | create, refresh, expire |
 | Customer cart | Aggregate | create, update, validate, clear |
 | Order | Entity | create and expose |
-| OrderItem | Entity | create with price/modifier/note snapshots |
+| OrderItem | Entity | create with product variant, price/modifier/note snapshots |
 | Order idempotency record | Safety record | create and resolve duplicate submissions |
 | Order-to-station routing | Workflow | create station queue records from order items |
 | Order channel | Value | `dine_in_qr` only in v1 |
 
 ## Not Owned
 
-- Menu product definitions and prices.
+- Menu product definitions, variants, availability, and prices.
 - TableAccessToken generation.
 - TableSession settlement.
 - TableSession and Check ownership.
@@ -54,7 +54,7 @@ It converts a validated CustomerOrderingSession cart into billable order records
 - Fresh QR verification refreshes existing compatible CustomerOrderingSession when possible.
 - Order must link to both CustomerOrderingSession and TableSession.
 - Customer cart is not billable until successful order submission.
-- Backend recalculates prices and validates availability/modifiers at submission.
+- Backend recalculates prices and validates selected variant, availability, and modifiers at submission.
 - V1 does not have a separate order price preview/quote endpoint or customer price-confirmation step.
 - Frontend totals are informational only; final price snapshots are created server-side during submission.
 - V1 creates only `dine_in_qr` orders.
@@ -78,9 +78,9 @@ It converts a validated CustomerOrderingSession cart into billable order records
 | --- | --- | --- |
 | CustomerOrderingSession | Anonymous browser/table session | tenant, table, cookie token, presence window, expiry |
 | CustomerCart | In-progress cart | session-owned, non-billable |
-| CustomerCartItem | Cart item | product, quantity, modifiers, notes, estimated price |
+| CustomerCartItem | Cart item | product, variant, quantity, modifiers, notes, estimated price |
 | Order | Submitted order | links customerOrderingSessionId and tableSessionId |
-| OrderItem | Billable order item | price snapshot, modifier snapshot, note, station assignment |
+| OrderItem | Billable order item | product/variant snapshot, price snapshot, modifier snapshot, note, station assignment |
 | OrderSubmitIdempotency | Duplicate submit protection | unique scoped key |
 
 ## App Surfaces
