@@ -28,6 +28,7 @@ Status:
 
 - The six app docs are the semantic source for modules, contexts, schemas, and APIs.
 - App-level v1 scenario gaps are closed at documentation level.
+- Cross-app v1 behavior and acceptance criteria are documented in `docs/app-flows/`.
 - Deeper module and data-model updates should now merge into these app decisions instead of introducing parallel concepts.
 
 Locked app decisions:
@@ -48,7 +49,7 @@ The architecture is app-first. PlatformApp, TenantApp, CustomerApp, StationStaff
 
 Output:
 
-- Update module docs and data model from the locked app decisions.
+- Update module docs, data model, and API contracts from the locked app and app-flow decisions.
 
 ### 1. Lock v1 operating scope
 

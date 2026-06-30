@@ -149,8 +149,8 @@ Correction actions must be narrowly defined before implementation. They must not
 Allowed CashierApp corrections in v1:
 
 - add an internal cashier note to the active TableSession;
-- cancel/void an order item only while its preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the TableSession;
-- void a payment on an open TableSession when no external payment provider is involved.
+- cancel/void an order item only while its preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the Check/Adisyon;
+- void a payment on an open Check/Adisyon when no external payment provider is involved.
 
 Not allowed in v1:
 
@@ -191,7 +191,7 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 - Payment creation must be idempotent.
 - Session closure must be idempotent.
 - V1 payment methods are `cash`, `card`, and `transfer`.
-- Mixed payment is recorded as multiple payment records against the same TableSession.
+- Mixed payment is recorded as multiple payment records against the same Check/Adisyon.
 - V1 payment splitting is amount-based only; splitting by item/person is out of scope.
 - External payment providers are out of scope for v1.
 - Fiscal/e-Adisyon/ÖKC receipt issuance is out of scope for v1.
