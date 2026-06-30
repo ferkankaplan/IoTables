@@ -28,7 +28,7 @@ Status:
 
 - The six app docs are the semantic source for modules, contexts, schemas, and APIs.
 - App-level v1 scenario gaps are closed at documentation level.
-- Cross-app v1 behavior and acceptance criteria are documented in `docs/app-flows/`.
+- Cross-app v1 behavior, happy paths, branches, and acceptance criteria are documented in `docs/app-flows/`.
 - Deeper module and data-model updates should now merge into these app decisions instead of introducing parallel concepts.
 
 Locked app decisions:

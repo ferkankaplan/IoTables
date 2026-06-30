@@ -4,6 +4,8 @@ This document defines what each app sees when shared operational state changes.
 
 It prevents modules, schemas, and APIs from inventing different meanings for the same state.
 
+Detailed happy paths and branch behavior are enumerated in [v1-scenario-catalog.md](v1-scenario-catalog.md). This document defines the visibility and acceptance checks those scenarios must satisfy.
+
 ## App Visibility Matrix
 
 | State / Event | PlatformApp | TenantApp | CustomerApp | StationStaffApp | ServiceStaffApp | CashierApp |

@@ -13,6 +13,7 @@ These documents sit between app-specific docs and module/schema/API design:
 | Document | Purpose |
 | --- | --- |
 | [v1-end-to-end-flow.md](v1-end-to-end-flow.md) | Main tenant-to-order-to-settlement flow across all six apps |
+| [v1-scenario-catalog.md](v1-scenario-catalog.md) | Happy paths and branches for v1 app behavior |
 | [v1-state-visibility-and-acceptance.md](v1-state-visibility-and-acceptance.md) | Cross-app state visibility matrix and v1 acceptance criteria |
 
 ## Rule
