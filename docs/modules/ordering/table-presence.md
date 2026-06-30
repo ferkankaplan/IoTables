@@ -63,10 +63,10 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| TableAccessToken | Stores generated token metadata | tenant, table, tokenHash, expiresAt, consumedAt |
-| CustomerOrderingSession presence fields | Stores fresh presence window | `presenceValidUntil`, refreshed after valid redemption |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| TableAccessToken | issued -> consumed / expired | tenant, table, tokenHash, expiresAt, consumedAt | Token is one-time use; token secret stored hashed; redemption is atomic; token does not expose trusted table IDs | Expired/consumed tokens can be retained short-term for replay investigation, then purged by retention policy |
+| CustomerOrderingSession presence fields | refreshed while session active -> expired | customerOrderingSession, presenceValidUntil, lastRedeemedToken metadata if needed | Fresh presence gates order submit and table order/balance visibility; browsing can continue without fresh presence | Presence expiry does not delete cart; CustomerOrderingSession lifecycle is owned by Customer Ordering |
 
 ## App Surfaces
 

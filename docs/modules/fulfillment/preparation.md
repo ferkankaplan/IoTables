@@ -80,11 +80,11 @@ preparing -> cannot_prepare
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| PreparationItem | Station queue item | orderItemId, stationId, status, cannotPrepareReason |
-| PreparationTransition | State history | actor, from, to, timestamp |
-| StationWorkload | Read model | active counts and ages |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| PreparationItem | pending -> preparing -> ready, or pending/preparing -> cannot_prepare | tenant, orderItemId, stationId, status, cannotPrepareReason, updatedBy, updatedAt | One preparation item per routed OrderItem; transitions validate current state and station authorization; `cannot_prepare` requires reason | Preserve with OrderItem; completed/closed-session items are not modified except explicit recovery |
+| PreparationTransition | append-only | preparationItem, actor, fromStatus, toStatus, reason, createdAt | Every meaningful status transition records actor/time; duplicate transitions must be idempotent or stale-rejected | Append-only operational history |
+| StationWorkload | derived/read-only | station, counts by status, oldest pending age, average prep time where available | Derived from PreparationItem/Transition; must respect Staff Access station scope | Rebuildable read model |
 
 ## App Surfaces
 

@@ -88,12 +88,12 @@ Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodicall
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| TableDisplayClaim | One-time provisioning claim for a table display | Owned by Tenant Setup / Table Display Provisioning |
-| TableDisplayCredential | Authenticates the ESP32 display for a table | Owned by Tenant Setup / Table Display Provisioning |
-| TableAccessToken | Stores generated token metadata | Owned by Ordering / Table Presence |
-| CustomerOrderingSession presence fields | Stores `presenceValidUntil` | Owned by Customer Ordering, updated by Ordering / Table Presence |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| TableDisplayClaim | created -> consumed / expired | tenant, table, claimHash, createdByUserId, expiresAt, consumedAt | One-time claim; atomic consumption; raw claim is never stored | Owned by Tenant Setup / Table Display Provisioning; retain safe metadata for provisioning audit |
+| TableDisplayCredential | active -> revoked / rotated | tenant, table, credentialHash, status, provisionedAt, revokedAt, lastSeenAt | One active credential per tenant/table in v1; backend resolves table from credential; raw credential never appears in QR payload | Owned by Tenant Setup / Table Display Provisioning; revoke/rotate instead of hard-delete |
+| TableAccessToken | issued -> consumed / expired | tenant, table, tokenHash, expiresAt, consumedAt | One-time token; hashed token storage; redemption is atomic; token does not expose trusted table IDs | Owned by Ordering / Table Presence; retain short-term for replay investigation, then purge by retention policy |
+| CustomerOrderingSession presence fields | refreshed while session active -> expired | customerOrderingSession, presenceValidUntil, lastRedeemedToken metadata if needed | Fresh presence gates order submit and table order/balance visibility; expiry does not delete cart | CustomerOrderingSession lifecycle is owned by Customer Ordering; presence refresh is controlled by Ordering / Table Presence |
 
 ## App Surfaces
 

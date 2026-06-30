@@ -61,10 +61,10 @@ It protects the system from losing, duplicating, or silently misreporting side e
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| OutboxMessage | Side effect to execute | tenant nullable, type, aggregate reference, payload reference, idempotency reference, status |
-| ExternalEffectAttempt | Provider execution attempt | outbox message, attempt number, started/completed timestamps, result summary |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| OutboxMessage | pending -> claimed -> completed / failed | tenant nullable, effectType, aggregateType, aggregateId, payloadRef, idempotencyRef, status, nextAttemptAt, timestamps | Unique idempotency reference per effect type; side effect executes only after source transaction commits; failed side effects are visible for recovery | Retain unresolved/failed records; completed records follow explicit retention policy |
+| ExternalEffectAttempt | started -> success / retryable_failure / permanent_failure / timeout | outboxMessage, attemptNo, startedAt, completedAt, result, redacted resultSummary | Attempt numbers unique per outbox message; provider responses stored without secrets/sensitive raw payloads | Append-only attempt history |
 
 ## App Surfaces
 

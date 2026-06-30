@@ -11,6 +11,7 @@ This folder contains the v1 product behavior source for CustomerApp.
 | [visibility.md](visibility.md) | What this app sees from shared cross-app state |
 | [acceptance-criteria.md](acceptance-criteria.md) | V1 acceptance criteria |
 | [ui-states.md](ui-states.md) | Required UI states |
+| [api-usage.md](api-usage.md) | Module-owned API endpoints used by this app |
 | [out-of-scope.md](out-of-scope.md) | Behaviors this app must not implement in v1 |
 
 Shared cross-app docs are in [../_shared](../_shared/semantic-source-rule.md).

@@ -39,6 +39,7 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 | List ready items | Show service queue | ServiceStaffApp |
 | Mark picked up | Optional intermediate handoff | ServiceStaffApp |
 | Mark delivered | Confirm table delivery | ServiceStaffApp |
+| Bulk mark delivered | Confirm multiple same-table items in one atomic action | ServiceStaffApp |
 | Read delivery state | Customer/cashier visibility | CustomerApp, CashierApp |
 
 ## Internal Rules
@@ -70,12 +71,13 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| DeliveryState | Current service state after readiness | orderItemId, picked_up/delivered status |
-| DeliveryTransition | State history | actor, from, to, timestamp |
-| ServiceQueue | Read model | PreparationItem.ready plus delivery state for authorized hall/service view |
-| ServiceWorkload | Read model | active counts and age metrics |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| DeliveryState | none -> picked_up -> delivered, or none -> delivered | tenant, orderItemId, status, updatedBy, updatedAt | Exists only when service delivery tracking is enabled; ready state comes from PreparationItem; delivered items cannot be modified except explicit recovery | Preserve with OrderItem for customer/cashier visibility |
+| DeliveryTransition | append-only | deliveryState/orderItem, actor, fromStatus, toStatus, createdAt | Every pickup/delivered transition records actor/time; transitions validate hall scope through Staff Access | Append-only operational history |
+| DeliveryBulkIdempotency | processing -> completed / failed | tenant, table, actor, idempotencyKey, requestHash, deliveredOrderItemIds, status | Unique by tenant + actor + idempotencyKey; whole bulk command succeeds or fails as one unit | Retain long enough for service staff/network retries and same-day audit replay |
+| ServiceQueue | derived/read-only | ready preparation items, table/hall context, delivery state | Derived from PreparationItem.ready plus DeliveryState; must respect service hall scope | Rebuildable read model |
+| ServiceWorkload | derived/read-only | ready count, picked-up count, oldest ready age, delivered count, average ready-to-delivered time | Derived from ready/delivery transitions; metrics are operational only | Rebuildable read model |
 
 ## App Surfaces
 
@@ -87,8 +89,8 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 ## Future Service Boundary
 
-- Own data: delivery states and transitions.
-- Own APIs: list ready items, mark picked up, mark delivered.
+- Own data: delivery states, transitions, and bulk delivery idempotency.
+- Own APIs: list ready items, mark picked up, mark delivered, bulk mark delivered.
 - Published events: delivery.status_changed, item.delivered.
 - Consumed events: preparation.ready, table_session.closed.
 - Must not leak: delivery mutation to CustomerApp.

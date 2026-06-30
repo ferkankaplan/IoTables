@@ -51,18 +51,19 @@ It is a provisioning helper, not a runtime seeding mechanism.
 
 ## Operational Safety
 
-- Applying starter template must be idempotent by `tenantId + templateVersion`.
+- Applying starter template must be idempotent by `tenantId + templateKey + templateVersion`.
 - Partial failure must either rollback all starter records or mark provisioning as failed for manual recovery.
 - Re-running after completion is forbidden unless an explicit manual recovery tool exists.
 - Starter application should be audited.
+- Starter templates must not run from migrations, server startup, restart, deployment, or release upgrade; database rules live in [../../database/seed-provisioning.md](../../database/seed-provisioning.md).
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| Sector | Enum/config | initial value: `cafe` |
-| StarterTemplate | Template definition | versioned |
-| StarterTemplateApplication | One-time application record | tenant, template, version, appliedAt |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| Sector | configured -> selectable | code, displayName, enabled | `cafe` is the initial v1 sector; disabled sectors cannot be selected for new tenant creation | Preserve historical sector codes used by existing tenants/templates |
+| StarterTemplate | drafted/configured -> active -> retired | sector, templateVersion, halls, tables, stations, products, variants, staff, serviceDeliveryTracking default | Template versions are immutable after activation; applying a template must create normal tenant-owned records | Retire instead of mutating active templates used in historical provisioning |
+| StarterTemplateApplication | pending -> applied / failed / recovery_needed | tenant, sector, templateKey, templateVersion, status, appliedAt, failureSummary | Unique by tenant + templateKey + templateVersion; successful application must never re-run on restart/deploy/migration/release | Preserve forever as seed-rerun proof |
 
 ## App Surfaces
 

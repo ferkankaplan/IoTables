@@ -84,11 +84,11 @@ Minimum v1 action names:
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| AuditEvent | Append-only event | tenant, actor, action, target, timestamp |
-| AuditMetadata | Structured details | no secrets |
-| AuditReason | Required reason | corrections/destructive actions |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| AuditEvent | append-only | tenant nullable, actor nullable, action, targetType, targetId, reason, metadata, createdAt | Critical actions write structured action names; metadata must not contain secrets; actor may be system for provisioning/background work | Append-only; retention policy must preserve critical business/security evidence |
+| AuditMetadata | embedded structured value | safe key/value details | No raw secrets, OTP codes, credentials, payment secrets, or raw provider payloads | Stored only as part of AuditEvent |
+| AuditReason | required value for sensitive actions | reason text/code | Required for corrections, destructive actions, suspend/reactivate, and manual recovery where specified | Immutable once recorded |
 
 ## App Surfaces
 

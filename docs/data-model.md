@@ -19,7 +19,10 @@ It is not a final database schema. It is the shared domain contract that databas
 ```mermaid
 erDiagram
   Tenant ||--o{ User : owns
+  Tenant ||--o| TenantHealth : summarizes
+  Tenant ||--o{ TenantLifecycleEvent : records
   User ||--o{ PlatformRoleAssignment : may_have
+  User ||--o{ LoginSession : authenticates
   User ||--o| TotpFactor : protects
   User ||--o{ OtpChallenge : verifies
   OtpChallenge ||--o{ OtpAttempt : records
@@ -51,12 +54,23 @@ erDiagram
   TableSession ||--o{ Order : groups
   TableSession ||--|| Check : bills
   Check ||--o{ PriceAdjustment : adjusts
+  TableSession ||--o| SessionClosure : closes
   Order ||--o{ OrderItem : contains
   OrderItem ||--o| PreparationItem : routes_to
+  PreparationItem ||--o{ PreparationTransition : records
   OrderItem ||--o| DeliveryState : delivered_by
+  DeliveryState ||--o{ DeliveryTransition : records
+  User ||--o{ DeliveryBulkIdempotency : guards
+  Table ||--o{ DeliveryBulkIdempotency : targets
 
   Check ||--o{ Payment : settles
+  Check ||--o{ PaymentIdempotency : guards
+  PaymentIdempotency }o--o| Payment : returns
+  Payment ||--o| PaymentVoid : may_have
+  Payment ||--o{ PaymentVoidIdempotency : guards
   Check ||--o{ CashierCorrection : records
+  Check ||--o{ CashierCorrectionIdempotency : guards
+  CashierCorrectionIdempotency }o--o| CashierCorrection : returns
   Tenant ||--o{ AuditEvent : records
   Tenant ||--o{ OutboxMessage : emits
 ```
@@ -73,7 +87,7 @@ Owned by: Platform / Tenant Registry
 | `name` | Required, immutable |
 | `subdomain` | Required, immutable, unique |
 | `gsmNumber` | Required, editable, audited |
-| `sector` | Editable classification; does not re-run starter data |
+| `sector` | Optional editable classification; does not re-run starter data |
 | `capacity` | Optional, editable |
 | `address` | Optional, editable |
 | `status` | `provisioning` / `active` / `suspended` / `provisioning_failed` |
@@ -106,8 +120,45 @@ Owned by: Tenant Setup
 Invariants:
 
 - initial `cafe` starter template enables service delivery tracking by default.
+- tenants created without a starter template default service delivery tracking to disabled.
 - disabling service delivery tracking disables ServiceStaffApp runtime authority.
 - when disabled, `PreparationItem.ready` is the final tracked fulfillment state.
+
+### TenantHealth
+
+Owned by: Platform / Tenant Registry
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `lifecycleState` | Tenant status summary |
+| `setupState` | Provisioning/setup readiness summary |
+| `starterTemplateState` | Starter application summary |
+| `tenantAdminBootstrapState` | First admin readiness summary |
+| `dnsReady` | Manual DNS readiness |
+| `runtimeErrorSummary` | Safe platform-visible summary only |
+
+Invariants:
+
+- health is a high-level read model.
+- tenant runtime detail such as orders, payments, sessions, or station queues must not leak into PlatformApp through health.
+
+### TenantLifecycleEvent
+
+Owned by: Platform / Tenant Registry
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `previousStatus`, `nextStatus` | Lifecycle transition |
+| `actorUserId` | Nullable system/platform actor |
+| `reason` | Required for suspend/reactivate/failure recovery where applicable |
+| `createdAt` | Timestamp |
+
+Invariants:
+
+- lifecycle events are append-only.
+- status changes must also be auditable.
 
 ### StarterTemplateApplication
 
@@ -117,13 +168,14 @@ Owned by: Sector Starter Templates
 | --- | --- |
 | `tenantId` | Tenant receiving starter data |
 | `sector` | Example: `cafe` |
+| `templateKey` | Example: `cafe_default` |
 | `templateVersion` | Versioned starter template |
 | `appliedAt` | Completion timestamp |
-| `status` | applied / failed / recovery-needed |
+| `status` | pending / applied / failed / recovery_needed |
 
 Constraints:
 
-- unique by `tenantId + templateVersion`.
+- unique by `tenantId + templateKey + templateVersion`.
 - must never run on restart, deployment, migration, or release upgrade.
 
 ## Identity, Staff, and Access
@@ -167,6 +219,24 @@ Invariants:
 
 - bootstrap password cannot continue after first login.
 - passwords and OTP values must never be logged.
+
+### LoginSession
+
+Owned by: Identity and Access
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Nullable only for platform session |
+| `userId` | Authenticated user |
+| `appScope` | platform / tenant / cashier / station / service |
+| `sessionTokenHash` | Opaque token hash |
+| `issuedAt`, `expiresAt`, `revokedAt` | Lifecycle timestamps |
+
+Invariants:
+
+- session tenant/app scope must match the requested app.
+- expired or revoked sessions fail closed.
+- session tokens must never be logged in plaintext.
 
 ### PlatformRoleAssignment
 
@@ -618,6 +688,24 @@ Invariants:
 - `cannot_prepare` does not cancel, discount, refund, remove, or reprice an OrderItem.
 - CashierApp must handle account/customer correction through allowed cashier workflows.
 
+### PreparationTransition
+
+Owned by: Preparation
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `preparationItemId` | Preparation item |
+| `actorUserId` | Station staff actor |
+| `fromStatus`, `toStatus` | Transition |
+| `reason` | Required for `cannot_prepare` |
+| `createdAt` | Timestamp |
+
+Invariants:
+
+- transitions are append-only.
+- every meaningful preparation status change records actor and time.
+
 ### DeliveryState
 
 Owned by: Service Delivery
@@ -644,6 +732,45 @@ When service delivery tracking is disabled:
 | --- | --- |
 | PreparationItem.pending / PreparationItem.preparing | Hazırlanıyor |
 | PreparationItem.ready | Teslim edildi |
+
+### DeliveryTransition
+
+Owned by: Service Delivery
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `orderItemId` | Delivered order item |
+| `actorUserId` | Service staff actor |
+| `fromStatus`, `toStatus` | Transition |
+| `createdAt` | Timestamp |
+
+Invariants:
+
+- transitions are append-only.
+- pickup/delivery transitions must validate service hall scope server-side.
+
+### DeliveryBulkIdempotency
+
+Owned by: Service Delivery
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `actorUserId` | Service staff actor |
+| `tableId` | Target table |
+| `idempotencyKey` | Request key |
+| `requestHash` | Server-computed actor/table/item fingerprint |
+| `deliveredOrderItemIds` | Stable completed replay result |
+| `status` | processing / completed / failed |
+| `createdAt`, `completedAt` | Lifecycle timestamps |
+
+Invariants:
+
+- unique by `tenantId + actorUserId + idempotencyKey`.
+- same key and same request returns the original bulk result.
+- same key with a different table or item set is rejected.
+- bulk delivery is all-or-nothing; no partial delivered result is committed.
 
 ## Payments and Billing
 
@@ -690,6 +817,24 @@ V1 rules:
 - `PriceAdjustment` exists to keep future pricing structure explicit, not to expose broad cashier discount power.
 - V1 item void is represented by `OrderItem` void fields plus `CashierCorrection`, not by a separate negative price adjustment.
 
+### SessionClosure
+
+Owned by: Table Session and Billing
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `tableSessionId` | Closed session |
+| `checkId` | Settled Check/Adisyon |
+| `cashierUserId` | Closing actor |
+| `reason` | Nullable unless explicit recovery requires it |
+| `closedAt` | Timestamp |
+
+Invariants:
+
+- closure requires zero remaining balance in v1.
+- closing a session validates current balance and active session state in the same transaction.
+
 ### Payment
 
 Owned by: Payments
@@ -724,7 +869,50 @@ Owned by: Payments
 | `tenantId` | Tenant |
 | `checkId` | Check/Adisyon |
 | `idempotencyKey` | Request key |
+| `requestHash` | Server-computed payment fingerprint |
 | `paymentId` | Created payment |
+| `status` | processing / completed / failed |
+| `createdAt`, `completedAt` | Lifecycle timestamps |
+
+### PaymentVoid
+
+Owned by: Payments
+
+Logical v1 record. It may be implemented as immutable void fields on `Payment` plus the required `CashierCorrection`, or as a separate table if the physical schema needs it.
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `paymentId` | Voided payment |
+| `voidedByUserId` | Cashier actor |
+| `voidReason` | Required reason |
+| `voidedAt` | Timestamp |
+
+Invariants:
+
+- void is allowed only on an open Check in v1.
+- provider/external payments are out of v1, so provider reversal is not part of this model.
+- the original payment amount and received timestamp are never erased.
+
+### PaymentVoidIdempotency
+
+Owned by: Payments
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `paymentId` | Payment being voided |
+| `idempotencyKey` | Request key |
+| `requestHash` | Server-computed payment/actor/reason fingerprint |
+| `status` | processing / completed / failed |
+| `createdAt`, `completedAt` | Lifecycle timestamps |
+
+Invariants:
+
+- unique by `tenantId + paymentId + idempotencyKey`.
+- same key and same request returns the original void result.
+- same key with a different request is rejected.
+- payment void and its required correction are committed atomically.
 
 ### CashierCorrection
 
@@ -747,6 +935,27 @@ V1 rules:
 - item void is allowed only while preparation state is `pending` or `cannot_prepare` and before any payment is recorded.
 - payment void is allowed only on an open Check and only for non-provider payments.
 - manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, and moving items between checks/sessions are out of v1.
+
+### CashierCorrectionIdempotency
+
+Owned by: Table Session and Billing
+
+| Field | Notes |
+| --- | --- |
+| `tenantId` | Tenant |
+| `checkId` | Affected Check/Adisyon |
+| `idempotencyKey` | Request key |
+| `requestHash` | Server-computed correction fingerprint |
+| `cashierCorrectionId` | Created correction when completed |
+| `status` | processing / completed / failed |
+| `createdAt`, `completedAt` | Lifecycle timestamps |
+
+Invariants:
+
+- unique by `tenantId + checkId + idempotencyKey`.
+- same key and same request returns the original correction result.
+- same key with a different correction request is rejected.
+- correction idempotency never replaces target-state validation; both are required.
 
 ## OTP, Audit, and Side Effects
 
@@ -849,6 +1058,20 @@ Owned by: Reliable Side Effects
 | `result` | success / retryable_failure / permanent_failure / timeout |
 | `resultSummary` | Redacted provider response summary |
 
+## Derived Read Models and Embedded Values
+
+These records do not own independent business state. They are either rebuildable read models or structured values embedded in an owning record.
+
+| Name | Kind | Source of Truth | Notes |
+| --- | --- | --- | --- |
+| `TableState` | derived read model | TableSession, Order, PreparationItem, DeliveryState, Check, Payment | Used by TenantApp hall/table panels; Venue Layout does not own runtime state. |
+| `BillSummary` | derived read model | Check, OrderItem snapshots, CashierCorrection, PriceAdjustment, Payment | Used by CustomerApp and CashierApp; server-calculated only. |
+| `StationWorkload` | derived read model | PreparationItem and PreparationTransition | Used by StationStaffApp; rebuildable from queue history. |
+| `ServiceQueue` | derived read model | PreparationItem.ready plus DeliveryState | Used by ServiceStaffApp; respects service hall scope. |
+| `ServiceWorkload` | derived read model | PreparationItem and DeliveryTransition | Used by ServiceStaffApp operational counters. |
+| `AuditMetadata` | embedded value | AuditEvent.metadata | Safe structured details only; no secrets or raw provider payloads. |
+| `AuditReason` | embedded value | AuditEvent.reason and correction/lifecycle records | Required for sensitive actions where specified. |
+
 Minimum v1 action names:
 
 | Action | Scope |
@@ -883,14 +1106,22 @@ Minimum v1 action names:
 | immutable tenant name/subdomain by service rule | Preserve tenant identity |
 | unique active Platform Owner | Preserve single-user PlatformApp scope in v1 |
 | Tenant status enum check | Preserve exact v1 lifecycle |
+| unique TenantHealth per tenant when materialized | Prevent conflicting platform health summaries |
+| unique LoginSession token hash | Prevent ambiguous session authentication |
 | unique TableDisplayClaim hash | Prevent provisioning claim collision/replay ambiguity |
 | unique active TableDisplayCredential per tenant/table | Prevent multiple active display credentials |
+| unique TableAccessToken hash | Prevent QR token collision/replay ambiguity |
 | unique active TableSession per tenant/table | Prevent double active table sessions |
 | unique Check per TableSession in v1 | Preserve single-adisyon v1 model |
+| unique SessionClosure per TableSession | Prevent duplicate close records |
 | unique starter template application per tenant/template version | Prevent seed reruns |
 | unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
 | unique order submit idempotency key per tenant/customer session/key | Prevent duplicate orders |
 | unique payment idempotency key per tenant/check/key | Prevent duplicate payments |
+| unique payment void idempotency key per tenant/payment/key | Prevent duplicate payment void/correction records |
+| unique cashier correction idempotency key per tenant/check/key | Prevent duplicate cashier correction records |
+| unique bulk delivery idempotency key per tenant/actor/key | Prevent duplicate same-table bulk delivery records |
+| unique PaymentVoid per payment if modeled separately | Prevent duplicate void records |
 | unique outbox idempotency reference per effect type | Prevent duplicate external side effects |
 | unique default ProductVariant per tenant/product | Prevent multiple default orderable variants |
 | orderable ProductService requires at least one enabled ProductVariant | Prevent products without an orderable unit from entering customer ordering |
@@ -941,12 +1172,39 @@ Failure must not expose partial orders to CustomerApp, CashierApp, StationStaffA
 
 One payment transaction includes:
 
+- PaymentIdempotency reservation,
 - Payment,
-- payment idempotency record,
 - billing read model update if materialized,
 - audit event.
 
 Failure must not double-count paid amount.
+
+### Payment Void
+
+One payment void transaction includes:
+
+- PaymentVoidIdempotency reservation,
+- Payment lock,
+- Check lock,
+- required CashierCorrection,
+- immutable payment void fields,
+- billing read model update if materialized,
+- audit event.
+
+Failure must not half-void a payment or create duplicate payment-void corrections.
+
+### Bulk Delivery
+
+One bulk delivery transaction includes:
+
+- DeliveryBulkIdempotency reservation,
+- same-table and hall-scope validation,
+- target PreparationItem and DeliveryState locks in deterministic order,
+- DeliveryState creation when direct delivery is the first tracked service action,
+- DeliveryTransition rows,
+- stable replay result.
+
+Failure must not deliver only part of the selected same-table item set.
 
 ### External Side Effect
 
@@ -963,6 +1221,7 @@ Failure must not pretend the side effect rolled back with the source transaction
 
 One cashier correction transaction includes:
 
+- CashierCorrectionIdempotency reservation,
 - correction authorization check,
 - target state validation,
 - CashierCorrection,

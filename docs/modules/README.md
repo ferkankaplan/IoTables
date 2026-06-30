@@ -22,6 +22,8 @@ Apps define product semantics under `docs/apps`. Modules implement those app sem
 | --- | --- |
 | [module-map.md](module-map.md) | Context map, dependency direction, and module ownership |
 | [_shared/module-template.md](_shared/module-template.md) | Standard format for module documents |
+| [_shared/contract-format.md](_shared/contract-format.md) | Standard format for module command/query contracts |
+| [_shared/api-contract-format.md](_shared/api-contract-format.md) | Standard format for module-owned HTTP API request/response contracts |
 | [_shared/table-access-qr-flow.md](_shared/table-access-qr-flow.md) | End-to-end QR flow across Tenant Setup and Ordering |
 
 ## Rules

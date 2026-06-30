@@ -33,6 +33,25 @@ When a necessary assumption cannot be verified, state it explicitly and either v
 
 Use external research only when repository evidence is insufficient for a modern technical decision, framework behavior, security concern, or current best practice. Prefer official documentation and primary sources.
 
+## Semantic Index Usage
+
+This repository may contain a generated semantic index at `docs/semantic/index.jsonl`.
+
+Use it as a search and retrieval aid when looking for existing decisions, related app scenarios, module contracts, data models, API endpoints, invariants, or test traceability references.
+
+The semantic index is not a source of truth. The source of truth remains the Markdown documentation, code, tests, configuration, migrations, and usage sites. If the index conflicts with the source files, trust the source files and regenerate the index.
+
+Before adding or changing behavior:
+
+- search the semantic index for related `semantic_id`, app, module, command, endpoint, identifier, and heading context;
+- inspect the referenced source Markdown file and line range before relying on an index record;
+- prefer exact metadata/symbol/path matches before broad semantic similarity;
+- use semantic similarity only to discover nearby concepts that may otherwise be missed;
+- merge new behavior into the owning Markdown source first when documentation is the active work product;
+- regenerate the index with `python tools/build_semantic_index.py` after changing indexed documentation.
+
+When implementation begins, code and tests may reference relevant `semantic_id` values for traceability. These references must point back to documentation; they must not redefine product behavior inside code comments or tests.
+
 ## Collaboration Model
 
 Work in continuous dialogue with the user.

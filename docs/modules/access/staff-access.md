@@ -59,15 +59,16 @@ Identity and Access authenticates users; Staff Access decides what tenant operat
 - Frontend-visible station/hall IDs are not authorization proof.
 - Revoked staff permissions must affect active sessions as soon as practical.
 - Assignment changes must be audited.
+- Staff role, station scope, and hall scope policy is defined in [permission-policy-matrix.md](permission-policy-matrix.md).
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| StaffProfile | Tenant staff metadata | linked to Identity user |
-| StaffRoleAssignment | App role access | cashier, station, service, admin |
-| StaffStationAssignment | Station permission | station-scoped |
-| StaffHallAssignment | Service permission | hall-scoped |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| StaffProfile | active -> disabled | tenant, user, displayName, status | Linked Identity user remains authentication authority; staff profile is tenant-scoped | Disable rather than delete when operational history references the staff user |
+| StaffRoleAssignment | active -> revoked | tenant, user, role | Role grants app access only; operation still needs app-specific permission and scope checks | Preserve assignment/revocation history through audit |
+| StaffStationAssignment | active -> revoked | tenant, user, station | Station staff can view/update only assigned stations; disabled stations cannot grant active queue authority | Revoke instead of deleting when audit/history matters |
+| StaffHallAssignment | active -> revoked | tenant, user, hall | Service staff can view/update only assigned halls; disabled halls cannot grant active delivery authority | Revoke instead of deleting when audit/history matters |
 
 ## App Surfaces
 

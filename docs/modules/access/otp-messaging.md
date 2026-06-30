@@ -62,11 +62,11 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| OtpChallenge | Verification lifecycle | target GSM, purpose, expiresAt, verifiedAt |
-| OtpAttempt | Attempt tracking | rate limits and audit |
-| MessageDelivery | Provider delivery record | provider id/status/error |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| OtpChallenge | created -> sent -> verified / expired / locked | tenant, user, purpose, targetGsm, codeHash, expiresAt, verifiedAt | Code stored hashed/non-recoverable; 5 minute lifetime in v1; verification idempotent after success; existing challenge target must not silently change if tenant GSM changes | Retain safe challenge metadata for audit/rate-limit review; never retain plaintext code |
+| OtpAttempt | recorded per verification attempt | tenant, challenge, attemptNo, result, createdAt | At most 5 verification attempts per challenge in v1; attempt numbers unique per challenge | Append-only security record |
+| MessageDelivery | queued -> sent / failed | tenant, challenge, deliveryNo, provider, providerMessageRef, status, redacted errorSummary | At most 3 send attempts per challenge in v1; provider response must not store OTP code/secrets/raw sensitive payload | Preserve attempts for troubleshooting and abuse review according to retention policy |
 
 ## App Surfaces
 

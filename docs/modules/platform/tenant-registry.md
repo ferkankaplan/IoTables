@@ -72,11 +72,11 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| Tenant | Platform tenant record | immutable name/subdomain, GSM, status, sector |
-| TenantHealth | Health/read model | high-level platform/setup signals only in v1 |
-| TenantLifecycleEvent | Lifecycle history | status changes and reasons |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| Tenant | provisioning -> active -> suspended/reactivated or provisioning_failed | id, immutable name, immutable subdomain, GSM, sector, capacity, address, status, dnsReady, provisioningError | subdomain unique; name/subdomain immutable; GSM required and audited; sector changes do not re-run starter data; suspended tenants block runtime actions | Do not hard-delete after runtime records exist; failed provisioning needs explicit recovery/deletion tooling |
+| TenantHealth | recalculated/read-only | tenant, lifecycle/setup state, starter application state, tenant admin bootstrap state, DNS readiness, safe runtime error summary | High-level platform signal only; must not expose tenant runtime detail or mutate tenant data | Derived/read model; can be rebuilt from source state where practical |
+| TenantLifecycleEvent | append-only | tenant, previousStatus, nextStatus, actor/system, reason, createdAt | Every suspend/reactivate/provisioning failure should leave a lifecycle event and audit evidence | Append-only; never rewrite status history |
 
 ## App Surfaces
 

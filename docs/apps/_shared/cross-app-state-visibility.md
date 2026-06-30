@@ -1,4 +1,7 @@
 # Cross-App State Visibility
+
+This document describes what each app may see. It is not an authorization matrix. Server-side command/query permissions are defined in [../../modules/access/permission-policy-matrix.md](../../modules/access/permission-policy-matrix.md).
+
 | State / Event | PlatformApp | TenantApp | CustomerApp | StationStaffApp | ServiceStaffApp | CashierApp |
 | --- | --- | --- | --- | --- | --- | --- |
 | Tenant `provisioning` | Full | Not available until tenant route resolves | Not available | Not available | Not available | Not available |

@@ -57,9 +57,9 @@ It defines where products/services may route, but it does not own station queue 
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| Station | Tenant fulfillment station | tenant, name, enabled, displayOrder |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| Station | active -> disabled | tenant, id, name, displayOrder, enabled | Station belongs to one tenant; disabled stations cannot receive new preparation items; menu products assigned to disabled stations cannot remain orderable | Disable instead of hard-delete when menu assignments, staff assignments, or preparation history reference it |
 
 ## App Surfaces
 

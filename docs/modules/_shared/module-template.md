@@ -51,9 +51,9 @@ How other modules interact with this module.
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| Example | Stores module-owned data | Important constraints |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| Example | created -> active -> disabled/closed | tenant, id, status, timestamps | uniqueness, ownership, transition rules | soft-disable or preserve when referenced |
 
 ## App Surfaces
 

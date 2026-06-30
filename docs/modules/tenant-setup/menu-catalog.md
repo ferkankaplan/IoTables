@@ -46,6 +46,8 @@ It is the pricing and orderability authority for CustomerApp.
 | Manage product variants | Tenant size/portion and current price setup | TenantApp |
 | Manage modifiers | Product customization | TenantApp |
 | Set availability | Control orderability | TenantApp |
+| List setup menu | Render TenantApp menu management workspace | TenantApp |
+| Get product/service detail | Render TenantApp product editor and operational item context | TenantApp, CashierApp, StationStaffApp |
 | Get customer menu | Render CustomerApp menu | CustomerApp |
 | Validate cart item | Validate selected product, variant, modifiers, and availability | Customer Ordering |
 | Price cart item | Server-side price calculation | Customer Ordering |
@@ -77,15 +79,15 @@ It is the pricing and orderability authority for CustomerApp.
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| MenuCategory | Organizes products/services | tenant-scoped |
-| ProductService | Menu item/service family | active, description, image |
-| ProductVariant | Orderable variant/portion | product, name, price, default flag |
-| AvailabilityOverride | Temporary orderability override | product or variant target, state, reason, optional expiry |
-| ModifierGroup | Required/optional customization group | min/max selection |
-| ModifierOption | Customization option | price delta, availability |
-| ProductService.stationId | Fulfillment routing | one station id per product/service in v1 |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| MenuCategory | active -> disabled | tenant, id, name, displayOrder, enabled | Category is tenant-scoped; disabled category hides/blocks normal ordering for contained products | Disable instead of hard-delete when products or order history reference it |
+| ProductService | active -> disabled | tenant, id, category, stationId, name, description, imageRef, enabled | Every orderable product has one station in v1 and at least one enabled ProductVariant; disabled product cannot be ordered | Disable instead of hard-delete when cart/order/history references it |
+| ProductVariant | active -> disabled | tenant, productService, name, price, displayOrder, isDefault, enabled | Positive price; at most one default variant per product; disabled variant cannot be ordered; price changes never alter OrderItem snapshots | Disable instead of hard-delete when carts/orders reference it |
+| AvailabilityOverride | scheduled/active -> expired | tenant, productService, optional productVariant, state, reason, startsAt, expiresAt, createdByUserId | Target must be product-level or product+variant-level; expired overrides do not affect submission; temporary sold-out must not disable historical catalog records | Preserve override history for audit and orderability troubleshooting |
+| ModifierGroup | active -> disabled | productService, name, required, minSelections, maxSelections | Required/min/max rules must be valid before product is orderable; cart validation uses current group rules | Disable/version behavior must not invalidate submitted OrderItem modifier snapshots |
+| ModifierOption | active -> unavailable/disabled | modifierGroup, name, priceDelta, available | Unavailable option cannot be newly selected; price delta is server-side authority before submission | Preserve option history for submitted snapshots |
+| ProductService.stationId | active routing value | productService, station | Must reference enabled station for product to be orderable; one station per product/service in v1 | Existing OrderItem keeps station snapshot when routing changes |
 
 ## App Surfaces
 

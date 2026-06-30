@@ -54,14 +54,18 @@ It coordinates Platform Tenant Registry, Access, Sector Starter Templates, and T
 - External side effects such as OTP/SMS must have explicit retry/recovery behavior.
 - Partial failure must not leave an apparently active tenant with missing required setup.
 - Recovery tooling must distinguish incomplete provisioning from completed one-time starter application.
+- Database-level migration and provisioning rules are defined in [../../database/migrations.md](../../database/migrations.md) and [../../database/seed-provisioning.md](../../database/seed-provisioning.md).
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| Tenant | Created/transitioned by provisioning | Owned by Tenant Registry |
-| StarterTemplateApplication | Prevents starter rerun | Owned by Sector Starter Templates |
-| AuditEvent | Records provisioning actions | Owned by Governance |
+Provisioning coordinates durable state owned by other modules. It does not own tenant setup records after creation.
+
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| Tenant | provisioning -> active / provisioning_failed | owned by Tenant Registry: identity, status, provisioningError | Tenant is activated only after required setup records commit; failed flow must not look active | Preserve failed state for explicit recovery or approved deletion |
+| StarterTemplateApplication | pending -> applied / failed / recovery_needed | owned by Sector Starter Templates: tenant, templateKey, templateVersion, status | One-time starter application is the durable seed-rerun guard | Preserve as proof even if starter data is edited later |
+| AuditEvent | append-only | owned by Governance: actor/system, action, target, metadata | Critical provisioning state changes must be auditable | Append-only |
+| OutboxMessage / MessageDelivery | pending -> completed / failed | owned by Governance or OTP Messaging for non-transactional side effects | External side effects such as SMS must not be assumed to rollback with tenant creation | Preserve attempts according to side-effect retention policy |
 
 ## App Surfaces
 

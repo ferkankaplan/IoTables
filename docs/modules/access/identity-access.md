@@ -67,16 +67,17 @@ It decides who a person is, which tenant they belong to, which app they may ente
 - Authentication must never trust tenant or role data from the frontend.
 - Disabled users cannot keep using old sessions.
 - First-login state transitions must be idempotent.
+- The app-scope and session portion of the v1 permission policy is defined in [permission-policy-matrix.md](permission-policy-matrix.md).
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| User | Human account | platform or tenant scoped |
-| Credential | Password/bootstrap state | hashed secrets only |
-| LoginSession | Authenticated staff/admin session | app/tenant scoped |
-| UserRole | High-level role membership | role names and active flags |
-| TotpFactor | Platform Owner second factor | encrypted secret, enrollment state |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| User | bootstrap/active -> disabled | tenant nullable for platform owner, username, status, firstPasswordChangeRequired | Username unique within tenant/platform scope; tenant users cannot access PlatformApp; disabled users cannot keep using old sessions | Disable instead of hard-delete when audit, orders, payments, or transitions reference the user |
+| Credential | bootstrap -> changed -> rotated | user, passwordHash, bootstrapCredential, changedAt | Plaintext passwords are never stored; bootstrap credentials cannot grant continued access after first login | Preserve credential metadata needed for audit; never preserve raw secrets |
+| LoginSession | active -> expired/revoked | user, tenant, app scope, session token hash, issuedAt, expiresAt, revokedAt | Session tenant/app scope must match requested app; revoked/expired sessions fail closed | Expire/revoke; retain only safe metadata as needed |
+| PlatformRoleAssignment | active -> disabled | user, role, status | Only `tenantId = null` users can hold `platform_owner`; v1 allows exactly one active Platform Owner | Preserve role assignment history for platform audit |
+| TotpFactor | enrolled -> enabled -> disabled/rotated | user, secretCiphertext, enrolledAt, enabled | Platform Owner must enroll before PlatformApp access; TOTP secret never logged/exposed after enrollment | Disable/rotate instead of deleting if audit needs evidence |
 
 ## App Surfaces
 

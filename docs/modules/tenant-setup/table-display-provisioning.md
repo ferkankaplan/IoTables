@@ -61,10 +61,10 @@ It lets TenantApp bind a physical table display to a table so the display can au
 
 ## Data Model
 
-| Model / Table | Purpose | Notes |
-| --- | --- | --- |
-| TableDisplayClaim | One-time provisioning claim | tenant, table, claimHash, expiresAt, consumedAt |
-| TableDisplayCredential | Authenticates table display | tenant, table, credentialHash, status, provisionedAt, revokedAt, lastSeenAt |
+| Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
+| --- | --- | --- | --- | --- |
+| TableDisplayClaim | created -> consumed / expired | tenant, table, claimHash, createdByUserId, expiresAt, consumedAt | Claim is one-time use; claim secret stored hashed; consuming a claim is atomic and creates/rotates credential | Preserve consumed/expired claim metadata for provisioning audit; never store raw claim |
+| TableDisplayCredential | active -> revoked/rotated | tenant, table, credentialHash, status, provisionedAt, revokedAt, lastSeenAt | Only one active display credential per tenant/table in v1; backend resolves table from credential, not client-provided IDs; raw credential never appears in QR payload | Revoke/rotate instead of hard-delete; preserve safe metadata for audit/support |
 
 ## App Surfaces
 

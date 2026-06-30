@@ -10,6 +10,22 @@ Platform owns tenant identity, lifecycle, provisioning, and platform-only operat
 | [provisioning.md](provisioning.md) | Tenant creation orchestration and recovery state |
 | [sector-starter-templates.md](sector-starter-templates.md) | One-time starter data templates by sector |
 
+## Contract Documents
+
+| Contract | Purpose |
+| --- | --- |
+| [tenant-registry-contracts.md](tenant-registry-contracts.md) | Tenant identity, profile, lifecycle, health, and subdomain commands/queries |
+| [provisioning-contracts.md](provisioning-contracts.md) | Tenant provisioning and recovery commands/queries |
+| [sector-starter-templates-contracts.md](sector-starter-templates-contracts.md) | Sector starter template application and state contracts |
+
+## API Documents
+
+| API Contract | Purpose |
+| --- | --- |
+| [tenant-registry-api.md](tenant-registry-api.md) | Tenant profile, lifecycle, DNS readiness, health, and tenant context endpoints |
+| [provisioning-api.md](provisioning-api.md) | Tenant creation, provisioning state, retry, and recovery endpoints |
+| [sector-starter-templates-api.md](sector-starter-templates-api.md) | Sector list, starter template preview, and starter application state endpoints |
+
 ## Primary Apps
 
 - PlatformApp
