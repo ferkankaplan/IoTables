@@ -6,7 +6,7 @@ Apps are user-facing surfaces. Bounded contexts are the primary architectural un
 
 The goal is encapsulation: apps call context/module interfaces; internal data, rules, state transitions, and safety constraints stay behind the owning boundary.
 
-App-flow documents in [docs/app-flows](../app-flows/README.md) define cross-app behavior, happy paths, branches, UI states, and acceptance criteria. Module, schema, and API decisions must implement those flows instead of inventing independent product semantics.
+App documents in [docs/apps](../apps/README.md) define cross-app behavior, happy paths, branches, UI states, and acceptance criteria. Module, schema, and API decisions must implement those flows instead of inventing independent product semantics.
 
 ## External Reference Findings
 

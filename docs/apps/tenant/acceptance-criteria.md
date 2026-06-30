@@ -1,0 +1,15 @@
+# TenantApp Acceptance Criteria
+TenantApp is accepted for v1 when:
+
+- public tenant page exposes only safe public tenant fields;
+- tenant admin login requires first password change and OTP through tenant GSM;
+- tenant name and subdomain are not editable;
+- halls and tables are managed in one workspace with contextual table panels;
+- v1 table layout is an ordered grid, not floor-plan coordinates;
+- table display provisioning is available from table detail;
+- stations can be created/disabled;
+- menu categories, products/services, modifiers, prices, availability, and one station assignment can be managed;
+- each product/service has exactly one station in v1;
+- service delivery tracking can be explicitly enabled/disabled;
+- staff roles, station scopes, and service hall scopes can be managed;
+- configuration changes that affect access, ordering, fulfillment, or customer-visible identity are audited.

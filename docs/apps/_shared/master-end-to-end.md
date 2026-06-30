@@ -4,7 +4,7 @@ This document defines the expected v1 behavior across the six IoTables apps.
 
 It is the product behavior bridge between app docs and module/schema/API design. If a module, schema, or API conflicts with this flow, the app behavior wins unless the app docs are explicitly revised.
 
-Detailed happy paths and branch behavior are enumerated in [v1-scenario-catalog.md](v1-scenario-catalog.md). This file keeps the main end-to-end path readable.
+Detailed app-specific branch behavior lives in each app folder's `scenarios.md`. This file keeps the shared end-to-end path readable.
 
 ## Scope
 
