@@ -6,6 +6,8 @@ It prevents modules, schemas, and APIs from inventing different meanings for the
 
 Detailed happy paths and branch behavior are enumerated in [v1-scenario-catalog.md](v1-scenario-catalog.md). This document defines the visibility and acceptance checks those scenarios must satisfy.
 
+Required UI states for each app workspace are defined in [v1-ui-state-catalog.md](v1-ui-state-catalog.md).
+
 ## App Visibility Matrix
 
 | State / Event | PlatformApp | TenantApp | CustomerApp | StationStaffApp | ServiceStaffApp | CashierApp |
@@ -146,11 +148,6 @@ CashierApp is accepted for v1 when:
 
 ## UI Detailing Follow-Ups
 
-These are not schema/API blockers. They should be resolved during detailed UI design without changing the v1 app semantics above:
-
-- exact customer-facing copy for QR/session/order errors;
-- empty/loading/error states per app workspace;
-- same-day recent history limits for station and service queues;
-- visual priority thresholds for old orders/items.
+Detailed per-app UI states are now tracked in [v1-ui-state-catalog.md](v1-ui-state-catalog.md). Remaining visual design choices should not change the v1 app semantics above.
 
 Tenant-level restaurant open/closed scheduling is out of v1. TenantApp may expose static public tenant information, but v1 orderability is controlled by tenant status, table state, product/service availability, station availability, and fresh QR presence.
