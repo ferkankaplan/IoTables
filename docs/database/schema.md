@@ -883,6 +883,9 @@ Owned by: Reliable Side Effects
 | `idempotency_ref` | `text` | Stable duplicate-protection reference |
 | `status` | `text` | `outbox_status` check |
 | `next_attempt_at` | `timestamptz` | Worker scheduling |
+| `claimed_by` | `text` | Nullable worker identity |
+| `claimed_at` | `timestamptz` | Nullable claim time |
+| `claim_expires_at` | `timestamptz` | Nullable worker lease expiry |
 | `created_at` | `timestamptz` | Enqueue time |
 | `completed_at` | `timestamptz` | Nullable completion |
 

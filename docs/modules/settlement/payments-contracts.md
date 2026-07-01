@@ -7,7 +7,7 @@ Source module: [payments.md](payments.md)
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
 | `payments.record_payment` | CashierApp | checkId, amountMinor, method, idempotencyKey, API-computed requestHash | Cashier role; Check open; amount positive; amount <= remaining balance; provider payments out of v1 | Reserve payment idempotency row; lock Check; compute remaining; insert Payment; audit | Payment and updated paid amount |
-| `payments.void_payment` | CashierApp | paymentId, reason, idempotencyKey, API-computed requestHash | Cashier role; Check open; non-provider v1 payment; reason required | Reserve payment-void idempotency row; lock Payment and Check; set void fields; write cashier correction/audit atomically; duplicate compatible key returns original result | Voided payment and updated paid amount |
+| `payments.void_payment` | CashierApp | paymentId, reason, idempotencyKey, API-computed requestHash | Cashier role; Check open; non-provider v1 payment; reason required | Reserve payment-void idempotency row; lock Check then Payment; set void fields; write cashier correction/audit atomically; duplicate compatible key returns original result | Voided payment and updated paid amount |
 
 ## Queries
 

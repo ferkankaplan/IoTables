@@ -878,7 +878,7 @@ Owned by: Payments
 
 Owned by: Payments
 
-Logical v1 record. It may be implemented as immutable void fields on `Payment` plus the required `CashierCorrection`, or as a separate table if the physical schema needs it.
+Logical v1 record. The v1 physical schema represents it as immutable void fields on `Payment` plus the required `CashierCorrection`; no separate `payment_voids` table exists in v1.
 
 | Field | Notes |
 | --- | --- |
@@ -1044,6 +1044,7 @@ Owned by: Reliable Side Effects
 | `idempotencyRef` | Stable duplicate-protection reference |
 | `status` | pending / claimed / completed / failed |
 | `nextAttemptAt` | Retry scheduling |
+| `claimedBy`, `claimedAt`, `claimExpiresAt` | Worker lease metadata for crash recovery |
 | `createdAt`, `completedAt` | Lifecycle timestamps |
 
 ### ExternalEffectAttempt
@@ -1121,7 +1122,7 @@ Minimum v1 action names:
 | unique payment void idempotency key per tenant/payment/key | Prevent duplicate payment void/correction records |
 | unique cashier correction idempotency key per tenant/check/key | Prevent duplicate cashier correction records |
 | unique bulk delivery idempotency key per tenant/actor/key | Prevent duplicate same-table bulk delivery records |
-| unique PaymentVoid per payment if modeled separately | Prevent duplicate void records |
+| single payment void state per Payment row | Prevent duplicate void records |
 | unique outbox idempotency reference per effect type | Prevent duplicate external side effects |
 | unique default ProductVariant per tenant/product | Prevent multiple default orderable variants |
 | orderable ProductService requires at least one enabled ProductVariant | Prevent products without an orderable unit from entering customer ordering |
@@ -1184,8 +1185,8 @@ Failure must not double-count paid amount.
 One payment void transaction includes:
 
 - PaymentVoidIdempotency reservation,
-- Payment lock,
 - Check lock,
+- Payment lock,
 - required CashierCorrection,
 - immutable payment void fields,
 - billing read model update if materialized,

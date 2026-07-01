@@ -11,6 +11,7 @@ Source module: [reliable-side-effects.md](reliable-side-effects.md)
 | `side_effects.record_attempt` | Worker | outboxMessageId, attemptNo, result summary | Claimed message; redacted provider response | Append ExternalEffectAttempt | Attempt record |
 | `side_effects.mark_completed` | Worker | outboxMessageId | Claimed message and successful attempt | Mark completed once; idempotent if already completed | Completed outbox message |
 | `side_effects.mark_failed` | Worker | outboxMessageId, retry/permanent result | Claimed message; retry policy applied | Update status and nextAttemptAt or terminal failed state | Failed/retry state |
+| `side_effects.recover_stale_claims` | Worker/recovery tooling | effect type filters, now | Worker or recovery authority only | Requeue claimed messages whose `claimExpiresAt` has passed; append redacted recovery evidence if needed | Pending or failed retryable message |
 
 ## Queries
 
@@ -30,4 +31,5 @@ Reliable Side Effects does not publish domain business events. It records and ex
 | `duplicate_effect` | Same effectType/idempotencyRef already exists. |
 | `payload_not_safe` | Payload contains raw secrets or unredacted provider data. |
 | `claim_conflict` | Another worker claimed the message. |
+| `stale_claim_recovered` | A previously claimed message was returned to retryable work. |
 | `permanent_failure` | Provider result should not be retried automatically. |

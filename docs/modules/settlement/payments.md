@@ -73,7 +73,7 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 | Payment | recorded -> voided | tenant, check, amount, method, status, cashier, receivedAt, void fields | Amount positive; cannot exceed remaining balance in v1; CustomerApp cannot create/mutate payments; provider payments are out of v1 | Preserve permanently; void instead of deleting |
 | PaymentIdempotency | processing -> completed / failed | tenant, check, idempotencyKey, paymentId, requestHash/status if needed | Unique by tenant + check + idempotencyKey; duplicate clicks/retries return original payment result | Retain long enough to cover cashier/network retries and audit payment safety |
 | PaymentVoidIdempotency | processing -> completed / failed | tenant, payment, idempotencyKey, requestHash, status, completedAt | Unique by tenant + payment + idempotencyKey; duplicate compatible void returns original void result | Retain with payment audit history |
-| PaymentVoid | created or represented by Payment void fields | tenant, payment, reason, actor, voidedAt | Allowed only on open Check and only for non-provider payments in v1; reason required | Append-only or immutable void fields; never erase original payment |
+| PaymentVoid | represented by immutable Payment void fields in v1 | tenant, payment, reason, actor, voidedAt | Allowed only on open Check and only for non-provider payments in v1; reason required; no separate v1 `payment_voids` table | Immutable void fields plus required correction; never erase original payment |
 
 ## App Surfaces
 

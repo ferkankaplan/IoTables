@@ -23,6 +23,7 @@ Normal apps do not enqueue or execute side effects directly.
 | `side_effects.record_attempt` | Worker-internal direct module call. |
 | `side_effects.mark_completed` | Worker-internal direct module call. |
 | `side_effects.mark_failed` | Worker-internal direct module call. |
+| `side_effects.recover_stale_claims` | Worker/recovery-internal direct module call. |
 
 ## Response Schemas
 
@@ -37,6 +38,7 @@ Normal apps do not enqueue or execute side effects directly.
 | `status` | string enum | `pending`, `claimed`, `completed`, `failed`. |
 | `attemptCount` | integer | Number of attempts. |
 | `nextAttemptAt` | timestamp/null | Retry schedule. |
+| `claimExpiresAt` | timestamp/null | Worker lease expiry when status is `claimed`; null otherwise. |
 | `lastFailureSummary` | string/null | Redacted. |
 | `createdAt` | timestamp | UTC. |
 | `updatedAt` | timestamp | UTC. |

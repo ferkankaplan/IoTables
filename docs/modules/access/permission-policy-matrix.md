@@ -249,6 +249,7 @@ Frontend visibility is never authorization proof.
 | `side_effects.record_attempt` | Worker | Worker owns claimed message | Provider result redacted |
 | `side_effects.mark_completed` | Worker | Worker owns claimed message | Successful attempt exists |
 | `side_effects.mark_failed` | Worker | Worker owns claimed message | Retry policy applied |
+| `side_effects.recover_stale_claims` | Worker, recovery tooling | Worker process or recovery authority | Claim lease expired |
 
 ## Governance Queries
 

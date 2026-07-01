@@ -14,7 +14,7 @@ Governance owns audit, policy evidence, and reliable external side-effect record
 | Contract | Purpose |
 | --- | --- |
 | [audit-contracts.md](audit-contracts.md) | Audit record and audit query contracts |
-| [reliable-side-effects-contracts.md](reliable-side-effects-contracts.md) | Outbox enqueue, worker claim, attempt, retry, and failure contracts |
+| [reliable-side-effects-contracts.md](reliable-side-effects-contracts.md) | Outbox enqueue, worker claim, stale-claim recovery, attempt, retry, and failure contracts |
 
 ## API Documents
 

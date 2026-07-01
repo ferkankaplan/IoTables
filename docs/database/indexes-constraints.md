@@ -193,6 +193,8 @@ constraint ck_preparation_items__status
 | `cashier_corrections` | `reason <> ''` | Corrections always need a reason. |
 | `cashier_correction_idempotency` | completed rows require `cashier_correction_id` and `completed_at` | Prevent ambiguous correction replay results. |
 | `otp_challenges` | `verified_at is null or verified_at <= expires_at` | Prevent success after expiry. |
+| `outbox_messages` | claimed rows require `claimed_by`, `claimed_at`, and `claim_expires_at`; non-claimed rows clear claim lease fields | Preserve recoverable worker claim lifecycle. |
+| `outbox_messages` | `claim_expires_at is null or claim_expires_at > claimed_at` | Prevent immediately expired or invalid worker leases. |
 | `audit_events` | no raw secrets in `metadata` | Enforce by service sanitizer and tests; DB cannot prove semantic secrecy. |
 
 ## Composite Foreign Keys for Tenant Integrity
@@ -349,7 +351,7 @@ Service queue joins require indexed path:
 | --- | --- |
 | Audit by tenant/time | `ix_audit_events__tenant_created` on `(tenant_id, created_at desc)` |
 | Audit by target | `ix_audit_events__target` on `(target_type, target_id, created_at desc)` |
-| Outbox claim next pending | `ix_outbox_messages__status_next_attempt` on `(status, next_attempt_at, created_at)` where `status in ('pending', 'failed')` |
+| Outbox claim next pending/stale | `ix_outbox_messages__status_next_attempt` on `(status, next_attempt_at, claim_expires_at, created_at)` where `status in ('pending', 'failed', 'claimed')` |
 | Outbox by aggregate | `ix_outbox_messages__aggregate` on `(aggregate_type, aggregate_id)` |
 | Effect attempts by message | unique `(outbox_message_id, attempt_no)` plus `ix_external_effect_attempts__message_started` |
 | OTP challenge lookup | `ix_otp_challenges__tenant_user_purpose_created` on `(tenant_id, user_id, purpose, created_at desc)` |
@@ -371,10 +373,10 @@ These are database behavior requirements, not API suggestions.
 | Delivery transition | Lock `delivery_states` or create first state with unique `order_item_id`; validate hall scope before mutation. |
 | Bulk delivery | Reserve idempotency row, lock all target order/preparation/delivery rows in deterministic order, validate same table and hall scope, then transition all items atomically. |
 | Payment record | Reserve payment idempotency row, lock Check, compute remaining balance in transaction, reject overpayment. |
-| Payment void | Reserve payment-void idempotency row, lock payment and Check, require open Check and non-provider v1 payment, write correction and void fields atomically. |
+| Payment void | Reserve payment-void idempotency row, lock Check then Payment, require open Check and non-provider v1 payment, write correction and void fields atomically. |
 | Cashier correction | Reserve correction idempotency row, lock Check and target record, validate v1 correction rules, write correction and target mutation atomically. |
 | Session close | Lock TableSession and Check; recompute remaining balance in transaction; require zero balance. |
-| Outbox worker claim | Use row-level claim update or `select for update skip locked`; each attempt writes `external_effect_attempts`. |
+| Outbox worker claim | Use row-level claim update or `select for update skip locked`; set a bounded claim lease; each attempt writes `external_effect_attempts`. |
 
 ## Deferrable or Service-Enforced Rules
 

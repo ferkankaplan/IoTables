@@ -7,7 +7,7 @@ Source module: [otp-messaging.md](otp-messaging.md)
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
 | `otp_messaging.create_challenge` | Identity and Access | tenantId, userId, purpose, targetGsm | Purpose supported; target GSM snapshotted; user belongs to tenant | Create challenge with hashed code and expiry; do not retarget existing challenge | OTP challenge state |
-| `otp_messaging.send_otp` | Identity and Access, TenantApp/CashierApp setup surfaces, worker | challengeId | Challenge not expired/verified/locked; setup flow owns challenge; max 3 sends in v1; provider payload redacted | Insert `message_deliveries`; enqueue/send through side-effect adapter | Delivery attempt state |
+| `otp_messaging.send_otp` | Identity and Access, TenantApp/CashierApp setup surfaces, worker | challengeId | Challenge not expired/verified/locked; setup flow owns challenge; max 3 sends in v1; provider payload redacted | Insert `message_deliveries`; enqueue Reliable Side Effects outbox work; provider send happens only after commit | Delivery attempt state |
 | `otp_messaging.verify_otp` | Identity and Access | challengeId, submitted code | Challenge active; max 5 attempts; code compared against hash | Lock challenge; append attempt; verification idempotent after success | Verified proof or failure state |
 | `otp_messaging.expire_or_lock_challenge` | OTP Messaging | challengeId, reason | Internal policy action | Mark effective terminal state through challenge/attempt metadata | Expired/locked state |
 

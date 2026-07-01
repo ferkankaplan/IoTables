@@ -41,12 +41,13 @@ Completed documentation layers:
 - permission policy matrix;
 - shared API standards;
 - module-owned API request/response contracts;
-- app API usage maps.
-- generated semantic JSONL index for documentation search and later code/test traceability.
+- app API usage maps;
+- generated semantic JSONL index for documentation search and later code/test traceability;
+- transaction and concurrency catalog for critical v1 flows.
 
 Next layer:
 
-- transaction and concurrency catalog for tenant creation, QR redeem, order submit, payment, correction, delivery, and close-session flows.
+- security threat model for QR abuse, fake orders, OTP abuse, tenant isolation, session theft, duplicate submit, and cashier/payment misuse.
 
 ## Ordered Work List
 

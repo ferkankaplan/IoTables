@@ -39,12 +39,14 @@ It protects the system from losing, duplicating, or silently misreporting side e
 | Record attempt | Persist provider response, failure, or timeout | Background worker |
 | Mark completed | Finish exactly-once logical effect processing | Background worker |
 | Mark failed | Stop retrying after policy exhaustion or non-retryable error | Background worker |
+| Recover stale claims | Return expired worker leases to retryable work | Background worker, recovery tooling |
 
 ## Internal Rules
 
 - A database transaction may enqueue an outbox message with the domain state change it depends on.
 - A side effect must not be executed before the domain transaction commits.
 - Each outbox message must have a stable idempotency reference scoped to the provider/effect type when the provider supports idempotency.
+- Claimed work must use a bounded worker lease; stale claims must become retryable through recovery instead of remaining permanently claimed.
 - Retrying an effect must not create duplicate business records.
 - Provider responses must be stored without secrets or sensitive payloads.
 - A module may keep an equivalent durable attempt log only when that log provides the same replay, retry, and auditability guarantees. OTP Messaging is allowed to own OTP-specific delivery attempts, but new external integrations should use this module by default.
@@ -53,6 +55,7 @@ It protects the system from losing, duplicating, or silently misreporting side e
 ## Operational Safety
 
 - Claiming work must be concurrency-safe.
+- A worker crash after claim must not lose the effect; expired claims are recovered before or during the next claim cycle.
 - Attempts must be append-only or otherwise preserve enough history for recovery.
 - Permanent failure must be visible through an explicit support/recovery workflow before the related feature is considered production-ready.
 - Retried side effects must include the original outbox idempotency reference.
@@ -63,7 +66,7 @@ It protects the system from losing, duplicating, or silently misreporting side e
 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
-| OutboxMessage | pending -> claimed -> completed / failed | tenant nullable, effectType, aggregateType, aggregateId, payloadRef, idempotencyRef, status, nextAttemptAt, timestamps | Unique idempotency reference per effect type; side effect executes only after source transaction commits; failed side effects are visible for recovery | Retain unresolved/failed records; completed records follow explicit retention policy |
+| OutboxMessage | pending -> claimed -> completed / failed | tenant nullable, effectType, aggregateType, aggregateId, payloadRef, idempotencyRef, status, nextAttemptAt, claimedBy, claimedAt, claimExpiresAt, timestamps | Unique idempotency reference per effect type; side effect executes only after source transaction commits; claimed work has a bounded lease; failed/stale side effects are visible for recovery | Retain unresolved/failed records; completed records follow explicit retention policy |
 | ExternalEffectAttempt | started -> success / retryable_failure / permanent_failure / timeout | outboxMessage, attemptNo, startedAt, completedAt, result, redacted resultSummary | Attempt numbers unique per outbox message; provider responses stored without secrets/sensitive raw payloads | Append-only attempt history |
 
 ## App Surfaces
@@ -75,7 +78,7 @@ It protects the system from losing, duplicating, or silently misreporting side e
 ## Future Service Boundary
 
 - Own data: outbox messages and external effect attempts.
-- Own APIs: enqueue, claim, record attempt, complete, fail, inspect.
+- Own APIs: enqueue, claim, recover stale claims, record attempt, complete, fail, inspect.
 - Published events: side_effect.completed, side_effect.failed if needed.
 - Consumed events: committed domain commands that require external side effects.
 - Must not leak: external provider secrets or business-state mutation authority.

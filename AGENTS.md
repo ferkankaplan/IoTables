@@ -23,6 +23,23 @@ The core principle is merge, not append.
 - Avoid duplicate flows, duplicate concepts, disconnected helper layers, and scattered special cases.
 - Make changes that look like they were part of the original architecture, not later patches.
 
+## Consistency Repair Trigger
+
+Whenever the agent detects a real inconsistency, contradiction, duplicate concept, stale decision, naming drift, broken trace, or cross-layer mismatch, it must treat that finding as a consistency repair job.
+
+This trigger applies at all times: while reading, planning, documenting, coding, reviewing, testing, or answering a question. The agent must not leave known inconsistency behind merely because it was discovered outside the immediate task.
+
+When this trigger fires:
+
+- identify the owning source of truth and the affected downstream documents, code, tests, schemas, APIs, migrations, and index records;
+- fix the root decision first, then propagate the correction backward and forward through every affected layer;
+- merge the correction into the natural owning location instead of appending a disconnected note;
+- remove or rewrite stale language so old and new decisions cannot coexist;
+- regenerate derived artifacts such as the semantic index when indexed documentation changes;
+- run the narrowest useful verification that proves the repaired layers are synchronized.
+
+If the repair is small, local, and low-risk, apply it immediately and report it. If it is broad, destructive, public-contract-changing, migration-affecting, or product-behavior-changing, present the evidence and recommended repair path to the user before changing it.
+
 ## Evidence-Based Work
 
 Use the repository as the primary source of truth: code, tests, configuration, migrations, documentation, scripts, and usage sites.
