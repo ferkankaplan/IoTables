@@ -49,6 +49,62 @@ It is a provisioning helper, not a runtime seeding mechanism.
 - A later template version must not apply automatically to an existing tenant.
 - Initial `cafe` starter data enables service delivery tracking by default.
 
+## `cafe.v1` Template Definition
+
+The active v1 cafe template is immutable after implementation begins.
+
+| Field | Value |
+| --- | --- |
+| Sector | `cafe` |
+| Template key | `cafe_default` |
+| Template version | `1` |
+| Semantic label | `cafe.v1` |
+| Currency | `TRY` |
+| Default service delivery tracking | `true` |
+
+Starter venue:
+
+| Hall | Tables |
+| --- | --- |
+| `Salon 1` | `Masa 000`, `Masa 001`, `Masa 999` |
+| `Salon 2` | `Masa 000`, `Masa 001`, `Masa 999` |
+
+Starter stations:
+
+| Station | Purpose |
+| --- | --- |
+| `Mutfak` | Food preparation |
+| `Kahve` | Coffee/tea preparation |
+
+Starter products use one default orderable variant each. Prices are VAT/tax-inclusive operational prices stored as minor units.
+
+| Station | Category | Product | Default Variant | Price Minor |
+| --- | --- | --- | --- | --- |
+| `Mutfak` | `Yiyecekler` | `Sandviç` | `Standart` | `18000` |
+| `Mutfak` | `Yiyecekler` | `Tost` | `Standart` | `15000` |
+| `Mutfak` | `Tatlılar` | `Kurabiye` | `Standart` | `7500` |
+| `Mutfak` | `Tatlılar` | `Kek` | `Standart` | `9000` |
+| `Mutfak` | `Yiyecekler` | `Poğaça` | `Standart` | `7000` |
+| `Kahve` | `Kahveler` | `Kapuçino` | `Standart` | `12000` |
+| `Kahve` | `Kahveler` | `Americano` | `Standart` | `10000` |
+| `Kahve` | `Kahveler` | `Türk Kahvesi` | `Standart` | `9000` |
+| `Kahve` | `Çaylar` | `Çay` | `Standart` | `4000` |
+| `Kahve` | `Kahveler` | `Latte` | `Standart` | `12500` |
+| `Kahve` | `Kahveler` | `Espresso` | `Standart` | `8500` |
+
+Starter staff:
+
+| Staff User | Username | Temporary Password | Role | Assignment | OTP |
+| --- | --- | --- | --- | --- | --- |
+| Tenant Admin | tenant subdomain | `admin` | `tenant_admin` | Tenant-wide admin | Required |
+| Kasiyer | `kasiyer` | `admin` | `cashier` | CashierApp | Required |
+| Aşçı | `asci` | `admin` | `station_staff` | `Mutfak` station | Not required |
+| Barista | `barista` | `admin` | `station_staff` | `Kahve` station | Not required |
+| Garson | `garson` | `admin` | `service_staff` | All starter halls | Not required |
+| Komi | `komi` | `admin` | `service_staff` | All starter halls | Not required |
+
+All starter staff must change the temporary password on first login. Tenant admin and cashier first-password setup require OTP sent to tenant GSM.
+
 ## Operational Safety
 
 - Applying starter template must be idempotent by `tenantId + templateKey + templateVersion`.

@@ -149,6 +149,7 @@ Frontend visibility is never authorization proof.
 | `table_display.consume_claim` | ESP32 setup flow | Valid raw claim secret | Claim unexpired/unconsumed |
 | `table_display.revoke_credential` | TenantApp | Tenant Admin own tenant | Credential belongs to table/tenant |
 | `table_display.rotate_credential` | TenantApp, claim consumption flow | Tenant Admin or valid claim flow | Old active credential revoked before new active credential |
+| `tenant_operational_settings.update_settings` | TenantApp, Provisioning | Tenant Admin own tenant or Provisioning | Own tenant settings only; service tracking change audited |
 
 ## Tenant Setup Queries
 
@@ -167,6 +168,9 @@ Frontend visibility is never authorization proof.
 | `menu_catalog.read_order_item_routing` | Ordering, Fulfillment | Internal module scope | Routing and label snapshot inputs |
 | `table_display.authenticate_credential` | ESP32 QR fetch flow, Table Presence | Raw display credential hash match | Trusted tenant/table display context |
 | `table_display.get_display_state` | TenantApp | Tenant Admin own tenant | Claim/credential status without raw secrets |
+| `tenant_operational_settings.get_settings` | TenantApp | Tenant Admin own tenant | Full tenant operational settings |
+| `tenant_operational_settings.get_public_display_context` | TenantApp public page, Tenant Registry composition | Public-safe tenant route | Public display name fallback context |
+| `tenant_operational_settings.is_service_delivery_tracking_enabled` | Fulfillment, ServiceStaffApp guards, CustomerApp/CashierApp visibility mapping | Internal or authenticated tenant-scoped caller | Boolean tracking mode |
 
 ## Ordering Commands
 
@@ -209,9 +213,11 @@ Frontend visibility is never authorization proof.
 | Contract | Allowed Caller | Required Scope Checks | Result Boundary |
 | --- | --- | --- | --- |
 | `preparation.list_station_queue` | StationStaffApp | Station Staff role and assigned station | Queue for authorized station |
+| `preparation.list_station_recent_items` | StationStaffApp | Station Staff role and assigned station | Same-day recent/completed items for authorized station |
 | `preparation.read_preparation_state` | CustomerApp, CashierApp, ServiceStaffApp | Customer visibility, Cashier role, or Service Staff hall scope | Preparation state only |
 | `preparation.get_station_workload` | StationStaffApp | Station Staff role and assigned station | Workload counters |
 | `service_delivery.list_ready_items` | ServiceStaffApp | Service Staff role, assigned hall, tracking enabled | Ready/picked-up queue |
+| `service_delivery.list_recent_deliveries` | ServiceStaffApp | Service Staff role, assigned hall, tracking enabled | Same-day delivered/recent activity for authorized halls |
 | `service_delivery.read_delivery_state` | CustomerApp, CashierApp | Customer visibility or Cashier role | Customer sees mapped text only |
 | `service_delivery.get_service_workload` | ServiceStaffApp | Service Staff role and assigned hall | Service workload counters |
 

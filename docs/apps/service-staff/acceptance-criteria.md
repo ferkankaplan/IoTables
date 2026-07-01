@@ -10,5 +10,5 @@ ServiceStaffApp is accepted for v1 when:
 - staff can mark `ready -> delivered`;
 - staff may mark `ready -> picked_up -> delivered`;
 - bulk delivery is allowed only for selected same-table items;
-- delivery transitions are idempotent and audited;
+- single-item delivery transitions are duplicate-safe, bulk delivery is idempotent, and delivery transitions are audited;
 - CustomerApp shows `Teslim edildi` only after delivered when service tracking is enabled.

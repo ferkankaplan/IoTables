@@ -21,6 +21,7 @@ It provides traceability for sensitive changes and runtime corrections.
 - Authorization decisions.
 - Payment calculations.
 - Order or session mutation.
+- Product analytics, operational KPI calculation, reporting dashboards, or telemetry pipelines.
 
 ## Users and App Access
 
@@ -47,6 +48,7 @@ It provides traceability for sensitive changes and runtime corrections.
 - Corrections require reason.
 - Bootstrap, password setup, OTP verification result, tenant status changes, payments, session closure, delivery/preparation transitions, starter template application, and cashier corrections must be auditable.
 - Audit logs should avoid storing secrets or OTP codes.
+- Audit records are evidence, not analytics telemetry. Analytics may aggregate from audited events only when the owning app/module source also allows that metric.
 - V1 audit retention is indefinite. Automated deletion/archival requires an explicit retention policy later.
 
 Minimum v1 action names:

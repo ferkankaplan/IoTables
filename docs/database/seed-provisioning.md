@@ -169,11 +169,11 @@ The `cafe.v1` starter creates normal tenant-owned records.
 | Halls | `Salon 1`, `Salon 2` |
 | Tables per hall | `Masa 000`, `Masa 001`, `Masa 999` |
 | Stations | `Mutfak`, `Kahve` |
-| Mutfak products | `Sandviç`, `Tost`, `Kurabiye`, `Kek`, `Poğaça` |
-| Kahve products | `Kapuçino`, `Americano`, `Türk Kahvesi`, `Çay`, `Latte`, `Espresso` |
+| Mutfak products | `Sandviç`, `Tost`, `Kurabiye`, `Kek`, `Poğaça` with default variants/prices from `cafe.v1` |
+| Kahve products | `Kapuçino`, `Americano`, `Türk Kahvesi`, `Çay`, `Latte`, `Espresso` with default variants/prices from `cafe.v1` |
 | Staff users | `Kasiyer`, `Aşçı`, `Barista`, `Garson`, `Komi` |
 
-Each starter product must have at least one default `product_variants` row. Exact starter prices belong to the versioned template artifact. Implementation must not create an enabled/orderable product without a valid `price_minor`.
+Each starter product must have at least one default `product_variants` row. Exact starter prices are defined by the immutable `cafe.v1` template in [../modules/platform/sector-starter-templates.md](../modules/platform/sector-starter-templates.md#cafev1-template-definition). Implementation must not create an enabled/orderable product without a valid `price_minor`.
 
 After creation, TenantApp treats these records as normal editable tenant data. They are not protected system records.
 
@@ -271,4 +271,4 @@ Provisioning implementation must have tests for:
 
 ## Open Questions
 
-Exact starter product prices are intentionally not set in this database strategy document. They must be defined in the versioned `cafe.v1` template artifact before implementation.
+None currently.

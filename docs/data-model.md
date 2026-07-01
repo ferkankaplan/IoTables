@@ -1065,7 +1065,7 @@ These records do not own independent business state. They are either rebuildable
 
 | Name | Kind | Source of Truth | Notes |
 | --- | --- | --- | --- |
-| `TableState` | derived read model | TableSession, Order, PreparationItem, DeliveryState, Check, Payment | Used by TenantApp hall/table panels; Venue Layout does not own runtime state. |
+| `TableState` | derived read model | TableSession, Order, PreparationItem, DeliveryState, Check, Payment | Used by TenantApp hall/table panels and CashierApp venue board; Venue Layout does not own runtime state. |
 | `BillSummary` | derived read model | Check, OrderItem snapshots, CashierCorrection, PriceAdjustment, Payment | Used by CustomerApp and CashierApp; server-calculated only. |
 | `StationWorkload` | derived read model | PreparationItem and PreparationTransition | Used by StationStaffApp; rebuildable from queue history. |
 | `ServiceQueue` | derived read model | PreparationItem.ready plus DeliveryState | Used by ServiceStaffApp; respects service hall scope. |

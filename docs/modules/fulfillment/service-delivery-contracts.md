@@ -15,6 +15,7 @@ Source module: [service-delivery.md](service-delivery.md)
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
 | `service_delivery.list_ready_items` | ServiceStaffApp | actor, hall filters | Service staff role and hall assignment; tracking enabled | Ready/picked-up service queue |
+| `service_delivery.list_recent_deliveries` | ServiceStaffApp | actor, hall filters, current business day, cursor/limit | Service staff role and hall assignment; tracking enabled | Same-day delivered/recent service activity |
 | `service_delivery.read_delivery_state` | CustomerApp, CashierApp | orderItemId/session filter | App visibility rules; CustomerApp sees mapped text only | Delivery state or derived final state |
 | `service_delivery.get_service_workload` | ServiceStaffApp | actor/hall filters | Hall assignment | Ready/picked-up/delivered counters |
 

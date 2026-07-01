@@ -10,6 +10,7 @@ Preparation owns station queues and preparation status transitions.
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/v1/station-staff/queue` | StationStaffApp | `preparation.list_station_queue` | StationStaff session | Query: `stationId`, `status?`, `cursor`, `limit` | `PreparationQueue` | `outside_station_scope`, `missing_role` |
+| `GET` | `/api/v1/station-staff/recent-items` | StationStaffApp | `preparation.list_station_recent_items` | StationStaff session | Query: `stationId`, `cursor`, `limit` | `StationRecentItemList` | `outside_station_scope`, `missing_role` |
 | `GET` | `/api/v1/station-staff/workload` | StationStaffApp | `preparation.get_station_workload` | StationStaff session | Query: `stationId` | `StationWorkload` | `outside_station_scope` |
 | `POST` | `/api/v1/station-staff/preparation-items/{preparationItemId}/start` | StationStaffApp | `preparation.start_preparing` | StationStaff session + CSRF | Path: `preparationItemId` | `PreparationItem` | `invalid_preparation_transition`, `outside_station_scope` |
 | `POST` | `/api/v1/station-staff/preparation-items/{preparationItemId}/mark-ready` | StationStaffApp | `preparation.mark_ready` | StationStaff session + CSRF | Path: `preparationItemId` | `PreparationItem` | `invalid_preparation_transition`, `outside_station_scope` |
@@ -49,6 +50,8 @@ Preparation owns station queues and preparation status transitions.
 | `readyAt` | timestamp/null | UTC. |
 
 `PreparationQueue` uses list envelope with `PreparationItem` items.
+
+`StationRecentItemList` uses list envelope with same-day items that left the active station queue or reached a terminal/recent state visible to StationStaffApp.
 
 `StationWorkload` includes station counters by status and oldest item age.
 

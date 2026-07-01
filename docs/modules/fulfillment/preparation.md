@@ -39,6 +39,7 @@ It starts when Customer Ordering routes order items to stations and ends when st
 | --- | --- | --- |
 | Create queue item | Add order item to station queue | Customer Ordering |
 | List station queue | Show staff queue | StationStaffApp |
+| List station recent items | Show same-day completed/recent station activity | StationStaffApp |
 | Start preparing | Transition pending to preparing | StationStaffApp |
 | Mark ready | Transition preparing to ready | StationStaffApp |
 | Report cannot prepare | Transition pending/preparing to cannot_prepare with reason | StationStaffApp |
@@ -69,7 +70,7 @@ preparing -> cannot_prepare
 
 ## Operational Safety
 
-- Status transitions must be idempotent.
+- Status transitions must be duplicate-safe: repeated or stale attempts must return the current server state or fail as stale without corrupting state.
 - Current state must be validated server-side.
 - Staff assignment must be checked server-side.
 - Concurrent updates to the same item must not corrupt state.
@@ -85,6 +86,7 @@ preparing -> cannot_prepare
 | PreparationItem | pending -> preparing -> ready, or pending/preparing -> cannot_prepare | tenant, orderItemId, stationId, status, cannotPrepareReason, updatedBy, updatedAt | One preparation item per routed OrderItem; transitions validate current state and station authorization; `cannot_prepare` requires reason | Preserve with OrderItem; completed/closed-session items are not modified except explicit recovery |
 | PreparationTransition | append-only | preparationItem, actor, fromStatus, toStatus, reason, createdAt | Every meaningful status transition records actor/time; duplicate transitions must be idempotent or stale-rejected | Append-only operational history |
 | StationWorkload | derived/read-only | station, counts by status, oldest pending age, average prep time where available | Derived from PreparationItem/Transition; must respect Staff Access station scope | Rebuildable read model |
+| StationRecentItem | derived/read-only | station, preparationItem, final/recent status, timestamps | Same-day recent activity only; must respect Staff Access station scope | Rebuildable from PreparationItem/Transition and delivery visibility |
 
 ## App Surfaces
 

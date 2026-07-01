@@ -177,7 +177,7 @@ State transitions must be controlled. An item must not jump backward or skip req
 
 StationStaffApp updates live order item state, so transitions must be safe under duplicate clicks, retries, and concurrent staff actions.
 
-- Status transitions must be idempotent.
+- Status transitions must be duplicate-safe: repeated or stale attempts must return the current server state or fail as stale without corrupting state.
 - Status transitions must validate the current state server-side.
 - A staff user must not update items outside authorized stations.
 - Two staff users updating the same item concurrently must not corrupt state.

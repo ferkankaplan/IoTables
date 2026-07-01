@@ -76,7 +76,9 @@ Primary pages should represent stable workspaces. Secondary objects should usual
 | Hall Management | `https://[tenant].iotables.net/admin/halls` | Manage halls and their tables in one workspace |
 | Station Management | `https://[tenant].iotables.net/admin/stations` | Manage preparation/service stations |
 | Menu Management | `https://[tenant].iotables.net/admin/menu` | Manage products, services, variants/portions, pricing, availability, categories, and station assignments |
+| Staff Management | `https://[tenant].iotables.net/admin/staff` | Manage staff users, roles, station scopes, and hall scopes |
 | Tenant Settings | `https://[tenant].iotables.net/admin/settings` | Manage editable tenant settings |
+| Tenant Audit | `https://[tenant].iotables.net/admin/settings?view=audit` | Review tenant setup and security audit in settings context |
 
 Tables may have addressable internal routes for deep linking if needed, but they should not have a primary standalone management page in the first version.
 

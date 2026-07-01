@@ -171,7 +171,8 @@ State transitions must be controlled. An item must not jump backward or skip req
 
 ServiceStaffApp updates live delivery state, so transitions must be safe under duplicate clicks, retries, and concurrent staff actions.
 
-- Delivery transitions must be idempotent.
+- Single-item delivery transitions must be duplicate-safe: repeated or stale attempts must return the current server state or fail as stale without corrupting state.
+- Bulk delivery transitions must be idempotent as one command.
 - Delivery transitions must validate the current state server-side.
 - A staff user must not view or update items outside authorized halls/service scope.
 - Two staff users updating the same item concurrently must not corrupt state.

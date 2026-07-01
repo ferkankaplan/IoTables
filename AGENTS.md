@@ -56,6 +56,8 @@ This repository may contain a generated semantic index at `docs/semantic/index.j
 
 Use it as a search and retrieval aid when looking for existing decisions, related app scenarios, module contracts, data models, API endpoints, invariants, or test traceability references.
 
+Follow `docs/semantic/source-policy.md` for the semantic source hierarchy. The required derivation direction is app scenario -> module contract -> data model -> API contract -> tests -> implementation -> generated artifacts.
+
 The semantic index is not a source of truth. The source of truth remains the Markdown documentation, code, tests, configuration, migrations, and usage sites. If the index conflicts with the source files, trust the source files and regenerate the index.
 
 Before adding or changing behavior:

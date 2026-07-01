@@ -10,7 +10,7 @@ Venue Layout owns halls, tables, ordered display, and table context. It does not
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/v1/tenant-setup/venue/board` | TenantApp | `venue_layout.get_hall_table_board` | Tenant Admin session | none | `HallTableBoard` | `not_authorized` |
-| `GET` | `/api/v1/cashier/venue/board` | CashierApp | `venue_layout.get_hall_table_board` | Cashier session | none | `HallTableBoard` | `missing_role` |
+| `GET` | `/api/v1/cashier/venue/board` | CashierApp | `venue_layout.get_hall_table_board` | Cashier session | none | `CashierHallTableBoard` | `missing_role` |
 | `GET` | `/api/v1/tenant-setup/halls` | TenantApp | `venue_layout.list_halls` | Tenant Admin session | Query: `includeDisabled?` | `HallList` | `not_authorized` |
 | `POST` | `/api/v1/tenant-setup/halls` | TenantApp | `venue_layout.create_hall` | Tenant Admin session + CSRF | Body: `HallWriteRequest` | `Hall` | `duplicate_hall`, `validation_failed` |
 | `PATCH` | `/api/v1/tenant-setup/halls/{hallId}` | TenantApp | `venue_layout.update_hall` | Tenant Admin session + CSRF | Body: editable hall fields | `Hall` | `duplicate_hall`, `not_found_or_hidden` |
@@ -49,7 +49,11 @@ Venue Layout owns halls, tables, ordered display, and table context. It does not
 
 `HallWithTables` includes `hallId`, `name`, `displayOrder`, `enabled`, and ordered `tables`.
 
-`Table` includes `tableId`, `hallId`, `name`, `displayOrder`, `enabled`, `activeSessionId?`, and `displayState?` only when caller is TenantApp.
+`Table` includes `tableId`, `hallId`, `name`, `displayOrder`, and `enabled`.
+
+`CashierHallTableBoard` uses the same hall/table envelope and adds caller-specific `CashierTableState` per table when available. `CashierTableState` may include `activeSessionId?`, `checkId?`, `sessionStatus?`, `totalMinor?`, `paidMinor?`, `remainingMinor?`, `latestOrderState?`, `attentionFlags`, and `derivedAt`.
+
+`CashierTableState` is a derived read model for the cashier board. Venue Layout may compose it for display, but it does not own TableSession, order, fulfillment, Check, or payment state.
 
 ## Idempotency
 

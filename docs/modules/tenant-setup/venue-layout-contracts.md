@@ -18,7 +18,7 @@ Source module: [venue-layout.md](venue-layout.md)
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
 | `venue_layout.get_table_context` | CustomerApp, CashierApp, Ordering, Fulfillment | tenantId, tableId | Caller must already satisfy app/session scope | Table label, hall, enabled state |
-| `venue_layout.get_hall_table_board` | TenantApp, CashierApp | tenantId | Tenant Admin or Cashier role | Halls, tables, derived table state references |
+| `venue_layout.get_hall_table_board` | TenantApp, CashierApp | tenantId | Tenant Admin or Cashier role | Halls, tables, and caller-specific derived table state references; CashierApp may receive operational `CashierTableState` composed from runtime contexts |
 | `venue_layout.list_halls` | TenantApp, Staff Access | tenantId | Tenant-scoped actor | Hall list for setup/assignment |
 
 ## Consumed Contracts

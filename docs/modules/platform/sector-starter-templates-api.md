@@ -36,7 +36,7 @@ Sector Starter Templates expose only safe PlatformApp selection and template app
 | `sector` | string enum | Sector. |
 | `templateKey` | string | Example: `cafe`. |
 | `templateVersion` | string/integer | Immutable template version. |
-| `creates` | object | Counts and labels for halls, tables, stations, products, and starter roles. |
+| `creates` | object | Counts, labels, and safe price preview for halls, tables, stations, products, and starter roles. |
 
 `StarterTemplateApplicationState`:
 

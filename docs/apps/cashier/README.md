@@ -12,6 +12,11 @@ This folder contains the v1 product behavior source for CashierApp.
 | [acceptance-criteria.md](acceptance-criteria.md) | V1 acceptance criteria |
 | [ui-states.md](ui-states.md) | Required UI states |
 | [api-usage.md](api-usage.md) | Module-owned API endpoints used by this app |
+| [wireframes.md](wireframes.md) | Cashier board, session, payment, correction, close, and responsive behavior |
+| [copy.md](copy.md) | Cashier-facing Turkish copy and forbidden settlement claims |
+| [components.md](components.md) | Product-level CashierApp component responsibilities |
+| [test-plan.md](test-plan.md) | CashierApp scenario, state, API, security, UI, and copy test coverage |
+| [analytics.md](analytics.md) | Cashier settlement metrics and audit separation |
 | [out-of-scope.md](out-of-scope.md) | Behaviors this app must not implement in v1 |
 
 Shared cross-app docs are in [../_shared](../_shared/semantic-source-rule.md).

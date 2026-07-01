@@ -10,6 +10,12 @@ Module, schema, API, backend, frontend, and test work that affects CustomerApp m
 - [visibility.md](visibility.md)
 - [acceptance-criteria.md](acceptance-criteria.md)
 - [ui-states.md](ui-states.md)
+- [api-usage.md](api-usage.md)
+- [wireframes.md](wireframes.md)
+- [copy.md](copy.md)
+- [components.md](components.md)
+- [test-plan.md](test-plan.md)
+- [analytics.md](analytics.md)
 - [out-of-scope.md](out-of-scope.md)
 
 If implementation discovers a behavior conflict, revise this app documentation before changing modules, data model, or API contracts.

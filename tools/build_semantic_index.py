@@ -15,6 +15,10 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 
+EXCLUDED_MARKDOWN_PATHS = {
+    "docs/documentation-checklist.md",
+}
+
 APP_BY_FOLDER = {
     "platform": "PlatformApp",
     "tenant": "TenantApp",
@@ -79,10 +83,6 @@ def classify(rel_path: str) -> dict[str, Any]:
         meta["kind"] = "data_model"
         return meta
 
-    if rel_path == "docs/documentation-roadmap.md":
-        meta["kind"] = "documentation_roadmap"
-        return meta
-
     if len(parts) < 2 or parts[0] != "docs":
         return meta
 
@@ -111,6 +111,9 @@ def classify(rel_path: str) -> dict[str, Any]:
         if len(parts) > 2:
             meta["module_context"] = parts[2]
             filename = parts[-1]
+            if filename == "permission-policy-matrix.md":
+                meta["kind"] = "module_policy_matrix"
+                return meta
             meta["module"] = normalize_module_name(filename)
             if filename == "README.md":
                 meta["kind"] = "module_context"
@@ -127,6 +130,16 @@ def classify(rel_path: str) -> dict[str, Any]:
         meta["kind"] = "api_standard"
         return meta
 
+    if folder == "adr":
+        meta["layer"] = "adr"
+        meta["kind"] = "adr_index" if parts[-1] == "README.md" else "adr"
+        return meta
+
+    if folder == "testing":
+        meta["layer"] = "test"
+        meta["kind"] = "test_strategy" if parts[-1] == "strategy.md" else "test_doc"
+        return meta
+
     if folder == "database":
         meta["layer"] = "database"
         meta["kind"] = "database"
@@ -139,8 +152,13 @@ def classify(rel_path: str) -> dict[str, Any]:
     return meta
 
 
-def iter_markdown_files(docs_dir: Path) -> list[Path]:
-    return sorted(path for path in docs_dir.rglob("*.md") if path.is_file())
+def iter_markdown_files(repo_root: Path, docs_dir: Path) -> list[Path]:
+    return sorted(
+        path
+        for path in docs_dir.rglob("*.md")
+        if path.is_file()
+        and path.relative_to(repo_root).as_posix() not in EXCLUDED_MARKDOWN_PATHS
+    )
 
 
 def parse_sections(markdown: str, fallback_title: str) -> list[Section]:
@@ -290,7 +308,7 @@ def build_index(repo_root: Path, docs_dir: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     id_counts: dict[str, int] = defaultdict(int)
 
-    for path in iter_markdown_files(docs_dir):
+    for path in iter_markdown_files(repo_root, docs_dir):
         markdown = path.read_text(encoding="utf-8")
         fallback_title = path.stem.replace("-", " ").title()
         for section in parse_sections(markdown, fallback_title):
@@ -320,7 +338,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    repo_root = Path.cwd()
+    repo_root = Path.cwd().resolve()
     docs_dir = (repo_root / args.docs).resolve()
     output_path = (repo_root / args.output).resolve()
 

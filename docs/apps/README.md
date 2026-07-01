@@ -26,6 +26,10 @@ Each app has its own folder. Shared cross-app rules live under `_shared` to avoi
 | [_shared/scenario-format.md](_shared/scenario-format.md) | Format and scope rule for app scenarios |
 | [_shared/cross-app-state-visibility.md](_shared/cross-app-state-visibility.md) | Full cross-app state visibility matrix |
 | [_shared/v1-out-of-scope.md](_shared/v1-out-of-scope.md) | Global out-of-scope scenario requests |
+| [_shared/copy-style.md](_shared/copy-style.md) | Shared app copy rules and user-facing wording patterns |
+| [_shared/accessibility-responsive.md](_shared/accessibility-responsive.md) | Shared accessibility, responsive, focus, and touch rules |
+| [_shared/component-model.md](_shared/component-model.md) | Shared product-level UI component responsibilities |
+| [_shared/wireframe-rules.md](_shared/wireframe-rules.md) | Required structure and rules for app wireframe documents |
 
 ## Per-App Document Set
 
@@ -38,6 +42,14 @@ Each app folder contains:
 - `visibility.md`
 - `acceptance-criteria.md`
 - `ui-states.md`
+- `api-usage.md`
 - `out-of-scope.md`
+
+Future UI package documents are added as app-level semantic sources when written:
+
+- `wireframes.md`
+- `copy.md`
+- `components.md`
+- `test-plan.md`
 
 Do not add new app behavior only to modules, schema, or APIs. Merge behavior here first.

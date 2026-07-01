@@ -9,6 +9,7 @@ The source of truth remains the Markdown documentation under `docs/`. The JSONL 
 | File | Purpose |
 | --- | --- |
 | [index.jsonl](index.jsonl) | Generated semantic records, one JSON object per Markdown section. |
+| [source-policy.md](source-policy.md) | Semantic source hierarchy and conflict-resolution policy. |
 
 ## Build Command
 
@@ -20,6 +21,12 @@ python tools/build_semantic_index.py
 
 The script reads Markdown files under `docs/` and writes `docs/semantic/index.jsonl`.
 
+## Source Scope
+
+The index is built from Markdown files that define product behavior, app scenarios, module contracts, data models, API contracts, tests, ADRs, operational architecture, or semantic-index behavior. The hierarchy is defined in [source-policy.md](source-policy.md).
+
+Human work queues are excluded. `docs/documentation-checklist.md` is only a planning aid for the user and must not be treated as product truth, architectural truth, or LLM retrieval truth.
+
 ## Record Shape
 
 Each JSONL row contains:
@@ -30,8 +37,8 @@ Each JSONL row contains:
 | `semantic_id` | Stable ID derived from documentation path and heading context. |
 | `title` | Current section title. |
 | `heading_path` | Full Markdown heading context. |
-| `metadata.layer` | `app`, `module`, `data`, `database`, `api`, or `documentation`. |
-| `metadata.kind` | More specific document type such as `app`, `module_contract`, `module_api`, or `database`. |
+| `metadata.layer` | `app`, `module`, `data`, `database`, `api`, `test`, `adr`, or `documentation`. |
+| `metadata.kind` | More specific document type such as `app`, `module_contract`, `module_api`, `module_policy_matrix`, `test_strategy`, `adr`, or `database`. |
 | `metadata.app` | App owner when the source path is app-specific. |
 | `metadata.module_context` | Module context when the source path is module-owned. |
 | `metadata.module` | Module name when available. |

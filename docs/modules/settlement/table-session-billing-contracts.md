@@ -8,7 +8,7 @@ Source module: [table-session-billing.md](table-session-billing.md)
 | --- | --- | --- | --- | --- | --- |
 | `table_session_billing.open_session_check_if_needed` | Customer Ordering | tenantId, tableId | Tenant/table active; called during accepted order submit | Rely on unique open TableSession; create TableSession and one Check if absent; conflict loads existing open session | Open TableSession and Check |
 | `table_session_billing.record_cashier_correction` | CashierApp | checkId, type, targetType, targetId, reason, idempotencyKey, API-computed requestHash | Cashier role; reason required; target eligible by v1 rules | Reserve correction idempotency row; lock Check and target; append correction; mutate allowed target atomically; duplicate compatible key returns original result | Correction result and updated bill summary |
-| `table_session_billing.close_session` | CashierApp | tableSessionId/checkId, optional reason | Cashier role; Check open; remaining balance zero; no invalid active state | Lock TableSession and Check; recompute balance; create SessionClosure; close Check/TableSession | Closed session |
+| `table_session_billing.close_session` | CashierApp | tableSessionId/checkId, optional reason | Cashier role; Check open or already closed by the same session context; remaining balance zero; no invalid active state | Lock TableSession and Check; recompute balance; create unique SessionClosure and close Check/TableSession; duplicate compatible close loads existing closed state without a second closure | Closed session |
 
 ## Queries
 

@@ -10,6 +10,7 @@ Service Delivery owns picked-up and delivered states after preparation readiness
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/v1/service-staff/ready-items` | ServiceStaffApp | `service_delivery.list_ready_items` | ServiceStaff session | Query: `hallId?`, `status?`, `cursor`, `limit` | `ServiceReadyItemList` | `service_tracking_disabled`, `outside_hall_scope` |
+| `GET` | `/api/v1/service-staff/recent-deliveries` | ServiceStaffApp | `service_delivery.list_recent_deliveries` | ServiceStaff session | Query: `hallId?`, `cursor`, `limit` | `ServiceRecentDeliveryList` | `service_tracking_disabled`, `outside_hall_scope` |
 | `GET` | `/api/v1/service-staff/workload` | ServiceStaffApp | `service_delivery.get_service_workload` | ServiceStaff session | Query: `hallId?` | `ServiceWorkload` | `service_tracking_disabled`, `outside_hall_scope` |
 | `POST` | `/api/v1/service-staff/items/{orderItemId}/pick-up` | ServiceStaffApp | `service_delivery.mark_picked_up` | ServiceStaff session + CSRF | Path: `orderItemId` | `DeliveryState` | `not_ready_for_delivery`, `outside_hall_scope`, `invalid_delivery_transition` |
 | `POST` | `/api/v1/service-staff/items/{orderItemId}/deliver` | ServiceStaffApp | `service_delivery.mark_delivered` | ServiceStaff session + CSRF | Path: `orderItemId` | `DeliveryState` | `not_ready_for_delivery`, `outside_hall_scope`, `invalid_delivery_transition` |
@@ -33,6 +34,8 @@ Service Delivery owns picked-up and delivered states after preparation readiness
 | `deliveryStatus` | string enum/null | `picked_up`, `delivered`, or null when not yet tracked. |
 
 `DeliveryState` includes `orderItemId`, `preparationItemId`, `status`, `pickedUpAt?`, `deliveredAt?`, and `actorDisplayName?`.
+
+`ServiceRecentDeliveryList` uses list envelope with same-day delivered/recent items visible to ServiceStaffApp for authorized halls.
 
 `BulkDeliverRequest`:
 

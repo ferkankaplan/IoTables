@@ -37,6 +37,7 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 | Interface | Purpose | Consumers |
 | --- | --- | --- |
 | List ready items | Show service queue | ServiceStaffApp |
+| List recent deliveries | Show same-day delivered/recent service activity | ServiceStaffApp |
 | Mark picked up | Optional intermediate handoff | ServiceStaffApp |
 | Mark delivered | Confirm table delivery | ServiceStaffApp |
 | Bulk mark delivered | Confirm multiple same-table items in one atomic action | ServiceStaffApp |
@@ -60,7 +61,7 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 ## Operational Safety
 
-- Delivery transitions must be idempotent.
+- Single-item delivery transitions must be duplicate-safe: repeated or stale attempts must return the current server state or fail as stale without corrupting state.
 - Bulk delivery transitions must be idempotent as one command.
 - Current state must be validated server-side.
 - Hall authorization must be checked server-side.
@@ -78,6 +79,7 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 | DeliveryBulkIdempotency | processing -> completed / failed | tenant, table, actor, idempotencyKey, requestHash, deliveredOrderItemIds, status | Unique by tenant + actor + idempotencyKey; whole bulk command succeeds or fails as one unit | Retain long enough for service staff/network retries and same-day audit replay |
 | ServiceQueue | derived/read-only | ready preparation items, table/hall context, delivery state | Derived from PreparationItem.ready plus DeliveryState; must respect service hall scope | Rebuildable read model |
 | ServiceWorkload | derived/read-only | ready count, picked-up count, oldest ready age, delivered count, average ready-to-delivered time | Derived from ready/delivery transitions; metrics are operational only | Rebuildable read model |
+| ServiceRecentDelivery | derived/read-only | delivered items, table/hall context, station label, deliveredAt, actor | Same-day recent delivery activity; must respect service hall scope | Rebuildable from DeliveryState/Transition |
 
 ## App Surfaces
 
@@ -90,7 +92,7 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 ## Future Service Boundary
 
 - Own data: delivery states, transitions, and bulk delivery idempotency.
-- Own APIs: list ready items, mark picked up, mark delivered, bulk mark delivered.
+- Own APIs: list ready items, list recent deliveries, mark picked up, mark delivered, bulk mark delivered.
 - Published events: delivery.status_changed, item.delivered.
 - Consumed events: preparation.ready, table_session.closed.
 - Must not leak: delivery mutation to CustomerApp.

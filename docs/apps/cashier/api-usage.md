@@ -6,6 +6,7 @@ CashierApp uses tenant-scoped APIs on `https://[tenant].iotables.net`.
 
 | App Need | Endpoint | Module API Contract | Notes |
 | --- | --- | --- | --- |
+| Login requirements | `GET /api/v1/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe first-password/OTP requirement discovery. |
 | Login | `POST /api/v1/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | Cashier app scope. |
 | First password setup | `POST /api/v1/auth/first-password/begin`, `POST /api/v1/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | Cashier requires OTP proof. |
 | OTP state/send/verify | `/api/v1/auth/otp-challenges/{challengeId}...` | [OTP Messaging](../../modules/access/otp-messaging-api.md) | Used only during protected setup flows. |

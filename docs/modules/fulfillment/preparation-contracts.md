@@ -16,6 +16,7 @@ Source module: [preparation.md](preparation.md)
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
 | `preparation.list_station_queue` | StationStaffApp | actor, stationId/status filters | Station assignment required | Queue items for authorized station |
+| `preparation.list_station_recent_items` | StationStaffApp | actor, stationId, current business day, cursor/limit | Station assignment required | Same-day recent/completed items for authorized station |
 | `preparation.read_preparation_state` | CustomerApp, CashierApp, ServiceStaffApp | orderItemId or table session filter | Caller visibility enforced by app/module scope | Preparation status and timestamps |
 | `preparation.get_station_workload` | StationStaffApp | actor, stationId | Station assignment required | Counts/age read model |
 

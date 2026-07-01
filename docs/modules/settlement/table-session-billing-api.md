@@ -57,4 +57,4 @@ The API layer computes the normalized request hash from route, check, actor, cor
 
 Cashier correction requires `Idempotency-Key`. Same key and same request returns the original `CashierCorrectionResult`; same key with different request returns `409 idempotency_conflict`.
 
-Close-session does not require `Idempotency-Key` in v1. It is naturally idempotent through TableSession/Check state, the unique `SessionClosure` record, and server-side balance recomputation.
+Close-session does not require `Idempotency-Key` in v1. It is naturally idempotent through TableSession/Check state, the unique `SessionClosure` record, and server-side balance recomputation. A duplicate compatible close returns the current `ClosedTableSession`; a stale or incompatible close fails without mutation.

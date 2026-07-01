@@ -11,6 +11,7 @@
 | Menu Management | loading, empty categories, empty category products, invalid product, unavailable product, disabled product |
 | Tenant Settings | loading, immutable field blocked, service tracking changed, GSM changed |
 | Staff Management | loading, empty staff, disabled user, missing role/scope, active session permission changed |
+| Tenant Audit | loading, empty audit, filtered empty, access denied |
 
 ### Empty States
 
