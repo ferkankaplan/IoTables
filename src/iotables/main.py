@@ -1,13 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from iotables import __version__
+from iotables.api.errors import (
+    ApiError,
+    api_error_handler,
+    http_exception_handler,
+    validation_exception_handler,
+)
 from iotables.api.router import api_router
 from iotables.config import Settings, get_settings
+from iotables.middleware import request_context_middleware
+from iotables.observability import configure_logging
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     resolved_settings = settings or get_settings()
+    configure_logging(resolved_settings.log_level)
+
     app = FastAPI(
         title=resolved_settings.app_name,
         version=__version__,
@@ -16,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/api/openapi.json",
     )
     app.state.settings = resolved_settings
+    app.middleware("http")(request_context_middleware)
 
     app.add_middleware(
         CORSMiddleware,
@@ -32,6 +44,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ],
     )
 
+    app.add_exception_handler(ApiError, api_error_handler)
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.include_router(api_router, prefix="/api/v1")
     return app
 

@@ -14,3 +14,5 @@ def test_health_live_returns_safe_status() -> None:
         "service": "IoTables",
         "environment": "local",
     }
+    assert response.headers["X-Request-Id"].startswith("req_")
+    assert response.headers["Cache-Control"] == "no-store"
