@@ -2,11 +2,13 @@ import logging
 import re
 import time
 from collections.abc import Awaitable, Callable
+from typing import Any
 from uuid import uuid4
 
 from fastapi import Request, Response
 
 from iotables.api.errors import error_response
+from iotables.security.context import ActorContext
 
 REQUEST_ID_HEADER = "X-Request-Id"
 REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
@@ -50,6 +52,7 @@ async def request_context_middleware(
         response.headers.setdefault("Cache-Control", "no-store")
 
     duration_ms = round((time.perf_counter() - started_at) * 1000, 3)
+    safe_context = request_log_context(request)
     logger.info(
         "HTTP request completed",
         extra={
@@ -59,6 +62,7 @@ async def request_context_middleware(
             "statusCode": status_code,
             "errorCode": getattr(request.state, "error_code", None),
             "durationMs": duration_ms,
+            **safe_context,
         },
     )
     return response
@@ -76,3 +80,17 @@ def safe_route(request: Request) -> str:
     if isinstance(path, str) and path:
         return path
     return request.url.path
+
+
+def request_log_context(request: Request) -> dict[str, Any]:
+    actor = getattr(request.state, "actor", None)
+    if not isinstance(actor, ActorContext):
+        return {}
+
+    context: dict[str, Any] = {
+        "actorType": actor.actor_type.value,
+        "appScope": actor.app_scope.value,
+    }
+    if actor.tenant_id is not None:
+        context["tenantId"] = str(actor.tenant_id)
+    return context

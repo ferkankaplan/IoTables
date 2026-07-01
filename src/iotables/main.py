@@ -13,6 +13,7 @@ from iotables.api.router import api_router
 from iotables.config import Settings, get_settings
 from iotables.middleware import request_context_middleware
 from iotables.observability import configure_logging
+from iotables.security.session import NullSessionResolver
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -27,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/api/openapi.json",
     )
     app.state.settings = resolved_settings
+    app.state.session_resolver = NullSessionResolver()
     app.middleware("http")(request_context_middleware)
 
     app.add_middleware(
