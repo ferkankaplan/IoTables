@@ -195,7 +195,7 @@ Owned by: Identity and Access
 
 Starter usernames:
 
-| Role | Username | OTP |
+| Starter User | Username | OTP |
 | --- | --- | --- |
 | Tenant Admin | tenant subdomain | Required |
 | Cashier | `kasiyer` | Required, sent to tenant GSM |

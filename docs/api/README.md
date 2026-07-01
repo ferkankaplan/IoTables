@@ -56,13 +56,13 @@ Action-style domain transitions should be explicit commands, not hidden `PATCH` 
 Examples:
 
 ```text
-POST /api/v1/preparation-items/{id}/start
-POST /api/v1/preparation-items/{id}/mark-ready
-POST /api/v1/checks/{id}/payments
-POST /api/v1/table-sessions/{id}/close
+POST /api/v1/station-staff/preparation-items/{preparationItemId}/start
+POST /api/v1/station-staff/preparation-items/{preparationItemId}/mark-ready
+POST /api/v1/cashier/checks/{checkId}/payments
+POST /api/v1/cashier/table-sessions/{tableSessionId}/close
 ```
 
-Endpoint-specific contracts will define final routes later.
+Endpoint-specific contracts define the authoritative route, actor, authentication, request, response, and failure-code details.
 
 ## JSON Rules
 

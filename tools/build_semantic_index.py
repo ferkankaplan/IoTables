@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 SCHEMA_VERSION = 1
 
 EXCLUDED_MARKDOWN_PATHS = {
@@ -156,8 +155,7 @@ def iter_markdown_files(repo_root: Path, docs_dir: Path) -> list[Path]:
     return sorted(
         path
         for path in docs_dir.rglob("*.md")
-        if path.is_file()
-        and path.relative_to(repo_root).as_posix() not in EXCLUDED_MARKDOWN_PATHS
+        if path.is_file() and path.relative_to(repo_root).as_posix() not in EXCLUDED_MARKDOWN_PATHS
     )
 
 
@@ -233,13 +231,10 @@ def extract_symbols(markdown: str) -> dict[str, list[str]]:
     code_spans = {match.group(1) for match in CODE_SPAN_RE.finditer(markdown)}
     commands = {match.group(1) for match in COMMAND_RE.finditer(markdown)}
     endpoints = {
-        f"{match.group(1)} {match.group(2).rstrip('`')}"
-        for match in ENDPOINT_RE.finditer(markdown)
+        f"{match.group(1)} {match.group(2).rstrip('`')}" for match in ENDPOINT_RE.finditer(markdown)
     }
     identifiers = {
-        value
-        for value in code_spans
-        if re.fullmatch(r"[a-z][a-z0-9_]*", value) and "_" in value
+        value for value in code_spans if re.fullmatch(r"[a-z][a-z0-9_]*", value) and "_" in value
     }
     apps = {name for name in APP_NAMES if name in markdown}
 

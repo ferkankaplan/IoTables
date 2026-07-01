@@ -230,7 +230,7 @@ Verification:
 
 - Customer payment provider checkout.
 - Pay-at-table.
-- Fiscal/e-Adisyon/OKC integrations.
+- Fiscal/e-Adisyon/ÖKC integrations.
 - Offline-first POS security.
 - Device fleet management, firmware health, and remote attestation.
 - Multi-location tenant isolation.

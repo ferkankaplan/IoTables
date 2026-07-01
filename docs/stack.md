@@ -23,7 +23,7 @@ This document records the intended IoTables stack and the currently verified loc
 | Settings/config | Pydantic Settings | 2.x |
 | Testing | pytest | latest compatible |
 | Async test support | pytest-asyncio | latest compatible |
-| HTTP test client | httpx | latest compatible |
+| HTTP test client | httpx2 | latest compatible |
 | Lint/format | Ruff | latest compatible |
 
 ## Frontend Stack

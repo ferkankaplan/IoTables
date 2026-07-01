@@ -1,0 +1,14 @@
+{
+  "name": "iotables",
+  "private": true,
+  "packageManager": "pnpm@11.0.0",
+  "scripts": {
+    "build": "pnpm --dir frontend build",
+    "check": "pnpm run lint && pnpm run test && pnpm run build",
+    "dev:api": "uv run uvicorn iotables.main:create_app --factory --reload",
+    "dev:web": "pnpm --dir frontend dev",
+    "format": "uv run ruff format .",
+    "lint": "uv run ruff check . && pnpm --dir frontend lint",
+    "test": "uv run pytest"
+  }
+}

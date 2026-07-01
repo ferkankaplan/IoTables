@@ -179,7 +179,7 @@ In v1, each product/service belongs to exactly one fulfillment station. Multi-st
 1. Tenant Admin opens staff management.
 2. Tenant Admin reviews starter staff users if a starter template was applied.
 3. Tenant Admin creates or edits staff users.
-4. Tenant Admin assigns roles such as cashier, station staff, waiter, and busser.
+4. Tenant Admin assigns app roles such as cashier, station staff, and service staff.
 5. Tenant Admin assigns service staff to authorized halls.
 6. Tenant Admin disables staff users who should no longer access tenant apps.
 
@@ -205,7 +205,7 @@ Starter data must not be recreated automatically after the tenant edits or delet
 | Product variant/portion | Full | Orderable unit and current price |
 | Availability override | Full | Temporary sold-out/orderability state without disabling catalog history |
 | Station assignment | Full | Determines where order items are routed |
-| Staff user | Full | Starter users such as cashier, cook, barista, waiter, and busser may be created during provisioning with first-login password change required |
+| Staff user | Full | Starter users such as cashier, cook, barista, waiter, and busser may be created during provisioning with first-login password change required; waiter and busser are service staff assignments in v1 |
 | Service hall assignment | Full | Defines which halls service staff can operate |
 | Service delivery tracking setting | Full | Controls whether ServiceStaffApp is active for the tenant |
 
