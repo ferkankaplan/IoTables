@@ -43,11 +43,12 @@ Completed documentation layers:
 - module-owned API request/response contracts;
 - app API usage maps;
 - generated semantic JSONL index for documentation search and later code/test traceability;
-- transaction and concurrency catalog for critical v1 flows.
+- transaction and concurrency catalog for critical v1 flows;
+- security threat model and rate limit strategy.
 
 Next layer:
 
-- security threat model for QR abuse, fake orders, OTP abuse, tenant isolation, session theft, duplicate submit, and cashier/payment misuse.
+- app wireframes for primary pages, drawers, dialogs, panels, and empty/error states.
 
 ## Ordered Work List
 
