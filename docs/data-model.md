@@ -978,8 +978,8 @@ Invariants:
 
 - OTP values are stored hashed or otherwise non-recoverable.
 - V1 OTP lifetime is 5 minutes.
-- V1 allows at most 5 verification attempts per challenge.
-- V1 allows at most 3 send attempts per challenge with cooldown between sends.
+- V1 allows at most 5 verification attempts per tenant/challenge.
+- V1 allows at most 3 send attempts per tenant/challenge with cooldown between sends.
 - OTP verification is idempotent after success.
 
 ### OtpAttempt
@@ -1118,6 +1118,8 @@ Minimum v1 action names:
 | unique starter template application per tenant/template version | Prevent seed reruns |
 | unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
 | unique order submit idempotency key per tenant/customer session/key | Prevent duplicate orders |
+| unique PreparationItem per tenant/order item | Prevent duplicate station queue records. |
+| unique DeliveryState per tenant/order item | Prevent duplicate delivery state records. |
 | unique payment idempotency key per tenant/check/key | Prevent duplicate payments |
 | unique payment void idempotency key per tenant/payment/key | Prevent duplicate payment void/correction records |
 | unique cashier correction idempotency key per tenant/check/key | Prevent duplicate cashier correction records |
@@ -1131,8 +1133,8 @@ Minimum v1 action names:
 | foreign key OrderItem.productVariantId to ProductVariant | Preserve order variant history source |
 | check positive ProductVariant price | Prevent invalid current menu prices |
 | check AvailabilityOverride target consistency | Require product-level or product+variant-level target |
-| OtpAttempt attempt number unique per challenge | Preserve retry/rate-limit accounting |
-| MessageDelivery delivery number unique per challenge | Preserve SMS send attempt accounting |
+| OtpAttempt attempt number unique per tenant/challenge | Preserve retry/rate-limit accounting |
+| MessageDelivery delivery number unique per tenant/challenge | Preserve SMS send attempt accounting |
 | foreign keys for tenant-owned records | Preserve tenant data integrity |
 | check positive payment amount | Prevent invalid payments |
 | check positive order item quantity | Prevent invalid orders |

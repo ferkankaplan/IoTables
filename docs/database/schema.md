@@ -829,7 +829,7 @@ Owned by: OTP / Messaging
 | `id` | `uuid` | Primary key |
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `otp_challenge_id` | `uuid` | FK to `otp_challenges.id` |
-| `attempt_no` | `integer` | Monotonic per challenge |
+| `attempt_no` | `integer` | Monotonic per challenge; v1 range 1-5 |
 | `result` | `text` | `otp_attempt_result` check |
 | `created_at` | `timestamptz` | Attempt time |
 
@@ -842,11 +842,11 @@ Owned by: OTP / Messaging
 | `id` | `uuid` | Primary key |
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `otp_challenge_id` | `uuid` | FK to `otp_challenges.id` |
-| `delivery_no` | `integer` | Monotonic per challenge |
+| `delivery_no` | `integer` | Monotonic per challenge; v1 range 1-3 |
 | `provider` | `text` | SMS adapter name |
 | `provider_message_ref` | `text` | Nullable provider reference |
-| `status` | `text` | `message_delivery_status` check |
-| `error_summary` | `text` | Redacted error |
+| `status` | `text` | `message_delivery_status` check; queued/sent/failed lifecycle guarded |
+| `error_summary` | `text` | Redacted error required for failed delivery |
 | `created_at` | `timestamptz` | Attempt start |
 | `completed_at` | `timestamptz` | Nullable completion |
 
@@ -865,7 +865,7 @@ Owned by: Audit
 | `target_type` | `text` | Target model label |
 | `target_id` | `text` | Text to support UUID or natural platform identifiers |
 | `reason` | `text` | Required for sensitive actions |
-| `metadata` | `jsonb` | Safe structured metadata, no secrets |
+| `metadata` | `jsonb` | Safe JSON object metadata, no secrets |
 | `created_at` | `timestamptz` | Append-only event time |
 
 ### `outbox_messages`
@@ -879,15 +879,15 @@ Owned by: Reliable Side Effects
 | `effect_type` | `text` | `outbox_effect_type` check |
 | `aggregate_type` | `text` | Source aggregate label |
 | `aggregate_id` | `text` | Source aggregate ID |
-| `payload_ref` | `jsonb` | Redacted payload reference |
+| `payload_ref` | `jsonb` | Redacted JSON object payload reference |
 | `idempotency_ref` | `text` | Stable duplicate-protection reference |
-| `status` | `text` | `outbox_status` check |
+| `status` | `text` | `outbox_status` check with claim/completion lifecycle guards |
 | `next_attempt_at` | `timestamptz` | Worker scheduling |
 | `claimed_by` | `text` | Nullable worker identity |
 | `claimed_at` | `timestamptz` | Nullable claim time |
 | `claim_expires_at` | `timestamptz` | Nullable worker lease expiry |
 | `created_at` | `timestamptz` | Enqueue time |
-| `completed_at` | `timestamptz` | Nullable completion |
+| `completed_at` | `timestamptz` | Required only for completed messages |
 
 ### `external_effect_attempts`
 
@@ -900,8 +900,8 @@ Owned by: Reliable Side Effects
 | `attempt_no` | `integer` | Monotonic per outbox message |
 | `started_at` | `timestamptz` | Attempt start |
 | `completed_at` | `timestamptz` | Nullable completion |
-| `result` | `text` | `external_effect_result` check |
-| `result_summary` | `text` | Redacted provider response summary |
+| `result` | `text` | `external_effect_result` check with completion lifecycle guard |
+| `result_summary` | `text` | Redacted provider response summary required for non-success results |
 
 ## Not Persisted as Tables in V1
 

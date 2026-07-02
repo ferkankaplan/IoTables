@@ -9,9 +9,19 @@ The product semantics live under `docs/apps/`. Implementation must follow the de
 ```powershell
 uv sync
 pnpm install
+pnpm run db:up
+pnpm run db:migrate
 pnpm run lint
 pnpm run test
 pnpm run build
+```
+
+Run the local PostgreSQL 18.4 service:
+
+```powershell
+pnpm run db:up
+pnpm run db:migrate
+pnpm run db:current
 ```
 
 Run the backend API:
@@ -32,6 +42,7 @@ pnpm run dev:web
 | --- | --- |
 | `src/iotables/` | FastAPI backend package |
 | `migrations/` | Alembic migration environment |
+| `compose.yaml` | Local PostgreSQL development service |
 | `frontend/` | Vite + React + Tailwind SPA |
 | `tests/` | Backend executable tests |
 | `docs/` | Semantic source documentation |

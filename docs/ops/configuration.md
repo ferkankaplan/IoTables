@@ -25,7 +25,7 @@ Source context:
 
 | Environment | Purpose | Rules |
 | --- | --- | --- |
-| local | Developer machine. | May use local PostgreSQL and local `.env`, ignored by git. |
+| local | Developer machine. | Uses the Docker Compose `db` PostgreSQL service by default and local `.env`, ignored by git. |
 | test | Automated tests. | Isolated database/schema, deterministic fake providers. |
 | staging | Production-like verification. | Realistic secrets/providers, no production data unless explicitly approved. |
 | production | Live tenant/customer traffic. | Strict secrets, HTTPS, secure cookies, migrations reviewed. |
@@ -86,6 +86,7 @@ Rules:
 ## Database and Migration Settings
 
 - Runtime connects to PostgreSQL 18.4 target from [../stack.md](../stack.md).
+- Local development defaults to `postgresql+asyncpg://iotables:iotables@localhost:5433/iotables`, backed by the Docker Compose `db` service. This is a local fake credential only.
 - Alembic migrations run as a deployment step, not from normal request handling.
 - Migration configuration must not import FastAPI routers or runtime providers with side effects.
 - The application readiness check must verify the expected migration head.

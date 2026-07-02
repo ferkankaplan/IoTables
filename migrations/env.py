@@ -5,14 +5,16 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import iotables.database.schema  # noqa: F401
 from iotables.config import get_settings
+from iotables.database.base import metadata
 
 config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None
+target_metadata = metadata
 
 
 def get_url() -> str:

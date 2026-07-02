@@ -117,8 +117,8 @@ Only one live unconsumed QR token per display should be enforced by the token is
 | `table_sessions` | unique `(tenant_id, table_id)` where `status = 'open'` | One active table session per table. |
 | `checks` | unique `table_session_id` | Exactly one Check/Adisyon per TableSession in v1. |
 | `session_closures` | unique `table_session_id` | Prevent duplicate close records. |
-| `preparation_items` | unique `order_item_id` | One station queue item per order item. |
-| `delivery_states` | unique `order_item_id` | One delivery state per order item. |
+| `preparation_items` | unique `(tenant_id, order_item_id)` | One station queue item per tenant order item. |
+| `delivery_states` | unique `(tenant_id, order_item_id)` | One delivery state per tenant order item. |
 | `delivery_bulk_idempotency` | unique `(tenant_id, actor_user_id, idempotency_key)` | Prevent duplicate same-actor bulk delivery commands. |
 | `payment_idempotency` | unique `(tenant_id, check_id, idempotency_key)` | Prevent duplicate payment recording. |
 | `payment_void_idempotency` | unique `(tenant_id, payment_id, idempotency_key)` | Prevent duplicate payment void/correction commands. |
@@ -128,8 +128,8 @@ Only one live unconsumed QR token per display should be enforced by the token is
 
 | Table | Constraint / Index | Purpose |
 | --- | --- | --- |
-| `otp_attempts` | unique `(otp_challenge_id, attempt_no)` | Preserve monotonic attempt accounting. |
-| `message_deliveries` | unique `(otp_challenge_id, delivery_no)` | Preserve SMS send attempt accounting. |
+| `otp_attempts` | unique `(tenant_id, otp_challenge_id, attempt_no)` | Preserve tenant-scoped monotonic attempt accounting. |
+| `message_deliveries` | unique `(tenant_id, otp_challenge_id, delivery_no)` | Preserve tenant-scoped SMS send attempt accounting. |
 | `outbox_messages` | unique `(effect_type, idempotency_ref)` | Prevent duplicate external side effects. |
 | `external_effect_attempts` | unique `(outbox_message_id, attempt_no)` | Preserve retry history. |
 
@@ -193,9 +193,15 @@ constraint ck_preparation_items__status
 | `cashier_corrections` | `reason <> ''` | Corrections always need a reason. |
 | `cashier_correction_idempotency` | completed rows require `cashier_correction_id` and `completed_at` | Prevent ambiguous correction replay results. |
 | `otp_challenges` | `verified_at is null or verified_at <= expires_at` | Prevent success after expiry. |
+| `otp_attempts` | `attempt_no between 1 and 5` | Enforce v1 verification attempt limit at the database boundary. |
+| `message_deliveries` | `delivery_no between 1 and 3` | Enforce v1 SMS send attempt limit at the database boundary. |
+| `message_deliveries` | queued rows have no completion/error; sent/failed rows require completion; failed rows require redacted error summary | Preserve provider delivery lifecycle without storing sensitive payloads. |
 | `outbox_messages` | claimed rows require `claimed_by`, `claimed_at`, and `claim_expires_at`; non-claimed rows clear claim lease fields | Preserve recoverable worker claim lifecycle. |
 | `outbox_messages` | `claim_expires_at is null or claim_expires_at > claimed_at` | Prevent immediately expired or invalid worker leases. |
-| `audit_events` | no raw secrets in `metadata` | Enforce by service sanitizer and tests; DB cannot prove semantic secrecy. |
+| `outbox_messages` | completed rows require `completed_at`; non-completed rows clear it | Prevent ambiguous outbox terminal state. |
+| `outbox_messages` | `payload_ref` must be a JSON object | Preserve structured redacted side-effect payload references. |
+| `external_effect_attempts` | failed/timeout attempts require `completed_at` and redacted `result_summary`; success requires `completed_at` | Preserve provider attempt evidence without raw sensitive payloads. |
+| `audit_events` | `metadata` must be a JSON object and contain no raw secrets | DB enforces structure; service sanitizer and tests enforce semantic secrecy. |
 
 ## Composite Foreign Keys for Tenant Integrity
 
@@ -240,13 +246,12 @@ Required examples:
 | `order_items` | `(tenant_id, product_service_id)` -> `product_services(tenant_id, id)` | Order snapshot source product cannot cross tenant. |
 | `order_items` | `(tenant_id, product_service_id, product_variant_id)` -> `product_variants(tenant_id, product_service_id, id)` | Order snapshot source variant must belong to product. |
 | `order_items` | `(tenant_id, station_id)` -> `stations(tenant_id, id)` | Routing snapshot cannot cross tenant. |
-| `preparation_items` | `(tenant_id, order_item_id)` -> `order_items(tenant_id, id)` | Queue item cannot cross tenant. |
+| `preparation_items` | `(tenant_id, order_item_id, station_id)` -> `order_items(tenant_id, id, station_id)` | Queue item cannot cross tenant or drift from the OrderItem routing snapshot. |
 | `preparation_items` | `(tenant_id, station_id)` -> `stations(tenant_id, id)` | Queue station cannot cross tenant. |
 | `preparation_transitions` | `(tenant_id, preparation_item_id)` -> `preparation_items(tenant_id, id)` | Preparation transition cannot cross tenant. |
 | `preparation_transitions` | `(tenant_id, actor_user_id)` -> `users(tenant_id, id)` | Preparation actor cannot cross tenant. |
 | `delivery_states` | `(tenant_id, order_item_id)` -> `order_items(tenant_id, id)` | Delivery state cannot cross tenant. |
-| `delivery_transitions` | `(tenant_id, delivery_state_id)` -> `delivery_states(tenant_id, id)` | Delivery transition cannot cross tenant/state. |
-| `delivery_transitions` | `(tenant_id, order_item_id)` -> `order_items(tenant_id, id)` | Delivery transition item cannot cross tenant. |
+| `delivery_transitions` | `(tenant_id, delivery_state_id, order_item_id)` -> `delivery_states(tenant_id, id, order_item_id)` | Delivery transition cannot cross tenant or drift from its DeliveryState item. |
 | `delivery_transitions` | `(tenant_id, actor_user_id)` -> `users(tenant_id, id)` | Delivery actor cannot cross tenant. |
 | `delivery_bulk_idempotency` | `(tenant_id, actor_user_id)` -> `users(tenant_id, id)` | Bulk delivery actor cannot cross tenant. |
 | `delivery_bulk_idempotency` | `(tenant_id, table_id)` -> `venue_tables(tenant_id, id)` | Bulk delivery target table cannot cross tenant. |
@@ -312,7 +317,7 @@ Required examples:
 | Query | Index |
 | --- | --- |
 | Assigned stations | `ix_staff_station_assignments__tenant_user_active` on `(tenant_id, user_id)` where `status = 'active'` |
-| Station queue | `ix_preparation_items__tenant_station_status_created` on `(tenant_id, station_id, status, created_at)` |
+| Station queue | `ix_preparation_items__tenant_station_status_updated` on `(tenant_id, station_id, status, updated_at desc)` |
 | Item transition history | `ix_preparation_transitions__tenant_item_created` on `(tenant_id, preparation_item_id, created_at)` |
 
 ### ServiceStaffApp
@@ -321,8 +326,8 @@ Required examples:
 | --- | --- |
 | Assigned halls | `ix_staff_hall_assignments__tenant_user_active` on `(tenant_id, user_id)` where `status = 'active'` |
 | Ready items | `ix_preparation_items__tenant_status_updated` on `(tenant_id, status, updated_at)` |
-| Delivery state by item | unique `delivery_states(order_item_id)` |
-| Delivery workload/history | `ix_delivery_transitions__tenant_created` on `(tenant_id, created_at desc)` |
+| Delivery state by item | unique `delivery_states(tenant_id, order_item_id)` |
+| Delivery workload/history | `ix_delivery_transitions__tenant_item_created` on `(tenant_id, order_item_id, created_at desc)` |
 | Bulk delivery idempotency replay | unique `delivery_bulk_idempotency(tenant_id, actor_user_id, idempotency_key)` |
 
 Service queue joins require indexed path:
@@ -351,10 +356,13 @@ Service queue joins require indexed path:
 | --- | --- |
 | Audit by tenant/time | `ix_audit_events__tenant_created` on `(tenant_id, created_at desc)` |
 | Audit by target | `ix_audit_events__target` on `(target_type, target_id, created_at desc)` |
+| Audit by action/time | `ix_audit_events__action_created` on `(action, created_at desc)` |
 | Outbox claim next pending/stale | `ix_outbox_messages__status_next_attempt` on `(status, next_attempt_at, claim_expires_at, created_at)` where `status in ('pending', 'failed', 'claimed')` |
 | Outbox by aggregate | `ix_outbox_messages__aggregate` on `(aggregate_type, aggregate_id)` |
 | Effect attempts by message | unique `(outbox_message_id, attempt_no)` plus `ix_external_effect_attempts__message_started` |
 | OTP challenge lookup | `ix_otp_challenges__tenant_user_purpose_created` on `(tenant_id, user_id, purpose, created_at desc)` |
+| OTP attempt history | `ix_otp_attempts__tenant_challenge_created` on `(tenant_id, otp_challenge_id, created_at desc)` |
+| OTP delivery history | `ix_message_deliveries__tenant_challenge_created` on `(tenant_id, otp_challenge_id, created_at desc)` |
 
 ## Locking and Transaction Requirements
 

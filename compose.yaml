@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:18.4
+    container_name: iotables-db
+    environment:
+      POSTGRES_DB: iotables
+      POSTGRES_USER: iotables
+      POSTGRES_PASSWORD: iotables
+    ports:
+      - "5433:5432"
+    volumes:
+      - iotables_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iotables -d iotables"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  iotables_postgres_data:

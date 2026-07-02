@@ -25,6 +25,7 @@ This document records the intended IoTables stack and the currently verified loc
 | Async test support | pytest-asyncio | latest compatible |
 | HTTP test client | httpx2 | latest compatible |
 | Lint/format | Ruff | latest compatible |
+| Migration timestamp timezone data | tzdata | latest compatible |
 
 ## Frontend Stack
 
@@ -42,7 +43,7 @@ This document records the intended IoTables stack and the currently verified loc
 | --- | --- | --- |
 | Version control | Git | 2.54.0.windows.1 |
 | GitHub CLI | gh | 2.95.0 |
-| PostgreSQL service | `postgresql-x64-18` | PostgreSQL 18.4, running, automatic startup |
+| Local PostgreSQL service | Docker Compose `db` service | `postgres:18.4`, exposed on `localhost:5433` |
 | PostgreSQL CLI | `psql` | 18.4 |
 | PostgreSQL bin path | `C:\Program Files\PostgreSQL\18\bin` | Added to user PATH; reopen terminals to inherit |
 | Container runtime | Docker | 29.5.3 |
@@ -56,11 +57,12 @@ This document records the intended IoTables stack and the currently verified loc
 | `.gitignore` | Ignored local, generated, cache, secret, and build files |
 | `.gitattributes` | Line ending and binary file handling |
 | `.editorconfig` | Cross-editor formatting defaults |
+| `compose.yaml` | Local PostgreSQL 18.4 development service |
 
 ## Architectural Direction
 
 - Frontend: Vite + React single-page application.
 - Backend: FastAPI API service.
-- Database: PostgreSQL with Alembic migrations.
+- Database: PostgreSQL with Alembic migrations; local development uses the Docker Compose `db` service instead of the host PostgreSQL service.
 - Tenant model: platform-owned tenants, each representing a cafe or restaurant customer.
 - Package layout: monorepo structure, with app boundaries added as the project grows.

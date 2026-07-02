@@ -5,6 +5,11 @@
   "scripts": {
     "build": "pnpm --dir frontend build",
     "check": "pnpm run lint && pnpm run test && pnpm run build",
+    "db:current": "uv run alembic current",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
+    "db:migrate": "uv run alembic upgrade head",
+    "db:up": "docker compose up -d db",
     "dev:api": "uv run uvicorn iotables.main:create_app --factory --reload",
     "dev:web": "pnpm --dir frontend dev",
     "format": "uv run ruff format .",

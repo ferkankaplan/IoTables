@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="local", alias="IOTABLES_ENV")
     log_level: str = Field(default="INFO", alias="IOTABLES_LOG_LEVEL")
     database_url: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/iotables",
+        default="postgresql+asyncpg://iotables:iotables@localhost:5433/iotables",
         alias="IOTABLES_DATABASE_URL",
     )
     cors_origins: list[str] = Field(
