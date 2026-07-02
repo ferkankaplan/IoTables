@@ -11,6 +11,7 @@ EXPECTED_FOUNDATION_TABLES = {
     "tenant_health",
     "tenant_lifecycle_events",
     "starter_template_applications",
+    "tenant_provisioning_idempotency",
     "users",
     "credentials",
     "login_sessions",
@@ -133,6 +134,25 @@ def test_one_time_starter_template_guard_is_durable() -> None:
         "uq_starter_template_applications__tenant_id_id",
         "uq_starter_template_applications__tenant_template_version",
     } <= starter_uniques
+
+
+def test_tenant_provisioning_idempotency_preserves_replay_results() -> None:
+    idempotency_uniques = constraint_names("tenant_provisioning_idempotency", UniqueConstraint)
+    idempotency_checks = constraint_names("tenant_provisioning_idempotency", CheckConstraint)
+    idempotency_fks = constraint_names("tenant_provisioning_idempotency", ForeignKeyConstraint)
+
+    assert "uq_tenant_provisioning_idempotency__actor_key" in idempotency_uniques
+    assert {
+        "ck_tenant_provisioning_idempotency__idempotency_key_required",
+        "ck_tenant_provisioning_idempotency__request_hash_required",
+        "ck_tenant_provisioning_idempotency__response_payload_object",
+        "ck_tenant_provisioning_idempotency__status",
+        "ck_tenant_provisioning_idempotency__completed_result",
+    } <= idempotency_checks
+    assert {
+        "fk_tenant_provisioning_idempotency__users",
+        "fk_tenant_provisioning_idempotency__tenants",
+    } <= idempotency_fks
 
 
 def test_active_role_grants_are_idempotency_safe() -> None:
@@ -598,6 +618,8 @@ def test_audit_events_are_append_only_structured_records() -> None:
     } <= audit_checks
     assert "payment.voided" in action_sql
     assert "cashier.correction_applied" in action_sql
+    assert "tenant.profile_updated" in action_sql
+    assert "tenant.dns_ready_changed" in action_sql
     assert "CREATE INDEX ix_audit_events__tenant_created" in tenant_index
     assert "CREATE INDEX ix_audit_events__target" in target_index
 

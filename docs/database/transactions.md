@@ -35,7 +35,7 @@ Use explicit row locks where concurrent mutation can corrupt state. Acquire lock
 
 | Order | Lock Group | Examples |
 | --- | --- | --- |
-| 1 | Idempotency or one-time secret guard | `order_submit_idempotency`, `payment_idempotency`, consumed QR/claim row |
+| 1 | Idempotency or one-time secret guard | `tenant_provisioning_idempotency`, `order_submit_idempotency`, `payment_idempotency`, consumed QR/claim row |
 | 2 | Tenant/provisioning aggregate when provisioning or lifecycle is being changed | `tenants`, `starter_template_applications` |
 | 3 | Parent runtime aggregate | `table_sessions`, `checks` |
 | 4 | Target business records in deterministic ID order | `orders`, `order_items`, `payments`, `preparation_items`, `delivery_states` |
@@ -54,7 +54,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | Apps | PlatformApp |
 | Owner modules | Provisioning, Tenant Registry, Identity and Access, Staff Access, Sector Starter Templates, Tenant Setup, Audit |
 | Public command/API | `provisioning.start_tenant`, `POST /api/v1/platform/tenants` |
-| Idempotency | Required. Scope by platform actor + route + normalized tenant identity + idempotency key. |
+| Idempotency | Required. Store reservation/result in `tenant_provisioning_idempotency`; scope by platform actor + route + normalized tenant identity + idempotency key. |
 | Lock order | Phase 1 reserves tenant identity. Phase 2 locks `tenants`, then `starter_template_applications`, then creates owned records. |
 | Transaction boundary | Phase 1 short reservation transaction. Phase 2 one locked transaction for required records and starter data. Phase 3 separate failure-marking transaction when Phase 2 fails. |
 | Rollback | Phase 2 rollback removes tenant admin/starter business records from that failed attempt. Failure marking preserves safe recovery state. |

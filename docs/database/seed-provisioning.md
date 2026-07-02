@@ -198,6 +198,7 @@ Provisioning relies on database constraints and row locks:
 
 | Guard | Protection |
 | --- | --- |
+| unique `tenant_provisioning_idempotency(actor_user_id, idempotency_key)` | Prevent duplicate Platform Owner create-tenant commands and preserve replay result. |
 | unique `tenants.lower(subdomain)` | Prevent duplicate tenant domains. |
 | unique active Platform Owner | Prevent multiple PlatformApp owners. |
 | unique tenant username | Prevent duplicate bootstrap users. |

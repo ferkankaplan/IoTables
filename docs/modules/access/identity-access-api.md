@@ -16,7 +16,7 @@ CustomerApp does not use these endpoints.
 | `POST` | `/api/v1/auth/first-password/begin` | TenantApp, CashierApp, staff apps | `identity_access.begin_first_password_setup` | Setup token | Body: `setupToken` | `FirstPasswordSetupState` | `invalid_credentials`, `otp_required`, `setup_token_invalid` |
 | `POST` | `/api/v1/auth/first-password/complete` | TenantApp, CashierApp, staff apps | `identity_access.complete_first_password_setup` | Setup token + OTP proof when required | Body: `CompleteFirstPasswordRequest` | `LoginResult` or `CredentialSetupResult` | `otp_required`, `otp_invalid`, `password_policy_failed` |
 | `POST` | `/api/v1/auth/change-password` | Authenticated human apps | `identity_access.change_password` | App session + CSRF | Body: `currentPassword`, `newPassword` | `PasswordChangedResult` | `invalid_credentials`, `password_policy_failed` |
-| `POST` | `/api/v1/auth/totp/enroll` | PlatformApp | `identity_access.enroll_totp` | Platform Owner setup/auth session + CSRF | Body: `totpCode`, setup proof | `TotpEnrollResult` | `totp_invalid`, `not_authorized` |
+| `POST` | `/api/v1/auth/totp/enroll` | PlatformApp | `identity_access.enroll_totp` | Password proof during first Platform Owner TOTP setup | Body: `TotpEnrollRequest` | `LoginResult` | `totp_invalid`, `invalid_credentials`, `totp_already_enrolled` |
 | `POST` | `/api/v1/auth/logout` | Authenticated human apps | `identity_access.logout_or_revoke_session` | App session + CSRF | Body optional: `sessionId` for own session | `LogoutResult` | `not_authorized` |
 | `GET` | `/api/v1/auth/session` | Authenticated human apps | `identity_access.validate_session` | App session | none | `AuthenticatedActor` | `session_expired`, `wrong_app_scope` |
 | `GET` | `/api/v1/tenant/users/{userId}` | TenantApp | `identity_access.get_user` | Tenant Admin session | Path: `userId` | `UserProfile` | `not_authorized`, `not_found_or_hidden` |
@@ -41,6 +41,17 @@ CustomerApp does not use these endpoints.
 | `password` | string | yes | Never logged. |
 | `totpCode` | string | no | Required for Platform Owner when enabled/required. |
 
+When Platform Owner password is valid but no TOTP factor exists, login returns `totp_enrollment_required` with `totpSetup`. It does not create a dashboard session until `/api/v1/auth/totp/enroll` verifies the first TOTP code and stores the encrypted factor.
+
+`TotpEnrollRequest`:
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `username` | string | yes | Platform Owner username. |
+| `password` | string | yes | Password proof for first TOTP setup. |
+| `secret` | string | yes | Server-generated setup secret from `LoginResult.totpSetup`. |
+| `totpCode` | string | yes | Current authenticator code proving the secret was enrolled. |
+
 `CompleteFirstPasswordRequest`:
 
 | Field | Type | Required | Notes |
@@ -60,6 +71,7 @@ CustomerApp does not use these endpoints.
 | `actor` | `AuthenticatedActor`/null | Present after successful authentication. |
 | `setupToken` | string/null | Returned only for first-password setup. |
 | `expiresAt` | timestamp/null | Login session expiry when authenticated. |
+| `totpSetup` | object/null | Present only for Platform Owner first TOTP setup; contains setup secret and otpauth URL. |
 
 `AuthenticatedActor` includes `userId`, `tenantId?`, `appScope`, `roles`, `stationIds`, `hallIds`, and safe display fields.
 

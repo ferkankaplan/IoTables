@@ -30,8 +30,9 @@ Source module: [tenant-registry.md](tenant-registry.md)
 | `tenant.activated` | Tenant becomes active | Audit, Platform health |
 | `tenant.provisioning_failed` | Provisioning failure is recorded | Audit, Platform health |
 | `tenant.suspended` | Tenant is suspended | Tenant app guards, Audit |
-| `tenant.reactivated` | Tenant is reactivated | Tenant app guards, Audit |
 | `tenant.gsm_changed` | Tenant GSM changes | Audit, future OTP challenges |
+| `tenant.profile_updated` | Tenant editable profile fields except GSM-only change | Audit |
+| `tenant.dns_ready_changed` | Platform DNS readiness flag changes | PlatformApp, Audit |
 
 ## Failure Outcomes
 

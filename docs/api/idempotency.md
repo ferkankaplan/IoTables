@@ -77,11 +77,11 @@ Same key + different request:
 
 | Operation | Minimum Retention |
 | --- | --- |
+| Tenant provisioning | Preserve with tenant/provisioning history. |
 | Order submit | Long enough to cover mobile/browser retries; v1 target at least 24 hours. |
 | Payment record | Long enough to cover cashier/network retries and audit; v1 target at least 7 days. |
 | Payment void | Preserve with payment audit history. |
 | Cashier correction | Preserve with correction audit history. |
-| Tenant provisioning | Preserve with tenant/provisioning history. |
 | Bulk delivery | Long enough to cover service staff retries and same-day operational audit; v1 target at least 24 hours. |
 
 Retention can be tightened later only after operational requirements are known.

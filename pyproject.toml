@@ -11,10 +11,11 @@ requires-python = ">=3.14,<3.15"
 dependencies = [
   "alembic>=1.17",
   "asyncpg>=0.31",
+  "cryptography>=49.0.0",
   "fastapi>=0.124",
   "pydantic-settings>=2.12",
   "sqlalchemy[asyncio]>=2.0",
-  "uvicorn[standard]>=0.38"
+  "uvicorn[standard]>=0.38",
 ]
 
 [dependency-groups]

@@ -45,6 +45,7 @@ These are stored as `text` columns with named `CHECK` constraints.
 | `tenant_sector` | `cafe` in v1 |
 | `tenant_status` | `provisioning`, `active`, `suspended`, `provisioning_failed` |
 | `starter_application_status` | `pending`, `applied`, `failed`, `recovery_needed` |
+| `tenant_provisioning_idempotency_status` | `processing`, `completed`, `failed` |
 | `user_status` | `active`, `disabled` |
 | `app_scope` | `platform`, `tenant`, `cashier`, `station`, `service` |
 | `platform_role` | `platform_owner` |
@@ -153,6 +154,24 @@ Starter template definitions are code/config artifacts in v1. This table is the 
 | `applied_at` | `timestamptz` | Successful completion time |
 | `created_at` | `timestamptz` | Start time |
 | `updated_at` | `timestamptz` | Latest status update |
+
+### `tenant_provisioning_idempotency`
+
+Owned by: Platform / Provisioning
+
+Stores HTTP idempotency reservations and completed replay payloads for `POST /api/v1/platform/tenants`.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | `uuid` | Primary key |
+| `actor_user_id` | `uuid` | Platform owner FK to `users.id` |
+| `idempotency_key` | `text` | Client request key |
+| `request_hash` | `text` | Server-computed normalized tenant creation fingerprint |
+| `tenant_id` | `uuid` | Nullable FK to completed tenant |
+| `response_payload` | `jsonb` | Completed `ProvisioningResult` replay payload |
+| `status` | `text` | `tenant_provisioning_idempotency_status` check |
+| `created_at` | `timestamptz` | Reservation time |
+| `completed_at` | `timestamptz` | Nullable completion time |
 
 ## Access
 
@@ -867,6 +886,8 @@ Owned by: Audit
 | `reason` | `text` | Required for sensitive actions |
 | `metadata` | `jsonb` | Safe JSON object metadata, no secrets |
 | `created_at` | `timestamptz` | Append-only event time |
+
+Allowed v1 action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `tenant.dns_ready_changed`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
 
 ### `outbox_messages`
 

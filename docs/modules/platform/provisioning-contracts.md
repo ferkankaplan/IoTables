@@ -6,7 +6,7 @@ Source module: [provisioning.md](provisioning.md)
 
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
-| `provisioning.start_tenant` | PlatformApp | tenant name, subdomain, tenant GSM, optional sector/capacity/address | Platform Owner only; required tenant identity fields; selected sector must be supported | Phased flow from [../../database/seed-provisioning.md](../../database/seed-provisioning.md); subdomain and starter application uniqueness prevent duplicate creation | Provisioning result: active tenant or failed state |
+| `provisioning.start_tenant` | PlatformApp | tenant name, subdomain, tenant GSM, optional sector/capacity/address, `Idempotency-Key` | Platform Owner only; required tenant identity fields; selected sector must be supported | Reserve `tenant_provisioning_idempotency`; phased flow from [../../database/seed-provisioning.md](../../database/seed-provisioning.md); subdomain and starter application uniqueness prevent duplicate creation | Provisioning result: active tenant or failed state |
 | `provisioning.retry_failed` | PlatformApp | tenantId, optional recovery note | Platform Owner only; tenant must be `provisioning_failed` or incomplete `provisioning`; completed starter data must not rerun | Lock tenant and starter application rows; retry only incomplete phase | Updated provisioning state |
 | `provisioning.mark_recovery_needed` | Provisioning recovery tooling | tenantId, reason | Platform Owner/recovery workflow only | Lock tenant; preserve failure history | `recovery_needed` starter/provisioning state |
 
@@ -40,6 +40,8 @@ Source module: [provisioning.md](provisioning.md)
 | Failure | Meaning |
 | --- | --- |
 | `duplicate_subdomain` | Tenant identity reservation failed. |
+| `idempotency_conflict` | Same Platform Owner reused an idempotency key with a different normalized create-tenant request. |
+| `request_processing` | Same Platform Owner repeated a create-tenant request while the original request is still processing. |
 | `starter_already_applied` | Retry attempted to rerun completed starter data. |
 | `provisioning_incomplete` | Required records did not commit and tenant cannot become active. |
 | `recovery_required` | Safe retry cannot be proven without manual recovery. |

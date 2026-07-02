@@ -6,6 +6,7 @@ from iotables.api.errors import ApiError
 from iotables.security.context import ActorContext, AppScope, SessionResolver, StaffRole
 
 SESSION_COOKIE_NAME = "iotables_session"
+CSRF_HEADER_NAME = "X-CSRF-Token"
 
 
 class MissingSessionResolverError(RuntimeError):
@@ -70,3 +71,13 @@ def require_staff_role(required_role: StaffRole) -> Callable[[Request], object]:
         return actor
 
     return dependency
+
+
+async def require_csrf_token(request: Request) -> None:
+    csrf_token = request.headers.get(CSRF_HEADER_NAME)
+    if csrf_token is None or not csrf_token.strip():
+        raise ApiError(
+            status_code=403,
+            code="csrf_required",
+            message="A CSRF token is required for this action.",
+        )

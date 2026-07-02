@@ -62,6 +62,8 @@ Minimum v1 action names:
 | `tenant.activated` | Tenant activation after setup |
 | `tenant.suspended` | Tenant suspension |
 | `tenant.gsm_changed` | Tenant GSM update |
+| `tenant.profile_updated` | Tenant editable profile update outside GSM-only change |
+| `tenant.dns_ready_changed` | Platform DNS readiness flag update |
 | `starter_template.applied` | One-time starter template application |
 | `user.created` | Tenant/platform user creation |
 | `user.disabled` | User disable |

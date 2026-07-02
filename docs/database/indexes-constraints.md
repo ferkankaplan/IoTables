@@ -59,6 +59,7 @@ All tables in [schema.md](schema.md) use `uuid` primary keys except one-to-one t
 | `tenant_operational_settings` | primary key `tenant_id` | One settings row per tenant. |
 | `tenant_health` | primary key `tenant_id` | One platform health summary per tenant. |
 | `starter_template_applications` | unique `(tenant_id, template_key, template_version)` | Prevent starter data reruns. |
+| `tenant_provisioning_idempotency` | unique `(actor_user_id, idempotency_key)` | Prevent duplicate tenant creation for one Platform Owner action. |
 
 ### Access
 
@@ -169,6 +170,8 @@ constraint ck_preparation_items__status
 | --- | --- | --- |
 | `tenants` | `provisioning_error is null or status = 'provisioning_failed'` | Avoid stale error text on active tenants. |
 | `tenant_lifecycle_events` | `previous_status is distinct from next_status` where previous exists | Prevent no-op lifecycle history. |
+| `tenant_provisioning_idempotency` | completed rows require `tenant_id`, `completed_at`, and `response_payload` | Prevent ambiguous tenant creation replay results. |
+| `tenant_provisioning_idempotency` | `response_payload` must be a JSON object when present | Preserve structured replay data. |
 | `platform_role_assignments` | referenced user must have `tenant_id is null` | Requires service validation or trigger; cannot be expressed with simple check. |
 | `staff_profiles` | referenced user must have same `tenant_id` | Enforce with composite FK or service validation. |
 | `availability_overrides` | `expires_at is null or starts_at is null or expires_at > starts_at` | Prevent invalid windows. |
@@ -214,6 +217,7 @@ Required examples:
 | `tenant_operational_settings` | `(tenant_id)` -> `tenants(id)` | Settings cannot exist without tenant. |
 | `tenant_health` | `(tenant_id)` -> `tenants(id)` | Health summary cannot exist without tenant. |
 | `starter_template_applications` | `(tenant_id)` -> `tenants(id)` | Starter application proof cannot exist without tenant. |
+| `tenant_provisioning_idempotency` | `actor_user_id` -> `users(id)` and `tenant_id` -> `tenants(id)` | Tenant creation replay cannot point to a missing Platform Owner or tenant. |
 | `staff_profiles` | `(tenant_id, user_id)` -> `users(tenant_id, id)` | Staff profile cannot point to another tenant's user. |
 | `staff_role_assignments` | `(tenant_id, user_id)` -> `users(tenant_id, id)` | Staff role cannot point to another tenant's user. |
 | `staff_station_assignments` | `(tenant_id, user_id)` -> `users(tenant_id, id)` | Station assignment user cannot cross tenant. |

@@ -14,7 +14,7 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | `GET` | `/api/v1/platform/tenants` | PlatformApp | `tenant_registry.get_health` | Platform Owner session | Query: `status`, `sector`, `q`, `cursor`, `limit` | `TenantHealthList` | `not_authorized` |
 | `GET` | `/api/v1/platform/tenants/{tenantId}` | PlatformApp | `tenant_registry.get_profile` | Platform Owner session | Path: `tenantId` | `TenantProfile` | `not_authorized`, `not_found_or_hidden` |
 | `PATCH` | `/api/v1/platform/tenants/{tenantId}/profile` | PlatformApp | `tenant_registry.update_profile` | Platform Owner session + CSRF | Body: `gsmNumber?`, `sector?`, `capacity?`, `address?` | `TenantProfile` | `immutable_identity`, `validation_failed` |
-| `POST` | `/api/v1/platform/tenants/{tenantId}/status` | PlatformApp | `tenant_registry.change_status` | Platform Owner session + CSRF | Body: `nextStatus`, `reason` | `TenantLifecycleResult` | `invalid_lifecycle_transition`, `reason_required` |
+| `POST` | `/api/v1/platform/tenants/{tenantId}/status` | PlatformApp | `tenant_registry.change_status` | Platform Owner session + CSRF | Body: `nextStatus`, `reason` | `TenantProfile` | `invalid_lifecycle_transition`, `reason_required` |
 | `POST` | `/api/v1/platform/tenants/{tenantId}/dns-ready` | PlatformApp | `tenant_registry.set_dns_ready` | Platform Owner session + CSRF | Body: `dnsReady` | `TenantProfile` | `not_authorized`, `validation_failed` |
 | `GET` | `/api/v1/platform/tenants/{tenantId}/lifecycle-events` | PlatformApp | `tenant_registry.get_lifecycle_events` | Platform Owner session | Query: `cursor`, `limit` | `TenantLifecycleEventList` | `not_authorized` |
 | `GET` | `/api/v1/tenant/context` | TenantApp, runtime apps | `tenant_registry.resolve_by_subdomain` | Public safe read | Host-derived subdomain | `TenantContext` | `tenant_unavailable` |
@@ -31,6 +31,8 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | `sector` | string enum | no | Must be supported by Sector Starter Templates. Does not rerun starter data. |
 | `capacity` | integer | no | Optional restaurant capacity. |
 | `address` | object/string | no | Optional address shape can be refined before implementation. |
+
+`PATCH` semantics are partial: omitted fields are unchanged, while explicit `null` clears nullable fields. `gsmNumber` cannot be cleared.
 
 `TenantStatusChangeRequest`:
 
@@ -64,7 +66,16 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | `items` | array of `TenantHealthSummary` | Runtime order/payment details are not exposed. |
 | `page` | object | Cursor pagination. |
 
-`TenantHealthSummary` includes `tenantId`, `name`, `subdomain`, `status`, `dnsReady`, `sector`, `provisioningState`, `lastLifecycleEventAt`, and safe `healthFlags`.
+`TenantHealthSummary` includes `tenantId`, `name`, `subdomain`, `status`, `dnsReady`, `sector`, `provisioningState`, `lastLifecycleEventAt`, safe `healthFlags`, `createdAt`, and `updatedAt`.
+
+`TenantLifecycleEventList`:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `items` | array of `TenantLifecycleEvent` | Most recent lifecycle events first. |
+| `page` | object | Cursor pagination. |
+
+`TenantLifecycleEvent` includes `eventId`, `tenantId`, `previousStatus`, `nextStatus`, `actorUserId`, `reason`, and `createdAt`.
 
 `TenantContext` includes `tenantId`, `name`, `subdomain`, `status`, `sector`, and safe public display fields. It must not expose runtime data, platform notes, failure details, or secrets.
 

@@ -21,6 +21,10 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://iotables:iotables@localhost:5433/iotables",
         alias="IOTABLES_DATABASE_URL",
     )
+    security_secret_key: str = Field(
+        default="local-dev-insecure-secret-change-me",
+        alias="IOTABLES_SECURITY_SECRET_KEY",
+    )
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:5173"],
         alias="IOTABLES_CORS_ORIGINS",

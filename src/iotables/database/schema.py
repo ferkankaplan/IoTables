@@ -129,6 +129,50 @@ starter_template_applications = Table(
     ),
 )
 
+tenant_provisioning_idempotency = Table(
+    "tenant_provisioning_idempotency",
+    metadata,
+    id_column(),
+    Column(
+        "actor_user_id",
+        uuid_type,
+        ForeignKey("users.id", name="fk_tenant_provisioning_idempotency__users"),
+        nullable=False,
+    ),
+    Column("idempotency_key", Text, nullable=False),
+    Column("request_hash", Text, nullable=False),
+    Column(
+        "tenant_id",
+        uuid_type,
+        ForeignKey("tenants.id", name="fk_tenant_provisioning_idempotency__tenants"),
+    ),
+    Column("response_payload", JSONB),
+    Column("status", Text, nullable=False),
+    Column("created_at", timestamp_tz, nullable=False),
+    Column("completed_at", timestamp_tz),
+    UniqueConstraint(
+        "actor_user_id",
+        "idempotency_key",
+        name="uq_tenant_provisioning_idempotency__actor_key",
+    ),
+    CheckConstraint("idempotency_key <> ''", name="idempotency_key_required"),
+    CheckConstraint("request_hash <> ''", name="request_hash_required"),
+    CheckConstraint(
+        "response_payload is null or jsonb_typeof(response_payload) = 'object'",
+        name="response_payload_object",
+    ),
+    CheckConstraint("status in ('processing', 'completed', 'failed')", name="status"),
+    CheckConstraint(
+        "status <> 'completed' or "
+        "(tenant_id is not null and completed_at is not null and response_payload is not null)",
+        name="completed_result",
+    ),
+)
+Index(
+    "ix_tenant_provisioning_idempotency__tenant",
+    tenant_provisioning_idempotency.c.tenant_id,
+)
+
 users = Table(
     "users",
     metadata,
@@ -1965,7 +2009,8 @@ audit_events = Table(
         "action in ("
         "'platform_owner.created', 'platform_owner.totp_enrolled', "
         "'tenant.created', 'tenant.provisioning_failed', 'tenant.activated', "
-        "'tenant.suspended', 'tenant.gsm_changed', 'starter_template.applied', "
+        "'tenant.suspended', 'tenant.gsm_changed', 'tenant.profile_updated', "
+        "'tenant.dns_ready_changed', 'starter_template.applied', "
         "'user.created', 'user.disabled', 'password.changed', 'otp.verified', "
         "'table_display.provisioned', 'table_display.revoked', 'order.submitted', "
         "'preparation.status_changed', 'delivery.status_changed', "

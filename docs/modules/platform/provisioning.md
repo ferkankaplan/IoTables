@@ -13,6 +13,7 @@ It coordinates Platform Tenant Registry, Access, Sector Starter Templates, and T
 | Provisioning workflow | Workflow | start, complete, fail, retry through explicit recovery |
 | Provisioning status | State | provisioning, active, provisioning_failed handoff |
 | Provisioning recovery record | Safety record | store safe failure summary and retry metadata |
+| Tenant provisioning idempotency | Safety record | reserve create-tenant commands and preserve replay results |
 | Provisioning transaction boundary | Rule | define atomic database work and recovery behavior |
 
 ## Not Owned
@@ -49,7 +50,8 @@ It coordinates Platform Tenant Registry, Access, Sector Starter Templates, and T
 
 ## Operational Safety
 
-- Provisioning must be idempotent by tenant identity/subdomain and guarded by database constraints.
+- Provisioning must reserve `tenant_provisioning_idempotency` before creating tenant records.
+- Provisioning must be idempotent by platform actor/request key and tenant identity/subdomain, guarded by database constraints.
 - Atomic database work should run in a single transaction where possible.
 - External side effects such as OTP/SMS must have explicit retry/recovery behavior.
 - Partial failure must not leave an apparently active tenant with missing required setup.
@@ -64,6 +66,7 @@ Provisioning coordinates durable state owned by other modules. It does not own t
 | --- | --- | --- | --- | --- |
 | Tenant | provisioning -> active / provisioning_failed | owned by Tenant Registry: identity, status, provisioningError | Tenant is activated only after required setup records commit; failed flow must not look active | Preserve failed state for explicit recovery or approved deletion |
 | StarterTemplateApplication | pending -> applied / failed / recovery_needed | owned by Sector Starter Templates: tenant, templateKey, templateVersion, status | One-time starter application is the durable seed-rerun guard | Preserve as proof even if starter data is edited later |
+| TenantProvisioningIdempotency | processing -> completed / failed | actorUserId, idempotencyKey, requestHash, tenantId, responsePayload | Same key/request replays original result; same key/different request conflicts | Preserve according to tenant provisioning history retention |
 | AuditEvent | append-only | owned by Governance: actor/system, action, target, metadata | Critical provisioning state changes must be auditable | Append-only |
 | OutboxMessage / MessageDelivery | pending -> completed / failed | owned by Governance or OTP Messaging for non-transactional side effects | External side effects such as SMS must not be assumed to rollback with tenant creation | Preserve attempts according to side-effect retention policy |
 

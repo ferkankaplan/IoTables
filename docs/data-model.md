@@ -178,6 +178,27 @@ Constraints:
 - unique by `tenantId + templateKey + templateVersion`.
 - must never run on restart, deployment, migration, or release upgrade.
 
+### TenantProvisioningIdempotency
+
+Owned by: Platform / Provisioning
+
+| Field | Notes |
+| --- | --- |
+| `actorUserId` | Platform Owner who submitted tenant creation |
+| `idempotencyKey` | Client request key |
+| `requestHash` | Server-computed normalized create-tenant fingerprint |
+| `tenantId` | Completed tenant result when available |
+| `responsePayload` | Completed `ProvisioningResult` replay data |
+| `status` | processing / completed / failed |
+| `createdAt`, `completedAt` | Reservation and completion timestamps |
+
+Constraints:
+
+- unique by `actorUserId + idempotencyKey`.
+- same key and same request returns the original result.
+- same key and different request returns `idempotency_conflict`.
+- completed rows must preserve enough result data for replay.
+
 ## Identity, Staff, and Access
 
 ### User
@@ -1116,6 +1137,7 @@ Minimum v1 action names:
 | unique Check per TableSession in v1 | Preserve single-adisyon v1 model |
 | unique SessionClosure per TableSession | Prevent duplicate close records |
 | unique starter template application per tenant/template version | Prevent seed reruns |
+| unique tenant provisioning idempotency key per platform actor/key | Prevent duplicate tenant creation commands |
 | unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
 | unique order submit idempotency key per tenant/customer session/key | Prevent duplicate orders |
 | unique PreparationItem per tenant/order item | Prevent duplicate station queue records. |

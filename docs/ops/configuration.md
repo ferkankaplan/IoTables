@@ -63,11 +63,14 @@ Frontend configuration may expose only public values:
 
 Frontend feature flags must not bypass backend module guards, authorization, idempotency, or database invariants.
 
+Local Vite development proxies `/api` to `http://127.0.0.1:8000` so the browser can call the FastAPI service with same-origin paths during development. Production routing must provide the same `/api` path through deployment infrastructure instead of exposing secrets in frontend config.
+
 ## Secret Handling
 
 Secrets include:
 
 - database credentials;
+- `IOTABLES_SECURITY_SECRET_KEY`, used for encrypting Platform Owner TOTP secret material and other local security primitives until a deployment secret store/KMS is introduced;
 - session/CSRF signing keys;
 - TOTP encryption keys;
 - OTP/SMS provider credentials;
@@ -111,6 +114,7 @@ Startup validation must check:
 
 - required values are present;
 - production secrets are not placeholders;
+- `IOTABLES_SECURITY_SECRET_KEY` is environment-owned and rotated through an explicit deployment plan;
 - secure cookies are enabled in production;
 - allowed hosts/origins are explicit;
 - database URL points to the intended environment;

@@ -21,6 +21,7 @@ This document records the intended IoTables stack and the currently verified loc
 | Database migrations | Alembic | latest compatible |
 | PostgreSQL driver | asyncpg | latest compatible |
 | Settings/config | Pydantic Settings | 2.x |
+| TOTP secret encryption | cryptography | latest compatible |
 | Testing | pytest | latest compatible |
 | Async test support | pytest-asyncio | latest compatible |
 | HTTP test client | httpx2 | latest compatible |

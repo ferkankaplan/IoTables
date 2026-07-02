@@ -36,6 +36,14 @@ Run the frontend:
 pnpm run dev:web
 ```
 
+Bootstrap the local Platform Owner explicitly:
+
+```powershell
+uv run python -m iotables.tools.bootstrap_platform_owner --username platform --password admin
+```
+
+Production must use an environment-owned password and `IOTABLES_SECURITY_SECRET_KEY`; this command is not run automatically by app startup.
+
 ## Structure
 
 | Path | Purpose |
