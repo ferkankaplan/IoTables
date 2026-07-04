@@ -43,8 +43,6 @@ Source context:
 | --- | --- |
 | Login | `Giriş yap` |
 | Logout | `Çıkış yap` |
-| Enroll TOTP | `TOTP kur` |
-| Verify TOTP | `Doğrula` |
 | Create tenant | `Tenant oluştur` |
 | Save profile | `Kaydet` |
 | Mark DNS ready | `DNS hazır olarak işaretle` |
@@ -61,10 +59,7 @@ Source context:
 | Login loading | `Giriş durumu kontrol ediliyor...` |
 | Bootstrap user missing | `Platform sahibi henüz oluşturulmamış. Bootstrap komutunu çalıştırın.` |
 | First password change required | `Devam etmek için geçici şifreyi değiştirin.` |
-| TOTP enrollment required | `Dashboard erişimi için TOTP kurulumu gerekli.` |
-| TOTP required | `TOTP kodunu girin.` |
 | Invalid credentials | `Giriş bilgileri hatalı.` |
-| Invalid TOTP | `TOTP kodu hatalı.` |
 | Platform auth expired | `Oturum süreniz doldu. Tekrar giriş yapın.` |
 | Wrong app scope | `Bu uygulamaya erişim yetkiniz yok.` |
 

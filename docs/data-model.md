@@ -288,7 +288,7 @@ Owned by: Identity and Access
 
 Invariants:
 
-- Platform Owner must enroll TOTP before PlatformApp access.
+- Platform Owner does not need OTP/TOTP for PlatformApp access in v1.
 - TOTP secrets must never be logged or exposed after enrollment.
 
 ### StaffProfile

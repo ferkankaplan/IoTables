@@ -5,8 +5,7 @@ Happy path:
 
 1. Platform Owner opens `https://platform.iotables.net/login`.
 2. PlatformApp validates username/password.
-3. If TOTP is enrolled, PlatformApp validates TOTP.
-4. PlatformApp opens the dashboard.
+3. PlatformApp opens the dashboard.
 
 Branches:
 
@@ -14,9 +13,7 @@ Branches:
 | --- | --- |
 | First Platform Owner does not exist | Access is unavailable until explicit bootstrap command creates it |
 | Bootstrap password still active | Force password change before dashboard access |
-| TOTP not enrolled after first setup | Force TOTP enrollment before dashboard access |
 | Invalid credentials | Reject without tenant data exposure |
-| Invalid TOTP | Reject without tenant data exposure |
 | Platform user disabled | Reject login |
 
 Result:

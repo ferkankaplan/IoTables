@@ -36,7 +36,7 @@ Out of scope for this test plan:
 
 | Scenario | Coverage |
 | --- | --- |
-| P-01 Platform Owner Login | Platform Owner completes login and required TOTP gate before dashboard access. |
+| P-01 Platform Owner Login | Platform Owner completes username/password login before dashboard access. |
 | P-02 Create Tenant With Cafe Starter | Required tenant identity is submitted, provisioning applies `cafe.v1` once, tenant becomes active, and DNS checklist remains manual. |
 | P-03 Manual DNS Readiness | Platform Owner marks DNS readiness and tenant health reflects the manual flag. |
 | P-04 Suspend and Reactivate Tenant | Platform Owner suspends/reactivates with reason and tenant runtime availability follows lifecycle state. |
@@ -51,10 +51,7 @@ Out of scope for this test plan:
 | --- | --- |
 | First Platform Owner missing | Dashboard unavailable; setup unavailable copy shown. |
 | Bootstrap password still active | Password change required before dashboard. |
-| TOTP not enrolled | TOTP enrollment required before dashboard. |
-| TOTP required | TOTP step appears and blocks dashboard until valid. |
 | Invalid credentials | Safe rejection; no tenant data exposed. |
-| Invalid TOTP | Safe rejection; no tenant data exposed. |
 | Platform user disabled | Safe rejection; no tenant data exposed. |
 | Tenant user attempts PlatformApp | Wrong app scope; no tenant data exposed. |
 
@@ -111,7 +108,7 @@ Out of scope for this test plan:
 | --- | --- |
 | Platform Owner must log in before seeing tenants | Browser and API auth tests. |
 | First Platform Owner bootstrap is explicit and one-time | Bootstrap/ops test plus login unavailable state. |
-| Platform Owner must complete password change and TOTP enrollment | Browser login gate tests. |
+| Platform Owner login does not require OTP/TOTP in v1 | Browser login gate tests. |
 | Tenant creation requires name, subdomain, and GSM | Form validation and API contract tests. |
 | Tenant starts as `provisioning` | Provisioning API/domain tests. |
 | Tenant becomes `active` only after required setup records commit | Transaction/integration tests. |
@@ -126,7 +123,7 @@ Every state in [ui-states.md](ui-states.md) requires a UI test or documented non
 
 | Surface | Required UI States |
 | --- | --- |
-| Login | loading, invalid credentials, TOTP required, TOTP invalid, first password change required, TOTP enrollment required |
+| Login | loading, invalid credentials, first password change required |
 | Dashboard / Tenant List | loading, empty tenant list, partial health unavailable, tenant row stale, platform auth expired |
 | Create Tenant | pristine, validating, submitting, provisioning, provisioning failed, success |
 | Tenant Detail | loading, not found, suspended, provisioning, provisioning failed, DNS not ready, health unavailable |
@@ -139,10 +136,10 @@ PlatformApp executable tests must cover the app-visible behavior of these endpoi
 | Endpoint | Required Coverage |
 | --- | --- |
 | `GET /api/v1/auth/login-requirements` | Bootstrap/setup requirements are safe and do not expose tenant data. |
-| `POST /api/v1/auth/login` | Platform Owner login, TOTP required, wrong app scope, invalid credentials. |
+| `POST /api/v1/auth/login` | Platform Owner login, wrong app scope, invalid credentials. |
 | `GET /api/v1/auth/session` | Protected route access and auth-expired behavior. |
 | `POST /api/v1/auth/logout` | Session revoked and dashboard hidden. |
-| `POST /api/v1/auth/totp/enroll` | Required TOTP enrollment before dashboard access. |
+| `POST /api/v1/auth/totp/enroll` | Reserved for future PlatformApp hardening; not required by v1 login. |
 | `GET /api/v1/platform/tenants` | List/health filters, partial health, no runtime leakage. |
 | `GET /api/v1/platform/tenants/{tenantId}` | Detail visibility and not-found/hidden behavior. |
 | `PATCH /api/v1/platform/tenants/{tenantId}/profile` | GSM/sector/capacity/address update, immutable identity rejection. |

@@ -51,14 +51,13 @@ It decides who a person is, which tenant they belong to, which app they may ente
 - Bootstrap credentials must not allow continued access without first password change.
 - Platform Owner is a platform-scoped user with `tenantId = null` and role `platform_owner`.
 - The first Platform Owner must be created by an explicit one-time bootstrap command, not automatically on every server startup.
-- Platform Owner first login must force password change and TOTP enrollment before PlatformApp access.
-- PlatformApp login uses username/password plus TOTP after enrollment.
+- PlatformApp login uses username/password only in v1.
 - Tenant admin first password setup requires OTP.
 - Cashier first password setup requires OTP to tenant GSM during bootstrap.
 - Station and service staff first password setup does not require OTP in v1.
 - Users can access only their tenant unless explicitly platform scoped.
 - V1 password policy: minimum 12 characters for user-chosen passwords, reject known bootstrap/default passwords, and store only strong password hashes.
-- Platform Owner must use TOTP after enrollment. Tenant admin and cashier use OTP only for first password setup in v1.
+- Tenant admin and cashier use OTP only for first password setup in v1.
 
 ## Operational Safety
 
@@ -77,7 +76,7 @@ It decides who a person is, which tenant they belong to, which app they may ente
 | Credential | bootstrap -> changed -> rotated | user, passwordHash, bootstrapCredential, changedAt | Plaintext passwords are never stored; bootstrap credentials cannot grant continued access after first login | Preserve credential metadata needed for audit; never preserve raw secrets |
 | LoginSession | active -> expired/revoked | user, tenant, app scope, session token hash, issuedAt, expiresAt, revokedAt | Session tenant/app scope must match requested app; revoked/expired sessions fail closed | Expire/revoke; retain only safe metadata as needed |
 | PlatformRoleAssignment | active -> disabled | user, role, status | Only `tenantId = null` users can hold `platform_owner`; v1 allows exactly one active Platform Owner | Preserve role assignment history for platform audit |
-| TotpFactor | enrolled -> enabled -> disabled/rotated | user, secretCiphertext, enrolledAt, enabled | Platform Owner must enroll before PlatformApp access; TOTP secret never logged/exposed after enrollment | Disable/rotate instead of deleting if audit needs evidence |
+| TotpFactor | enrolled -> enabled -> disabled/rotated | user, secretCiphertext, enrolledAt, enabled | Reserved for future PlatformApp security hardening; not required by v1 PlatformApp login | Disable/rotate instead of deleting if audit needs evidence |
 
 ## App Surfaces
 

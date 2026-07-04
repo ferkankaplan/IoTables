@@ -25,10 +25,7 @@ from iotables.security.passwords import hash_password, verify_password
 from iotables.security.session import generate_session_token, hash_session_token
 from iotables.security.setup_token import SetupTokenError, issue_setup_token, parse_setup_token
 from iotables.security.totp import (
-    build_otpauth_url,
-    decrypt_totp_secret,
     encrypt_totp_secret,
-    generate_totp_secret,
     verify_totp_code,
 )
 
@@ -209,10 +206,9 @@ class IdentityAccessService:
                 "firstPasswordRequired": False,
             }
 
-        totp_enabled = await self._totp_enabled(user_row["id"])
         return {
             "status": "password_required",
-            "totpRequired": totp_enabled,
+            "totpRequired": False,
             "firstPasswordRequired": bool(user_row["first_password_change_required"]),
         }
 
@@ -250,7 +246,7 @@ class IdentityAccessService:
         password: str,
         totp_code: str | None = None,
     ) -> LoginResult:
-        normalized_username, user_row = await self._validate_platform_password(
+        _, user_row = await self._validate_platform_password(
             username=username,
             password=password,
         )
@@ -261,41 +257,6 @@ class IdentityAccessService:
                 actor=None,
                 session_token=None,
                 expires_at=None,
-            )
-
-        totp_row = await self._load_totp_factor(user_row["id"])
-        if totp_row is None:
-            secret = generate_totp_secret()
-            return LoginResult(
-                status="totp_enrollment_required",
-                actor=None,
-                session_token=None,
-                expires_at=None,
-                totp_setup={
-                    "secret": secret,
-                    "otpauthUrl": build_otpauth_url(
-                        issuer=self.settings.app_name,
-                        username=normalized_username,
-                        secret=secret,
-                    ),
-                },
-            )
-
-        secret = decrypt_totp_secret(
-            totp_row["secret_ciphertext"], self.settings.security_secret_key
-        )
-        if not totp_code:
-            return LoginResult(
-                status="totp_required",
-                actor=None,
-                session_token=None,
-                expires_at=None,
-            )
-        if not verify_totp_code(secret, totp_code):
-            raise ApiError(
-                status_code=401,
-                code="totp_invalid",
-                message="TOTP code is invalid.",
             )
 
         return await self._create_platform_session(user_id=user_row["id"])

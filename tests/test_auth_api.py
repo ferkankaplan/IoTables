@@ -31,7 +31,7 @@ class FakeIdentityAccessService:
         _ = tenant_subdomain
         return {
             "status": "password_required",
-            "totpRequired": app_scope == AppScope.PLATFORM and username == "owner",
+            "totpRequired": False,
             "firstPasswordRequired": app_scope == AppScope.TENANT and username == "demo",
         }
 
@@ -134,7 +134,7 @@ def test_login_requirements_use_app_scope_query_alias() -> None:
     assert response.status_code == 200
     assert response.json() == {
         "status": "password_required",
-        "totpRequired": True,
+        "totpRequired": False,
         "firstPasswordRequired": False,
     }
 
@@ -240,6 +240,15 @@ def test_session_returns_current_actor_from_cookie() -> None:
     assert response.status_code == 200
     assert response.json()["actor"]["userId"] == str(USER_ID)
     assert response.json()["actor"]["appScope"] == "platform"
+
+
+def test_session_without_cookie_returns_anonymous_state() -> None:
+    client = make_client(FakeIdentityAccessService())
+
+    response = client.get("/api/v1/auth/session")
+
+    assert response.status_code == 200
+    assert response.json() == {"actor": None}
 
 
 def test_logout_requires_csrf_token() -> None:

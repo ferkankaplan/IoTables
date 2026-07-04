@@ -97,7 +97,7 @@ Required tests:
 - Wrong app scope returns safe failure.
 - Disabled user/role/station/hall assignment fails at mutation time.
 - Tenant admin and cashier first password setup require OTP; station and service staff do not in v1.
-- Platform Owner requires TOTP before PlatformApp dashboard access.
+- Platform Owner does not require OTP/TOTP before PlatformApp dashboard access in v1.
 
 ### QR Presence and Customer Ordering
 

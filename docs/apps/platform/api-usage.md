@@ -8,11 +8,11 @@ This document maps PlatformApp behavior to module-owned API contracts. It does n
 
 | App Need | Endpoint | Module API Contract | Notes |
 | --- | --- | --- | --- |
-| Login requirements | `GET /api/v1/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe setup/TOTP requirement discovery; no tenant data exposure. |
-| Login | `POST /api/v1/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | Platform Owner scope; TOTP required before dashboard access. |
+| Login requirements | `GET /api/v1/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe setup requirement discovery; no tenant data exposure. |
+| Login | `POST /api/v1/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | Platform Owner scope; username/password only in v1. |
 | Session check | `GET /api/v1/auth/session` | [Identity and Access](../../modules/access/identity-access-api.md) | Used on protected dashboard load. |
 | Logout | `POST /api/v1/auth/logout` | [Identity and Access](../../modules/access/identity-access-api.md) | Revokes current session. |
-| TOTP enrollment | `POST /api/v1/auth/totp/enroll` | [Identity and Access](../../modules/access/identity-access-api.md) | Platform Owner only. |
+| TOTP enrollment | `POST /api/v1/auth/totp/enroll` | [Identity and Access](../../modules/access/identity-access-api.md) | Reserved for future PlatformApp hardening; not used by v1 PlatformApp login. |
 | Tenant list/health | `GET /api/v1/platform/tenants` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | High-level health only; no tenant runtime leakage. |
 | Tenant detail | `GET /api/v1/platform/tenants/{tenantId}` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | Identity/profile/lifecycle view. |
 | Update tenant profile | `PATCH /api/v1/platform/tenants/{tenantId}/profile` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | Editable platform-owned fields only; name/subdomain remain immutable. |

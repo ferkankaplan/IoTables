@@ -26,7 +26,7 @@ Source context:
 | Component | Responsibility | Main Sources |
 | --- | --- | --- |
 | `PlatformShell` | Platform route frame, authenticated session state, logout, app navigation. | Session check |
-| `PlatformLogin` | Login, first-password, TOTP enrollment/verification, and blocked setup states. | Identity and Access |
+| `PlatformLogin` | Username/password login and blocked setup states. | Identity and Access |
 | `PlatformHealthSummary` | High-level tenant lifecycle/setup/health counters. | Tenant health list |
 | `TenantHealthList` | Tenant list with filters, lifecycle, DNS, provisioning, starter, and health flags. | Tenant Registry |
 | `TenantCreateDrawer` | Tenant creation form, sector template preview, idempotent submit, provisioning result. | Provisioning, Sector Starter Templates |
@@ -53,9 +53,7 @@ Source context:
 - username/password login;
 - login requirements state;
 - first password change requirement;
-- TOTP enrollment requirement;
-- TOTP verification requirement;
-- invalid credential/TOTP messages;
+- invalid credential messages;
 - bootstrap-user-missing blocked state.
 
 `PlatformLogin` must not show tenant list, health, audit, tenant names, or tenant count before successful Platform Owner authentication.

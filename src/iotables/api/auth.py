@@ -79,7 +79,7 @@ class FirstPasswordCompleteRequest(BaseModel):
 
 
 class SessionResponse(BaseModel):
-    actor: dict[str, object]
+    actor: dict[str, object] | None
 
 
 class LogoutResponse(BaseModel):
@@ -205,7 +205,16 @@ async def enroll_totp(
 
 
 @router.get("/session", response_model=SessionResponse)
-async def session(actor: Annotated[ActorContext, Depends(get_current_actor)]) -> dict[str, object]:
+async def session(request: Request) -> dict[str, object | None]:
+    session_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_token:
+        return {"actor": None}
+
+    actor = await request.app.state.session_resolver.resolve(session_token)
+    if actor is None:
+        return {"actor": None}
+
+    request.state.actor = actor
     return {"actor": actor_payload(actor)}
 
 

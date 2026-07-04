@@ -46,7 +46,7 @@ Source context:
 
 | Component | Responsibility |
 | --- | --- |
-| PlatformLogin | Platform Owner login and TOTP setup/verification state. |
+| PlatformLogin | Platform Owner username/password login state. |
 | TenantHealthList | Active tenant list with lifecycle, DNS, provisioning, and safe health summaries. |
 | TenantCreateDrawer | Tenant creation flow with required name, subdomain, GSM, and optional profile fields. |
 | ProvisioningStatePanel | Provisioning, starter application, failure, and retry/recovery state. |

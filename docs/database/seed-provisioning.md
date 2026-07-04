@@ -40,7 +40,7 @@ Rules:
 - It is created by an explicit bootstrap command/tool, not by app startup.
 - The command must be idempotent and protected by the active Platform Owner uniqueness rule.
 - The Platform Owner has `tenant_id = null`.
-- PlatformApp access requires TOTP enrollment before normal use.
+- PlatformApp access requires username/password only in v1; OTP/TOTP is not part of PlatformApp login.
 - Bootstrap must never embed a production password in migration files or committed config.
 - Bootstrap writes audit event `platform_owner.created`.
 

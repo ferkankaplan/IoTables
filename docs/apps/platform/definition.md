@@ -6,7 +6,7 @@ PlatformApp is the private owner interface for operating IoTables as a platform.
 
 It is a single-user admin panel served from `platform.iotables.net`. The first interaction must require login. After login, the platform owner can inspect active tenants, monitor their health, and create new tenants.
 
-PlatformApp authentication uses a platform-scoped Platform Owner account. The first Platform Owner is created by an explicit one-time bootstrap command, not by automatic startup seed logic. The bootstrap account must change its password and enroll TOTP before PlatformApp access is granted.
+PlatformApp authentication uses a platform-scoped Platform Owner account. The first Platform Owner is created by an explicit one-time bootstrap command, not by automatic startup seed logic. V1 PlatformApp login uses username and password only; TOTP is not required for PlatformApp access unless a later security-hardening decision explicitly reintroduces it.
 
 Its main responsibility is to create, inspect, configure, suspend, and support tenant businesses. A tenant represents a cafe or restaurant customer.
 
@@ -279,7 +279,7 @@ SMS provider selection is not a PlatformApp product decision. PlatformApp depend
 - PlatformApp is private and must require platform-owner authentication.
 - PlatformApp is single-user in the first version.
 - Platform Owner is a platform-scoped user, not a tenant user.
-- Platform Owner login requires username/password plus TOTP after first enrollment.
+- Platform Owner login requires username/password only in v1.
 - Platform Owner bootstrap must be explicit and one-time; it must not run on application restart or deployment.
 - Tenant users must never access PlatformApp.
 - Platform actions must be audited.

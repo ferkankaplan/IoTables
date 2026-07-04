@@ -27,7 +27,7 @@ PlatformApp uses a small set of durable routes. Secondary records open as contex
 
 | Surface | URL | UI Shape | Purpose |
 | --- | --- | --- | --- |
-| Login | `/login` | Durable page | Platform Owner authentication, first password, and TOTP gates. |
+| Login | `/login` | Durable page | Platform Owner username/password authentication. |
 | Dashboard | `/` | Durable page | Platform health and tenant status overview. |
 | Tenant Workspace | `/tenants` | Durable page | Tenant list, filters, health, selected tenant detail panel. |
 | Create Tenant | `/tenants/new` | Drawer route | Tenant creation form and provisioning result without leaving tenant workspace. |
@@ -48,12 +48,10 @@ Required states:
 | Loading | Show minimal login shell while login requirements/session state loads. |
 | Bootstrap user missing | Show setup unavailable state; no dashboard link. |
 | First password change required | Force password change before dashboard access. |
-| TOTP enrollment required | Force TOTP setup before dashboard access. |
-| TOTP required | Show TOTP field after username/password requirement is known. |
-| Invalid credentials/TOTP | Show safe failure without exposing tenant data or account existence details. |
+| Invalid credentials | Show safe failure without exposing tenant data or account existence details. |
 | Platform user disabled | Reject access and keep tenant data hidden. |
 
-Login, first-password, and TOTP flows use dialogs/steps inside the login surface. Dashboard access appears only after backend authentication and required setup completion.
+Login and required setup flows use dialogs/steps inside the login surface. Dashboard access appears only after backend authentication and required setup completion.
 
 ## Dashboard
 

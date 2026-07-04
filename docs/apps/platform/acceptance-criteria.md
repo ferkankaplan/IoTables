@@ -3,7 +3,7 @@ PlatformApp is accepted for v1 when:
 
 - Platform Owner must log in before seeing tenants;
 - first Platform Owner bootstrap is explicit and one-time;
-- Platform Owner must complete password change and TOTP enrollment;
+- Platform Owner login does not require OTP/TOTP in v1;
 - tenant creation requires name, subdomain, and GSM number;
 - tenant starts as `provisioning`;
 - tenant becomes `active` only after required setup records commit;

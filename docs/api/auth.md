@@ -68,7 +68,7 @@ Platform Owner:
 
 - `tenant_id = null`;
 - PlatformApp scope only;
-- TOTP required before dashboard access.
+- username/password login only in v1.
 
 Tenant users:
 
@@ -82,7 +82,7 @@ Bootstrap users cannot enter normal app workflows until first password setup com
 
 | User | OTP Requirement |
 | --- | --- |
-| Platform Owner | TOTP enrollment required for PlatformApp access |
+| Platform Owner | No OTP/TOTP requirement in v1 |
 | Tenant Admin | OTP SMS to tenant GSM required |
 | Cashier | OTP SMS to tenant GSM required |
 | Station Staff | OTP not required in v1 |

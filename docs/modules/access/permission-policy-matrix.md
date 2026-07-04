@@ -44,7 +44,7 @@ Frontend visibility is never authorization proof.
 
 | App / Surface | Allowed Actor | Required Guards |
 | --- | --- | --- |
-| PlatformApp | Platform Owner | Platform session, active platform owner, TOTP enrolled/verified before dashboard |
+| PlatformApp | Platform Owner | Platform session and active platform owner |
 | TenantApp | Tenant Admin | Tenant active, tenant session, `tenant_admin` role, own tenant |
 | CustomerApp | Anonymous Customer | Tenant active; public menu browsing allowed; order/table/balance protected by CustomerOrderingSession and fresh presence where required |
 | StationStaffApp | Station Staff | Tenant active, station app scope, `station_staff` role, assigned station for queue mutations |
@@ -93,7 +93,7 @@ Frontend visibility is never authorization proof.
 | `identity_access.begin_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Tenant admin and cashier require OTP; station/service do not |
 | `identity_access.complete_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | OTP proof required for tenant admin/cashier |
 | `identity_access.change_password` | Authenticated user | Own active user session | Current password valid |
-| `identity_access.enroll_totp` | PlatformApp | Platform Owner | Required before Platform dashboard access |
+| `identity_access.enroll_totp` | PlatformApp | Platform Owner | Reserved for future PlatformApp hardening; not required by v1 login |
 | `identity_access.logout_or_revoke_session` | Authenticated user, TenantApp admin recovery, Platform recovery | Own session, Tenant Admin own tenant, or Platform recovery | Revoked/expired sessions fail closed |
 | `identity_access.disable_user` | TenantApp, Platform recovery | Tenant Admin own tenant or Platform recovery | Cannot silently disable only active Platform Owner |
 | `staff_access.upsert_staff_profile` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | User belongs to tenant |

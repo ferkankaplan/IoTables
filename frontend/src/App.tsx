@@ -108,7 +108,7 @@ type AuthenticatedActor = {
 };
 
 type SessionResponse = {
-  actor: AuthenticatedActor;
+  actor: AuthenticatedActor | null;
 };
 
 type LoginResponse = {
@@ -536,7 +536,7 @@ export function App() {
         const payload = await apiRequest<SessionResponse>("/api/v1/auth/session");
         if (active) {
           setActor(payload.actor);
-          setAuthState("authenticated");
+          setAuthState(payload.actor ? "authenticated" : "anonymous");
         }
       } catch {
         if (active) {
@@ -861,15 +861,9 @@ function PlatformLoginScreen({
 }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [totpCode, setTotpCode] = useState("");
-  const [totpSetup, setTotpSetup] = useState<LoginResponse["totpSetup"]>(null);
-  const [totpRequired, setTotpRequired] = useState(false);
   const [state, setState] = useState<"idle" | "submitting" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const canSubmit =
-    username.trim() &&
-    password &&
-    (!totpSetup && !totpRequired ? true : totpCode.trim().length === 6);
+  const canSubmit = Boolean(username.trim() && password);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -880,39 +874,15 @@ function PlatformLoginScreen({
     setState("submitting");
     setError(null);
     try {
-      const result =
-        totpSetup !== null
-          ? await apiRequest<LoginResponse>("/api/v1/auth/totp/enroll", {
-              body: JSON.stringify({
-                username: username.trim(),
-                password,
-                secret: totpSetup.secret,
-                totpCode
-              }),
-              headers: {"Content-Type": "application/json"},
-              method: "POST"
-            })
-          : await apiRequest<LoginResponse>("/api/v1/auth/login", {
-              body: JSON.stringify({
-                appScope: "platform",
-                username: username.trim(),
-                password,
-                totpCode: totpCode || undefined
-              }),
-              headers: {"Content-Type": "application/json"},
-              method: "POST"
-            });
-      if (result.status === "totp_enrollment_required" && result.totpSetup !== null) {
-        setTotpSetup(result.totpSetup);
-        setTotpRequired(false);
-        setState("idle");
-        return;
-      }
-      if (result.status === "totp_required") {
-        setTotpRequired(true);
-        setState("idle");
-        return;
-      }
+      const result = await apiRequest<LoginResponse>("/api/v1/auth/login", {
+        body: JSON.stringify({
+          appScope: "platform",
+          username: username.trim(),
+          password
+        }),
+        headers: {"Content-Type": "application/json"},
+        method: "POST"
+      });
       if (result.status !== "authenticated" || result.actor === null) {
         throw new Error("Platform erişimi tamamlanamadı.");
       }
@@ -941,21 +911,6 @@ function PlatformLoginScreen({
             type="password"
             value={password}
           />
-          {totpSetup ? (
-            <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-              <p className="font-semibold">TOTP kurulumu</p>
-              <p className="mt-2 break-all font-mono text-xs">{totpSetup.secret}</p>
-              <p className="mt-2 break-all text-xs">{totpSetup.otpauthUrl}</p>
-            </div>
-          ) : null}
-          {totpSetup || totpRequired ? (
-            <FieldText
-              label="TOTP kodu"
-              onChange={setTotpCode}
-              required
-              value={totpCode}
-            />
-          ) : null}
           {state === "error" ? <StateBlock title={error ?? "Giriş yapılamadı"} tone="error" /> : null}
           <button
             className="h-10 w-full bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"

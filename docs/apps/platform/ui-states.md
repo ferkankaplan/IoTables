@@ -3,7 +3,7 @@
 
 | Workspace | Required States |
 | --- | --- |
-| Login | loading, invalid credentials, TOTP required, TOTP invalid, first password change required, TOTP enrollment required |
+| Login | loading, invalid credentials, first password change required |
 | Dashboard / Tenant List | loading, empty tenant list, partial health unavailable, tenant row stale, platform auth expired |
 | Create Tenant | pristine, validating, submitting, provisioning, provisioning failed, success |
 | Tenant Detail | loading, not found, suspended, provisioning, provisioning failed, DNS not ready, health unavailable |
@@ -21,7 +21,6 @@
 | --- | --- |
 | Platform Owner not authenticated | Redirect to login |
 | Bootstrap user missing | Show setup unavailable state; do not expose dashboard |
-| TOTP not enrolled | Force enrollment before dashboard |
 | Tenant create required field missing | Mark field and keep form data |
 | Subdomain already exists | Mark subdomain field and block submit |
 | Provisioning failed | Show recoverable failure state and audit/retry affordance when available |

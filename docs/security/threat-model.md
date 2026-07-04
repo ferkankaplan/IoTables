@@ -28,7 +28,7 @@ It is downstream of:
 
 | Boundary | Trusted Evidence | Must Not Trust |
 | --- | --- | --- |
-| PlatformApp browser | Platform session, CSRF, TOTP state | Tenant IDs or platform authority from request body |
+| PlatformApp browser | Platform session, CSRF state | Tenant IDs or platform authority from request body |
 | Tenant/staff browser | Host tenant, staff session, CSRF, app scope, role/scope checks | Frontend visibility, station/hall IDs, tenant IDs, prices, totals |
 | CustomerApp browser | Host tenant, CustomerOrderingSession cookie, fresh QR presence | Customer identity, table IDs, prices, session state from JavaScript |
 | ESP32 table display | Active TableDisplayCredential | Tenant/table IDs supplied by device request |
