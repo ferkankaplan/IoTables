@@ -6,6 +6,33 @@ The product semantics live under `docs/apps/`. Implementation must follow the de
 
 ## Local Commands
 
+Run the full local Docker smoke stack:
+
+```powershell
+docker compose up -d --build
+docker compose logs -f backend frontend
+```
+
+Open:
+
+- Frontend: `http://localhost:5173`
+- API health: `http://localhost:8000/api/v1/health/live`
+- API docs: `http://localhost:8000/api/docs`
+
+Stop the full stack:
+
+```powershell
+docker compose down
+```
+
+Bootstrap the local Platform Owner inside the backend container:
+
+```powershell
+docker compose exec backend uv run python -m iotables.tools.bootstrap_platform_owner --username platform --password admin
+```
+
+Run the app locally outside Docker:
+
 ```powershell
 uv sync
 pnpm install

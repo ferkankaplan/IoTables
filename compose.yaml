@@ -16,5 +16,38 @@ services:
       timeout: 5s
       retries: 12
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iotables-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      IOTABLES_ENV: local
+      IOTABLES_LOG_LEVEL: INFO
+      IOTABLES_DATABASE_URL: postgresql+asyncpg://iotables:iotables@db:5432/iotables
+      IOTABLES_SECURITY_SECRET_KEY: local-dev-insecure-secret-change-me
+      IOTABLES_CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "uv run alembic upgrade head &&
+             uv run uvicorn iotables.main:create_app --factory --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: iotables-frontend
+    depends_on:
+      - backend
+    environment:
+      IOTABLES_API_PROXY_TARGET: http://backend:8000
+      IOTABLES_DEV_SERVER_HOST: 0.0.0.0
+    ports:
+      - "5173:5173"
+
 volumes:
   iotables_postgres_data:

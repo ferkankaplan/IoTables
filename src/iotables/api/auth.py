@@ -1,10 +1,12 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from iotables.api.errors import ApiError
+from iotables.api.tenant_resolution import tenant_subdomain_from_request
 from iotables.config import Settings
 from iotables.database.session import get_database_session
 from iotables.modules.access.identity import IdentityAccessService, actor_payload
@@ -55,6 +57,27 @@ class TotpEnrollRequest(BaseModel):
     totp_code: str = Field(alias="totpCode", min_length=6, max_length=6)
 
 
+class FirstPasswordBeginRequest(BaseModel):
+    setup_token: str = Field(alias="setupToken", min_length=1)
+
+
+class FirstPasswordSetupStateResponse(BaseModel):
+    status: str
+    setup_token: str = Field(alias="setupToken")
+    otp_required: bool = Field(alias="otpRequired")
+    otp_challenge_id: str | None = Field(alias="otpChallengeId")
+    target_hint: str | None = Field(alias="targetHint")
+    expires_at: str | None = Field(alias="expiresAt")
+    remaining_attempts: int | None = Field(alias="remainingAttempts")
+
+
+class FirstPasswordCompleteRequest(BaseModel):
+    setup_token: str = Field(alias="setupToken", min_length=1)
+    new_password: str = Field(alias="newPassword", min_length=8)
+    otp_challenge_id: UUID | None = Field(default=None, alias="otpChallengeId")
+    otp_code: str | None = Field(default=None, alias="otpCode", min_length=6, max_length=6)
+
+
 class SessionResponse(BaseModel):
     actor: dict[str, object]
 
@@ -72,11 +95,18 @@ def get_identity_access_service(
 
 @router.get("/login-requirements", response_model=LoginRequirementsResponse)
 async def login_requirements(
+    request: Request,
     service: Annotated[IdentityAccessService, Depends(get_identity_access_service)],
     app_scope: Annotated[AppScope, Query(alias="appScope")],
     username: str,
 ) -> dict[str, object]:
-    requirements = await service.get_login_requirements(app_scope=app_scope, username=username)
+    requirements = await service.get_login_requirements(
+        app_scope=app_scope,
+        username=username,
+        tenant_subdomain=(
+            tenant_subdomain_from_request(request) if app_scope != AppScope.PLATFORM else None
+        ),
+    )
     return {
         "status": requirements.get("status", "password_required"),
         "totpRequired": bool(requirements.get("totpRequired", False)),
@@ -91,17 +121,49 @@ async def login(
     request: Request,
     service: Annotated[IdentityAccessService, Depends(get_identity_access_service)],
 ) -> dict[str, object]:
-    if payload.app_scope != AppScope.PLATFORM:
-        raise ApiError(
-            status_code=403,
-            code="wrong_app_scope",
-            message="This session cannot access this app.",
-        )
-
-    result = await service.authenticate_platform(
+    result = await service.authenticate(
+        app_scope=payload.app_scope,
         username=payload.username,
         password=payload.password,
+        tenant_subdomain=tenant_subdomain_from_request(request)
+        if payload.app_scope != AppScope.PLATFORM
+        else None,
         totp_code=payload.totp_code,
+    )
+    if result.session_token is not None and result.expires_at is not None:
+        response.set_cookie(
+            key=SESSION_COOKIE_NAME,
+            value=result.session_token,
+            httponly=True,
+            secure=cookie_secure(request.app.state.settings),
+            samesite="lax",
+            expires=result.expires_at,
+            path="/",
+        )
+    return result.as_api_payload()
+
+
+@router.post("/first-password/begin", response_model=FirstPasswordSetupStateResponse)
+async def begin_first_password(
+    payload: FirstPasswordBeginRequest,
+    service: Annotated[IdentityAccessService, Depends(get_identity_access_service)],
+) -> dict[str, object]:
+    result = await service.begin_first_password_setup(setup_token=payload.setup_token)
+    return result.as_api_payload()
+
+
+@router.post("/first-password/complete", response_model=LoginResponse)
+async def complete_first_password(
+    payload: FirstPasswordCompleteRequest,
+    response: Response,
+    request: Request,
+    service: Annotated[IdentityAccessService, Depends(get_identity_access_service)],
+) -> dict[str, object]:
+    result = await service.complete_first_password_setup(
+        setup_token=payload.setup_token,
+        new_password=payload.new_password,
+        otp_challenge_id=payload.otp_challenge_id,
+        otp_code=payload.otp_code,
     )
     if result.session_token is not None and result.expires_at is not None:
         response.set_cookie(

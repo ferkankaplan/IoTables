@@ -620,6 +620,12 @@ def test_audit_events_are_append_only_structured_records() -> None:
     assert "cashier.correction_applied" in action_sql
     assert "tenant.profile_updated" in action_sql
     assert "tenant.dns_ready_changed" in action_sql
+    assert "venue_layout.changed" in action_sql
+    assert "table.disabled" in action_sql
+    assert "station.changed" in action_sql
+    assert "station.disabled" in action_sql
+    assert "menu_catalog.changed" in action_sql
+    assert "availability.changed" in action_sql
     assert "CREATE INDEX ix_audit_events__tenant_created" in tenant_index
     assert "CREATE INDEX ix_audit_events__target" in target_index
 

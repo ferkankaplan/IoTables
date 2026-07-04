@@ -13,12 +13,17 @@ from iotables.database.schema import (
     credentials,
     login_sessions,
     platform_role_assignments,
+    staff_profiles,
+    staff_role_assignments,
+    tenants,
     totp_factors,
     users,
 )
-from iotables.security.context import ActorContext, ActorType, AppScope
+from iotables.modules.access.otp import OtpMessagingService
+from iotables.security.context import ActorContext, ActorType, AppScope, StaffRole
 from iotables.security.passwords import hash_password, verify_password
 from iotables.security.session import generate_session_token, hash_session_token
+from iotables.security.setup_token import SetupTokenError, issue_setup_token, parse_setup_token
 from iotables.security.totp import (
     build_otpauth_url,
     decrypt_totp_secret,
@@ -28,6 +33,9 @@ from iotables.security.totp import (
 )
 
 SESSION_TTL = timedelta(hours=8)
+FIRST_PASSWORD_SETUP_TTL = timedelta(minutes=15)
+FIRST_PASSWORD_PURPOSE = "first_password"
+TENANT_ADMIN_OTP_PURPOSE = "tenant_admin_first_password"
 
 
 @dataclass(frozen=True)
@@ -43,15 +51,40 @@ class LoginResult:
     actor: ActorContext | None
     session_token: str | None
     expires_at: datetime | None
+    setup_token: str | None = None
     totp_setup: dict[str, str] | None = None
 
     def as_api_payload(self) -> dict[str, object]:
         return {
             "status": self.status,
             "actor": actor_payload(self.actor) if self.actor is not None else None,
-            "setupToken": None,
+            "setupToken": self.setup_token,
             "expiresAt": self.expires_at.isoformat() if self.expires_at is not None else None,
             "totpSetup": self.totp_setup,
+        }
+
+
+@dataclass(frozen=True)
+class FirstPasswordSetupState:
+    status: str
+    setup_token: str
+    otp_required: bool
+    otp_challenge_id: UUID | None
+    target_hint: str | None
+    expires_at: datetime | None
+    remaining_attempts: int | None
+
+    def as_api_payload(self) -> dict[str, object]:
+        return {
+            "status": self.status,
+            "setupToken": self.setup_token,
+            "otpRequired": self.otp_required,
+            "otpChallengeId": str(self.otp_challenge_id)
+            if self.otp_challenge_id is not None
+            else None,
+            "targetHint": self.target_hint,
+            "expiresAt": self.expires_at.isoformat() if self.expires_at is not None else None,
+            "remainingAttempts": self.remaining_attempts,
         }
 
 
@@ -145,8 +178,22 @@ class IdentityAccessService:
             )
 
     async def get_login_requirements(
-        self, *, app_scope: AppScope, username: str
+        self, *, app_scope: AppScope, username: str, tenant_subdomain: str | None = None
     ) -> dict[str, object]:
+        if app_scope == AppScope.TENANT:
+            user_row = await self._load_tenant_user(
+                username=normalize_username(username),
+                tenant_subdomain=tenant_subdomain,
+                required_role="tenant_admin",
+            )
+            return {
+                "status": "password_required",
+                "totpRequired": False,
+                "firstPasswordRequired": bool(user_row["first_password_change_required"])
+                if user_row
+                else False,
+            }
+
         if app_scope != AppScope.PLATFORM:
             return {
                 "status": "password_required",
@@ -168,6 +215,33 @@ class IdentityAccessService:
             "totpRequired": totp_enabled,
             "firstPasswordRequired": bool(user_row["first_password_change_required"]),
         }
+
+    async def authenticate(
+        self,
+        *,
+        app_scope: AppScope,
+        username: str,
+        password: str,
+        tenant_subdomain: str | None = None,
+        totp_code: str | None = None,
+    ) -> LoginResult:
+        if app_scope == AppScope.PLATFORM:
+            return await self.authenticate_platform(
+                username=username,
+                password=password,
+                totp_code=totp_code,
+            )
+        if app_scope == AppScope.TENANT:
+            return await self.authenticate_tenant(
+                username=username,
+                password=password,
+                tenant_subdomain=tenant_subdomain,
+            )
+        raise ApiError(
+            status_code=403,
+            code="wrong_app_scope",
+            message="This session cannot access this app.",
+        )
 
     async def authenticate_platform(
         self,
@@ -226,6 +300,172 @@ class IdentityAccessService:
 
         return await self._create_platform_session(user_id=user_row["id"])
 
+    async def authenticate_tenant(
+        self,
+        *,
+        username: str,
+        password: str,
+        tenant_subdomain: str | None,
+    ) -> LoginResult:
+        user_row = await self._load_tenant_user(
+            username=normalize_username(username),
+            tenant_subdomain=tenant_subdomain,
+            required_role="tenant_admin",
+        )
+        if user_row is None:
+            raise invalid_credentials()
+
+        credential_row = (
+            (
+                await self.session.execute(
+                    select(credentials).where(credentials.c.user_id == user_row["id"])
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if credential_row is None or not verify_password(password, credential_row["password_hash"]):
+            raise invalid_credentials()
+
+        if user_row["first_password_change_required"]:
+            return LoginResult(
+                status="first_password_required",
+                actor=None,
+                session_token=None,
+                expires_at=None,
+                setup_token=self._issue_first_password_setup_token(
+                    user_id=user_row["id"],
+                    tenant_id=user_row["tenant_id"],
+                    app_scope=AppScope.TENANT,
+                ),
+            )
+
+        return await self._create_tenant_session(
+            user_id=user_row["id"],
+            tenant_id=user_row["tenant_id"],
+        )
+
+    async def begin_first_password_setup(self, *, setup_token: str) -> FirstPasswordSetupState:
+        token_payload = self._parse_first_password_setup_token(setup_token)
+        if token_payload["app_scope"] != AppScope.TENANT:
+            raise setup_token_invalid()
+
+        user_row = await self._load_tenant_setup_user(
+            user_id=token_payload["user_id"],
+            tenant_id=token_payload["tenant_id"],
+            required_role=StaffRole.TENANT_ADMIN.value,
+        )
+        if user_row is None or not user_row["first_password_change_required"]:
+            raise setup_token_invalid()
+        if not user_row["bootstrap_credential"]:
+            raise setup_token_invalid()
+
+        now = utc_now()
+        otp = OtpMessagingService(self.session, self.settings.security_secret_key)
+        challenge = await otp.create_challenge(
+            tenant_id=user_row["tenant_id"],
+            user_id=user_row["id"],
+            purpose=TENANT_ADMIN_OTP_PURPOSE,
+            target_gsm=user_row["tenant_gsm"],
+            now=now,
+        )
+        await self.session.commit()
+        return FirstPasswordSetupState(
+            status="otp_required",
+            setup_token=setup_token,
+            otp_required=True,
+            otp_challenge_id=challenge.challenge_id,
+            target_hint=challenge.target_hint,
+            expires_at=challenge.expires_at,
+            remaining_attempts=challenge.remaining_attempts,
+        )
+
+    async def complete_first_password_setup(
+        self,
+        *,
+        setup_token: str,
+        new_password: str,
+        otp_challenge_id: UUID | None = None,
+        otp_code: str | None = None,
+    ) -> LoginResult:
+        if len(new_password) < 8:
+            raise ApiError(
+                status_code=422,
+                code="password_policy_failed",
+                message="Password does not satisfy the policy.",
+            )
+
+        token_payload = self._parse_first_password_setup_token(setup_token)
+        if token_payload["app_scope"] != AppScope.TENANT:
+            raise setup_token_invalid()
+
+        user_row = await self._load_tenant_setup_user(
+            user_id=token_payload["user_id"],
+            tenant_id=token_payload["tenant_id"],
+            required_role=StaffRole.TENANT_ADMIN.value,
+        )
+        if user_row is None or not user_row["first_password_change_required"]:
+            raise setup_token_invalid()
+        if not user_row["bootstrap_credential"]:
+            raise setup_token_invalid()
+        if otp_challenge_id is None or not otp_code:
+            raise ApiError(
+                status_code=403,
+                code="otp_required",
+                message="OTP proof is required.",
+            )
+
+        now = utc_now()
+        otp = OtpMessagingService(self.session, self.settings.security_secret_key)
+        await otp.verify(
+            tenant_id=user_row["tenant_id"],
+            user_id=user_row["id"],
+            challenge_id=otp_challenge_id,
+            purpose=TENANT_ADMIN_OTP_PURPOSE,
+            code=otp_code,
+            now=now,
+        )
+        await self.session.execute(
+            update(credentials)
+            .where(credentials.c.user_id == user_row["id"])
+            .values(
+                password_hash=hash_password(new_password),
+                bootstrap_credential=False,
+                changed_at=now,
+            )
+        )
+        await self.session.execute(
+            update(users)
+            .where(
+                users.c.id == user_row["id"],
+                users.c.tenant_id == user_row["tenant_id"],
+            )
+            .values(first_password_change_required=False, updated_at=now)
+        )
+        await self._insert_audit_event(
+            tenant_id=user_row["tenant_id"],
+            actor_user_id=user_row["id"],
+            action="otp.verified",
+            target_type="otp_challenge",
+            target_id=str(otp_challenge_id),
+            metadata={"purpose": TENANT_ADMIN_OTP_PURPOSE},
+            created_at=now,
+        )
+        await self._insert_audit_event(
+            tenant_id=user_row["tenant_id"],
+            actor_user_id=user_row["id"],
+            action="password.changed",
+            target_type="user",
+            target_id=str(user_row["id"]),
+            metadata={"flow": FIRST_PASSWORD_PURPOSE},
+            created_at=now,
+        )
+
+        return await self._create_tenant_session(
+            user_id=user_row["id"],
+            tenant_id=user_row["tenant_id"],
+        )
+
     async def enroll_platform_totp(
         self,
         *,
@@ -270,6 +510,39 @@ class IdentityAccessService:
         )
 
         return await self._create_platform_session(user_id=user_row["id"])
+
+    async def _create_tenant_session(self, *, user_id: UUID, tenant_id: UUID) -> LoginResult:
+        now = utc_now()
+        expires_at = now + SESSION_TTL
+        session_token = generate_session_token()
+        session_id = uuid4()
+        await self.session.execute(
+            insert(login_sessions).values(
+                id=session_id,
+                tenant_id=tenant_id,
+                user_id=user_id,
+                app_scope=AppScope.TENANT.value,
+                session_token_hash=hash_session_token(session_token),
+                issued_at=now,
+                expires_at=expires_at,
+            )
+        )
+        await self.session.commit()
+
+        actor = ActorContext(
+            actor_type=ActorType.TENANT_USER,
+            app_scope=AppScope.TENANT,
+            user_id=user_id,
+            tenant_id=tenant_id,
+            roles=frozenset({StaffRole.TENANT_ADMIN}),
+            session_id=session_id,
+        )
+        return LoginResult(
+            status="authenticated",
+            actor=actor,
+            session_token=session_token,
+            expires_at=expires_at,
+        )
 
     async def logout(self, *, session_id: UUID) -> None:
         await self.session.execute(
@@ -357,6 +630,90 @@ class IdentityAccessService:
             .first()
         )
 
+    async def _load_tenant_user(
+        self,
+        *,
+        username: str,
+        tenant_subdomain: str | None,
+        required_role: str,
+    ):
+        if tenant_subdomain is None:
+            return None
+
+        return (
+            (
+                await self.session.execute(
+                    select(users)
+                    .join(tenants, tenants.c.id == users.c.tenant_id)
+                    .join(staff_profiles, staff_profiles.c.user_id == users.c.id)
+                    .join(
+                        staff_role_assignments,
+                        staff_role_assignments.c.user_id == users.c.id,
+                    )
+                    .where(
+                        func.lower(tenants.c.subdomain) == normalize_username(tenant_subdomain),
+                        tenants.c.status == "active",
+                        users.c.tenant_id == tenants.c.id,
+                        func.lower(users.c.username) == username,
+                        users.c.status == "active",
+                        staff_profiles.c.status == "active",
+                        staff_role_assignments.c.tenant_id == tenants.c.id,
+                        staff_role_assignments.c.role == required_role,
+                        staff_role_assignments.c.status == "active",
+                    )
+                )
+            )
+            .mappings()
+            .first()
+        )
+
+    async def _load_tenant_setup_user(
+        self,
+        *,
+        user_id: UUID,
+        tenant_id: UUID | None,
+        required_role: str,
+    ):
+        if tenant_id is None:
+            return None
+
+        return (
+            (
+                await self.session.execute(
+                    select(
+                        users.c.id,
+                        users.c.tenant_id,
+                        users.c.username,
+                        users.c.status,
+                        users.c.first_password_change_required,
+                        credentials.c.bootstrap_credential,
+                        tenants.c.gsm_number.label("tenant_gsm"),
+                    )
+                    .join(tenants, tenants.c.id == users.c.tenant_id)
+                    .join(credentials, credentials.c.user_id == users.c.id)
+                    .join(staff_profiles, staff_profiles.c.user_id == users.c.id)
+                    .join(
+                        staff_role_assignments,
+                        staff_role_assignments.c.user_id == users.c.id,
+                    )
+                    .where(
+                        users.c.id == user_id,
+                        users.c.tenant_id == tenant_id,
+                        users.c.status == "active",
+                        tenants.c.id == tenant_id,
+                        tenants.c.status == "active",
+                        staff_profiles.c.tenant_id == tenant_id,
+                        staff_profiles.c.status == "active",
+                        staff_role_assignments.c.tenant_id == tenant_id,
+                        staff_role_assignments.c.role == required_role,
+                        staff_role_assignments.c.status == "active",
+                    )
+                )
+            )
+            .mappings()
+            .first()
+        )
+
     async def _load_totp_factor(self, user_id: UUID):
         return (
             (
@@ -380,6 +737,7 @@ class IdentityAccessService:
     async def _insert_audit_event(
         self,
         *,
+        tenant_id: UUID | None = None,
         actor_user_id: UUID,
         action: str,
         target_type: str,
@@ -390,7 +748,7 @@ class IdentityAccessService:
         await self.session.execute(
             insert(audit_events).values(
                 id=uuid4(),
-                tenant_id=None,
+                tenant_id=tenant_id,
                 actor_user_id=actor_user_id,
                 action=action,
                 target_type=target_type,
@@ -399,6 +757,39 @@ class IdentityAccessService:
                 created_at=created_at,
             )
         )
+
+    def _issue_first_password_setup_token(
+        self,
+        *,
+        user_id: UUID,
+        tenant_id: UUID | None,
+        app_scope: AppScope,
+    ) -> str:
+        return issue_setup_token(
+            encryption_key=self.settings.security_secret_key,
+            user_id=user_id,
+            tenant_id=tenant_id,
+            app_scope=app_scope.value,
+            purpose=FIRST_PASSWORD_PURPOSE,
+            expires_at=utc_now() + FIRST_PASSWORD_SETUP_TTL,
+        )
+
+    def _parse_first_password_setup_token(self, setup_token: str) -> dict[str, object]:
+        try:
+            payload = parse_setup_token(
+                encryption_key=self.settings.security_secret_key,
+                token=setup_token,
+            )
+            if payload.get("purpose") != FIRST_PASSWORD_PURPOSE:
+                raise SetupTokenError("wrong purpose")
+            tenant_id = payload.get("tenantId")
+            return {
+                "user_id": UUID(str(payload["userId"])),
+                "tenant_id": UUID(str(tenant_id)) if tenant_id else None,
+                "app_scope": AppScope(str(payload["appScope"])),
+            }
+        except (SetupTokenError, ValueError, KeyError) as exc:
+            raise setup_token_invalid() from exc
 
 
 def actor_payload(actor: ActorContext) -> dict[str, object]:
@@ -418,6 +809,14 @@ def invalid_credentials() -> ApiError:
         status_code=401,
         code="invalid_credentials",
         message="Invalid username or password.",
+    )
+
+
+def setup_token_invalid() -> ApiError:
+    return ApiError(
+        status_code=410,
+        code="setup_token_invalid",
+        message="Setup token is invalid or expired.",
     )
 
 

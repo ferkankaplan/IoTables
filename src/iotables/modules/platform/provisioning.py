@@ -185,6 +185,28 @@ class TenantProfile:
 
 
 @dataclass(frozen=True)
+class TenantContext:
+    tenant_id: UUID
+    name: str
+    subdomain: str
+    status: str
+    sector: str | None
+    capacity: int | None
+    address: str | None
+
+    def as_api_payload(self) -> dict[str, Any]:
+        return {
+            "tenantId": str(self.tenant_id),
+            "name": self.name,
+            "subdomain": self.subdomain,
+            "status": self.status,
+            "sector": self.sector,
+            "capacity": self.capacity,
+            "address": self.address,
+        }
+
+
+@dataclass(frozen=True)
 class TenantLifecycleEvent:
     event_id: UUID
     tenant_id: UUID
@@ -209,6 +231,38 @@ class TenantLifecycleEvent:
 class TenantRegistryQueryService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    async def resolve_by_subdomain(self, subdomain: str) -> TenantContext:
+        row = (
+            (
+                await self.session.execute(
+                    select(tenants).where(func.lower(tenants.c.subdomain) == subdomain.lower())
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if row is None:
+            raise ApiError(
+                status_code=404,
+                code="not_found_or_hidden",
+                message="Resource was not found.",
+            )
+        if row["status"] != "active":
+            raise ApiError(
+                status_code=503,
+                code="tenant_unavailable",
+                message="Tenant is unavailable.",
+            )
+        return TenantContext(
+            tenant_id=row["id"],
+            name=row["name"],
+            subdomain=row["subdomain"],
+            status=row["status"],
+            sector=row["sector"],
+            capacity=row["capacity"],
+            address=row["address"],
+        )
 
     async def list_tenants(
         self,

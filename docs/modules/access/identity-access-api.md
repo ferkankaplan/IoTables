@@ -41,6 +41,8 @@ CustomerApp does not use these endpoints.
 | `password` | string | yes | Never logged. |
 | `totpCode` | string | no | Required for Platform Owner when enabled/required. |
 
+Tenant-scoped login resolves tenant context from the request host in production. Local development and automated tests may pass `X-Tenant-Subdomain` as an explicit tenant context fallback; production clients must not rely on body/query `tenantId`.
+
 When Platform Owner password is valid but no TOTP factor exists, login returns `totp_enrollment_required` with `totpSetup`. It does not create a dashboard session until `/api/v1/auth/totp/enroll` verifies the first TOTP code and stores the encrypted factor.
 
 `TotpEnrollRequest`:
@@ -62,6 +64,20 @@ When Platform Owner password is valid but no TOTP factor exists, login returns `
 | `otpCode` | string | conditional | Required for tenant admin and cashier. |
 
 ## Response Schemas
+
+`FirstPasswordSetupState`:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `status` | string enum | `otp_required` when OTP proof is required before completion. |
+| `setupToken` | string | Existing setup token; no authenticated app session exists yet. |
+| `otpRequired` | boolean | True for Tenant Admin and Cashier first-password setup in v1. |
+| `otpChallengeId` | string/null | Challenge identifier to submit during completion. |
+| `targetHint` | string/null | Masked tenant GSM display only. |
+| `expiresAt` | timestamp/null | OTP challenge expiry. |
+| `remainingAttempts` | integer/null | Remaining verification attempts; does not reveal the code. |
+
+The OTP code is never returned, logged, or stored in recoverable form. `/api/v1/auth/first-password/begin` creates the OTP challenge and records a redacted SMS delivery attempt; actual provider delivery is handled as a side effect. Repeated begin calls with the same still-valid setup context return the active unverified challenge state instead of creating duplicate OTP challenges.
 
 `LoginResult`:
 

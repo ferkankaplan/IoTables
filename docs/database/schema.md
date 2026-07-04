@@ -887,7 +887,7 @@ Owned by: Audit
 | `metadata` | `jsonb` | Safe JSON object metadata, no secrets |
 | `created_at` | `timestamptz` | Append-only event time |
 
-Allowed v1 action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `tenant.dns_ready_changed`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
+Allowed v1 action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `tenant.dns_ready_changed`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `venue_layout.changed`, `table.disabled`, `station.changed`, `station.disabled`, `menu_catalog.changed`, `availability.changed`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
 
 ### `outbox_messages`
 

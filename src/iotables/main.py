@@ -57,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "Idempotency-Key",
             "X-CSRF-Token",
             "X-Request-Id",
+            "X-Tenant-Subdomain",
         ],
     )
 

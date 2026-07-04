@@ -122,6 +122,322 @@ type LoginResponse = {
   } | null;
 };
 
+type FirstPasswordSetupState = {
+  status: string;
+  setupToken: string;
+  otpRequired: boolean;
+  otpChallengeId: string | null;
+  targetHint: string | null;
+  expiresAt: string | null;
+  remainingAttempts: number | null;
+};
+
+type VenueTable = {
+  tableId: string;
+  hallId: string;
+  name: string;
+  displayOrder: number;
+  enabled: boolean;
+};
+
+type HallWithTables = {
+  hallId: string;
+  name: string;
+  displayOrder: number;
+  enabled: boolean;
+  tables: VenueTable[];
+};
+
+type HallTableBoard = {
+  halls: HallWithTables[];
+  derivedAt: string;
+};
+
+type Station = {
+  stationId: string;
+  name: string;
+  displayOrder: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type StationList = {
+  items: Station[];
+};
+
+type ProductVariant = {
+  variantId: string;
+  productId: string;
+  name: string;
+  priceMinor: number;
+  currencyCode: string;
+  displayOrder: number;
+  isDefault: boolean;
+  enabled: boolean;
+};
+
+type ModifierOption = {
+  optionId: string;
+  groupId: string;
+  name: string;
+  priceDeltaMinor: number;
+  currencyCode: string;
+  available: boolean;
+  displayOrder: number;
+};
+
+type ModifierGroup = {
+  groupId: string;
+  productId: string;
+  name: string;
+  required: boolean;
+  minSelections: number;
+  maxSelections: number;
+  displayOrder: number;
+  options: ModifierOption[];
+};
+
+type AvailabilityOverride = {
+  overrideId: string;
+  productId: string;
+  variantId: string | null;
+  state: "available" | "unavailable";
+  reason: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+};
+
+type ProductService = {
+  productId: string;
+  categoryId: string;
+  stationId: string;
+  name: string;
+  description: string | null;
+  enabled: boolean;
+  variants: ProductVariant[];
+  modifierGroups: ModifierGroup[];
+  availability: AvailabilityOverride[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+type MenuCategory = {
+  categoryId: string;
+  name: string;
+  displayOrder: number;
+  enabled: boolean;
+  products: ProductService[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+type MenuSetupCatalog = {
+  categories: MenuCategory[];
+  derivedAt: string;
+};
+
+type CustomerMenuVariant = {
+  variantId: string;
+  name: string;
+  priceMinor: number;
+  currencyCode: string;
+  displayOrder: number;
+  isDefault: boolean;
+};
+
+type CustomerMenuOption = {
+  optionId: string;
+  name: string;
+  priceDeltaMinor: number;
+  currencyCode: string;
+  displayOrder: number;
+};
+
+type CustomerMenuModifierGroup = {
+  groupId: string;
+  name: string;
+  required: boolean;
+  minSelections: number;
+  maxSelections: number;
+  displayOrder: number;
+  options: CustomerMenuOption[];
+};
+
+type CustomerMenuProduct = {
+  productId: string;
+  categoryId: string;
+  name: string;
+  description: string | null;
+  variants: CustomerMenuVariant[];
+  modifierGroups: CustomerMenuModifierGroup[];
+};
+
+type CustomerMenuCategory = {
+  categoryId: string;
+  name: string;
+  displayOrder: number;
+  products: CustomerMenuProduct[];
+};
+
+type CustomerMenu = {
+  categories: CustomerMenuCategory[];
+  derivedAt: string;
+};
+
+type PresenceRedeemResult = {
+  customerOrderingSessionId: string;
+  tableId: string;
+  hallId: string;
+  freshUntil: string;
+  cartPreserved: boolean;
+};
+
+type PresenceState = {
+  customerOrderingSessionId: string;
+  tableId: string;
+  hallId: string;
+  freshUntil: string;
+  fresh: boolean;
+};
+
+type CartItem = {
+  clientCartItemId: string;
+  productId: string;
+  variantId: string;
+  quantity: number;
+  modifierOptionIds: string[];
+  note: string | null;
+  estimatedPriceMinor: number;
+};
+
+type CustomerCart = {
+  cartId: string;
+  version: string;
+  items: CartItem[];
+  displaySubtotalMinor: number;
+  currency: string;
+  updatedAt: string;
+};
+
+type ServiceReadyItem = {
+  orderItemId: string;
+  preparationItemId: string;
+  tableId: string;
+  hallId: string;
+  tableLabel: string;
+  itemLabel: string;
+  quantity: number;
+  preparationReadyAt: string;
+  deliveryStatus: "picked_up" | "delivered" | null;
+};
+
+type ServiceReadyItemList = {
+  items: ServiceReadyItem[];
+};
+
+type DeliveryState = {
+  orderItemId: string;
+  preparationItemId: string;
+  status: "picked_up" | "delivered";
+  pickedUpAt: string | null;
+  deliveredAt: string | null;
+  actorDisplayName: string | null;
+};
+
+type BulkDeliveryResult = {
+  tableId: string;
+  deliveredItems: DeliveryState[];
+  alreadyDeliveredItems: string[];
+  deliveredAt: string;
+  actorDisplayName: string | null;
+  duplicate: boolean;
+};
+
+type CashierTableState = {
+  tableId: string;
+  hallId: string;
+  tableLabel: string;
+  hallLabel: string;
+  tableSessionId: string | null;
+  checkId: string | null;
+  status: "empty" | "occupied" | string;
+  openedAt: string | null;
+  totalMinor: number;
+  paidMinor: number;
+  remainingMinor: number;
+};
+
+type CashierVenueBoard = {
+  tables: CashierTableState[];
+  derivedAt: string;
+};
+
+type BillSummary = {
+  checkId: string;
+  tableSessionId: string;
+  totalMinor: number;
+  paidMinor: number;
+  remainingMinor: number;
+  currency: string;
+  orderCount: number;
+  paymentCount: number;
+};
+
+type CashierPayment = {
+  paymentId: string;
+  checkId: string;
+  tableSessionId: string;
+  amountMinor: number;
+  currency: string;
+  method: "cash" | "card" | "transfer" | string;
+  status: string;
+  recordedAt: string;
+  voidedAt: string | null;
+};
+
+type PaymentList = {
+  items: CashierPayment[];
+};
+
+type PaymentResult = {
+  payment: CashierPayment;
+  paidMinor: number;
+  remainingMinor: number;
+  duplicate: boolean;
+};
+
+type PaymentVoidResult = {
+  payment: CashierPayment;
+  paidMinor: number;
+  remainingMinor: number;
+  correctionId: string;
+  duplicate: boolean;
+};
+
+type CashierOrderItem = {
+  orderItemId: string;
+  name: string;
+  variantName: string;
+  quantity: number;
+  unitPriceMinor: number;
+  currency: string;
+  note: string | null;
+  voided: boolean;
+};
+
+type CashierOrder = {
+  orderId: string;
+  tableSessionId: string;
+  submittedAt: string;
+  items: CashierOrderItem[];
+};
+
+type CashierOrderList = {
+  items: CashierOrder[];
+};
+
 type ApiErrorEnvelope = {
   error?: {
     code?: string;
@@ -156,6 +472,11 @@ const initialForm: CreateTenantForm = {
 };
 
 export function App() {
+  const appSurface = detectAppSurface();
+  if (appSurface === "customer") {
+    return <CustomerMenuApp />;
+  }
+
   const [authState, setAuthState] = useState<"checking" | "authenticated" | "anonymous">(
     "checking"
   );
@@ -232,10 +553,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (authState === "authenticated") {
+    if (authState === "authenticated" && appSurface === "platform") {
       void loadTenants();
     }
-  }, [authState]);
+  }, [authState, appSurface]);
 
   useEffect(() => {
     if (!selectedTenantId) {
@@ -321,14 +642,42 @@ export function App() {
   }
 
   if (authState === "anonymous") {
-    return (
-      <LoginScreen
-        onAuthenticated={(nextActor) => {
-          setActor(nextActor);
-          setAuthState("authenticated");
-        }}
+    const handleAuthenticated = (nextActor: AuthenticatedActor) => {
+      setActor(nextActor);
+      setAuthState("authenticated");
+    };
+    return appSurface === "tenant" || appSurface === "service" || appSurface === "cashier" ? (
+      <TenantLoginScreen
+        appScope={
+          appSurface === "service" ? "service" : appSurface === "cashier" ? "cashier" : "tenant"
+        }
+        defaultUsername={
+          appSurface === "service" || appSurface === "cashier" ? "" : tenantSubdomainFromLocation()
+        }
+        heading={
+          appSurface === "service"
+            ? "Servis girişi"
+            : appSurface === "cashier"
+              ? "Kasa girişi"
+              : "Tenant girişi"
+        }
+        onAuthenticated={handleAuthenticated}
       />
+    ) : (
+      <PlatformLoginScreen onAuthenticated={handleAuthenticated} />
     );
+  }
+
+  if (appSurface === "service") {
+    return <ServiceStaffSignedInScreen actor={actor} onLogout={() => void logout()} />;
+  }
+
+  if (appSurface === "cashier") {
+    return <CashierSignedInScreen actor={actor} onLogout={() => void logout()} />;
+  }
+
+  if (appSurface === "tenant") {
+    return <TenantSignedInScreen actor={actor} onLogout={() => void logout()} />;
   }
 
   return (
@@ -505,7 +854,11 @@ export function App() {
   );
 }
 
-function LoginScreen({ onAuthenticated }: { onAuthenticated: (actor: AuthenticatedActor) => void }) {
+function PlatformLoginScreen({
+  onAuthenticated
+}: {
+  onAuthenticated: (actor: AuthenticatedActor) => void;
+}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
@@ -614,6 +967,1080 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: (actor: Authenticat
         </form>
       </section>
     </main>
+  );
+}
+
+function TenantLoginScreen({
+  appScope,
+  defaultUsername,
+  heading,
+  onAuthenticated
+}: {
+  appScope: "cashier" | "service" | "tenant";
+  defaultUsername: string;
+  heading: string;
+  onAuthenticated: (actor: AuthenticatedActor) => void;
+}) {
+  const tenantSubdomain = tenantSubdomainFromLocation();
+  const [username, setUsername] = useState(defaultUsername);
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [setupState, setSetupState] = useState<FirstPasswordSetupState | null>(null);
+  const [setupToken, setSetupToken] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "submitting" | "setup" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  const loginReady = Boolean(username.trim() && password && state !== "submitting");
+  const setupReady = Boolean(
+    setupToken &&
+      newPassword.length >= 8 &&
+      (!setupState?.otpRequired || (setupState.otpChallengeId && otpCode.trim().length === 6)) &&
+      state !== "submitting"
+  );
+
+  async function submitLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!loginReady) {
+      return;
+    }
+
+    setState("submitting");
+    setError(null);
+    try {
+      const result = await apiRequest<LoginResponse>("/api/v1/auth/login", {
+        body: JSON.stringify({
+          appScope,
+          username: username.trim(),
+          password
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          ...tenantHeaders()
+        },
+        method: "POST"
+      });
+      if (result.status === "first_password_required" && result.setupToken) {
+        const beginResult = await apiRequest<FirstPasswordSetupState>(
+          "/api/v1/auth/first-password/begin",
+          {
+            body: JSON.stringify({setupToken: result.setupToken}),
+            headers: {"Content-Type": "application/json"},
+            method: "POST"
+          }
+        );
+        setSetupToken(result.setupToken);
+        setSetupState(beginResult);
+        setState("setup");
+        return;
+      }
+      if (result.status !== "authenticated" || result.actor === null) {
+        throw new Error("Tenant erişimi tamamlanamadı.");
+      }
+      onAuthenticated(result.actor);
+    } catch (loginError) {
+      setError(errorMessageFrom(loginError));
+      setState("error");
+    }
+  }
+
+  async function completeSetup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!setupReady || setupToken === null) {
+      return;
+    }
+
+    setState("submitting");
+    setError(null);
+    try {
+      const result = await apiRequest<LoginResponse>("/api/v1/auth/first-password/complete", {
+        body: JSON.stringify(
+          setupState?.otpRequired
+            ? {
+                setupToken,
+                newPassword,
+                otpChallengeId: setupState.otpChallengeId,
+                otpCode
+              }
+            : {
+                setupToken,
+                newPassword
+              }
+        ),
+        headers: {"Content-Type": "application/json"},
+        method: "POST"
+      });
+      if (result.status !== "authenticated" || result.actor === null) {
+        throw new Error("İlk şifre kurulumu tamamlanamadı.");
+      }
+      onAuthenticated(result.actor);
+    } catch (setupError) {
+      setError(errorMessageFrom(setupError));
+      setState("setup");
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-stone-100 px-4 text-zinc-950">
+      <section className="w-full max-w-sm border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-200 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            {tenantSubdomain}.iotables.net
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold">{heading}</h1>
+        </div>
+        {setupState ? (
+          <form className="space-y-4 px-5 py-5" onSubmit={(event) => void completeSetup(event)}>
+            <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+              <p className="font-semibold">
+                {setupState.otpRequired ? "SMS doğrulaması gerekli" : "İlk şifre değişimi gerekli"}
+              </p>
+              {setupState.otpRequired ? (
+                <>
+                  <p className="mt-1">Kod gönderilen GSM: {setupState.targetHint ?? "gizli"}</p>
+                  <p className="mt-1">Kalan deneme: {setupState.remainingAttempts ?? "-"}</p>
+                </>
+              ) : null}
+            </div>
+            <FieldText
+              label="Yeni şifre"
+              onChange={setNewPassword}
+              required
+              type="password"
+              value={newPassword}
+            />
+            {setupState.otpRequired ? (
+              <FieldText label="SMS kodu" onChange={setOtpCode} required value={otpCode} />
+            ) : null}
+            {error ? <StateBlock title={error} tone="error" /> : null}
+            <button
+              className="h-10 w-full bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+              disabled={!setupReady}
+              type="submit"
+            >
+              {state === "submitting" ? "Tamamlanıyor" : "Şifreyi değiştir ve gir"}
+            </button>
+          </form>
+        ) : (
+          <form className="space-y-4 px-5 py-5" onSubmit={(event) => void submitLogin(event)}>
+            <FieldText label="Kullanıcı adı" onChange={setUsername} required value={username} />
+            <FieldText
+              label="Şifre"
+              onChange={setPassword}
+              required
+              type="password"
+              value={password}
+            />
+            {error ? <StateBlock title={error} tone="error" /> : null}
+            <button
+              className="h-10 w-full bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+              disabled={!loginReady}
+              type="submit"
+            >
+              {state === "submitting" ? "Giriş yapılıyor" : "Giriş yap"}
+            </button>
+          </form>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function TenantSignedInScreen({
+  actor,
+  onLogout
+}: {
+  actor: AuthenticatedActor | null;
+  onLogout: () => void;
+}) {
+  const [tenant, setTenant] = useState<TenantProfile | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error" | "forbidden">("loading");
+  const [activeWorkspace, setActiveWorkspace] = useState<TenantWorkspaceKey>(
+    tenantWorkspaceFromPath(window.location.pathname)
+  );
+
+  useEffect(() => {
+    let active = true;
+    async function loadTenantProfile() {
+      if (actor?.appScope !== "tenant" || !actor.roles.includes("tenant_admin")) {
+        setState("forbidden");
+        return;
+      }
+      setState("loading");
+      try {
+        const payload = await apiRequest<TenantProfile>("/api/v1/tenant/profile");
+        if (active) {
+          setTenant(payload);
+          setState("ready");
+        }
+      } catch {
+        if (active) {
+          setTenant(null);
+          setState("error");
+        }
+      }
+    }
+
+    void loadTenantProfile();
+    return () => {
+      active = false;
+    };
+  }, [actor?.appScope, actor?.tenantId, actor?.roles.join("|")]);
+
+  function selectWorkspace(workspace: TenantWorkspaceKey) {
+    setActiveWorkspace(workspace);
+    window.history.replaceState(null, "", tenantWorkspacePath(workspace));
+  }
+
+  return (
+    <main className="min-h-screen bg-stone-100 text-zinc-950">
+      <section className="flex min-h-screen">
+        <aside className="hidden w-64 border-r border-zinc-200 bg-white px-5 py-6 lg:block">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              TenantApp
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold">{tenant?.name ?? "Tenant"}</h1>
+            <p className="mt-1 break-all text-xs text-zinc-500">
+              {tenant?.subdomain ?? tenantSubdomainFromLocation()}.iotables.net
+            </p>
+          </div>
+          <nav className="mt-8 space-y-1 text-sm">
+            {tenantWorkspaces.map((workspace) => (
+              <button
+                className={`w-full border-l-4 px-3 py-2 text-left font-medium ${
+                  activeWorkspace === workspace.key
+                    ? "border-emerald-600 bg-emerald-50 text-emerald-950"
+                    : "border-transparent hover:bg-zinc-50"
+                }`}
+                key={workspace.key}
+                onClick={() => selectWorkspace(workspace.key)}
+                type="button"
+              >
+                {workspace.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <section className="flex min-w-0 flex-1 flex-col">
+          <header className="border-b border-zinc-200 bg-white px-4 py-4 sm:px-6">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {tenantWorkspaceLabel(activeWorkspace)}
+                </p>
+                <h2 className="text-2xl font-semibold">{tenant?.name ?? "Tenant yönetimi"}</h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge value={tenant?.status ?? "loading"} />
+                <button
+                  className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                  onClick={onLogout}
+                  type="button"
+                >
+                  Çıkış yap
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
+              {tenantWorkspaces.map((workspace) => (
+                <button
+                  className={`h-9 shrink-0 border px-3 text-sm font-medium ${
+                    activeWorkspace === workspace.key
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-950"
+                      : "border-zinc-300 bg-white"
+                  }`}
+                  key={workspace.key}
+                  onClick={() => selectWorkspace(workspace.key)}
+                  type="button"
+                >
+                  {workspace.label}
+                </button>
+              ))}
+            </div>
+          </header>
+
+          <div className="flex-1 px-4 py-5 sm:px-6">
+            {state === "loading" ? (
+              <StateBlock title="Tenant bilgileri yükleniyor" />
+            ) : state === "forbidden" ? (
+              <StateBlock title="Bu oturum Tenant Admin yetkisine sahip değil" tone="error" />
+            ) : state === "error" || tenant === null ? (
+              <StateBlock title="Tenant profili alınamadı" tone="error" />
+            ) : (
+              <TenantWorkspace workspace={activeWorkspace} tenant={tenant} actor={actor} />
+            )}
+          </div>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function ServiceStaffSignedInScreen({
+  actor,
+  onLogout
+}: {
+  actor: AuthenticatedActor | null;
+  onLogout: () => void;
+}) {
+  const [items, setItems] = useState<ServiceReadyItem[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error" | "forbidden">("loading");
+  const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      if (actor?.appScope !== "service" || !actor.roles.includes("service_staff")) {
+        setState("forbidden");
+        return;
+      }
+      setState("loading");
+      try {
+        const payload = await apiRequest<ServiceReadyItemList>("/api/v1/service-staff/ready-items", {
+          headers: tenantHeaders()
+        });
+        if (active) {
+          setItems(payload.items);
+          setSelectedItemIds(new Set());
+          setState("ready");
+        }
+      } catch (requestError) {
+        if (active) {
+          setError(errorMessageFrom(requestError));
+          setState("error");
+        }
+      }
+    }
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [actor?.appScope, actor?.roles.join("|")]);
+
+  async function loadItems() {
+    setError(null);
+    try {
+      const payload = await apiRequest<ServiceReadyItemList>("/api/v1/service-staff/ready-items", {
+        headers: tenantHeaders()
+      });
+      setItems(payload.items);
+      setSelectedItemIds(new Set());
+      setState("ready");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setState("error");
+    }
+  }
+
+  async function transitionItem(orderItemId: string, action: "deliver" | "pick-up") {
+    if (actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      await apiRequest<DeliveryState>(`/api/v1/service-staff/items/${orderItemId}/${action}`, {
+        headers: {
+          "X-CSRF-Token": crypto.randomUUID(),
+          ...tenantHeaders()
+        },
+        method: "POST"
+      });
+      await loadItems();
+      setActionState("idle");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
+    }
+  }
+
+  async function bulkDeliver() {
+    const selectedItems = items.filter((item) => selectedItemIds.has(item.orderItemId));
+    const tableId = selectedItems[0]?.tableId;
+    if (!tableId || selectedItems.some((item) => item.tableId !== tableId)) {
+      setError("Toplu teslim için aynı masadan ürün seçin.");
+      return;
+    }
+    if (actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      await apiRequest<BulkDeliveryResult>("/api/v1/service-staff/items/bulk-deliver", {
+        body: JSON.stringify({
+          tableId,
+          orderItemIds: selectedItems.map((item) => item.orderItemId)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(),
+          "X-CSRF-Token": crypto.randomUUID(),
+          ...tenantHeaders()
+        },
+        method: "POST"
+      });
+      await loadItems();
+      setActionState("idle");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
+    }
+  }
+
+  function toggleSelected(item: ServiceReadyItem) {
+    setSelectedItemIds((current) => {
+      const next = new Set(current);
+      if (next.has(item.orderItemId)) {
+        next.delete(item.orderItemId);
+      } else {
+        next.add(item.orderItemId);
+      }
+      return next;
+    });
+  }
+
+  const groupedItems = useMemo(() => {
+    const groups = new Map<string, ServiceReadyItem[]>();
+    for (const item of items) {
+      groups.set(item.tableId, [...(groups.get(item.tableId) ?? []), item]);
+    }
+    return Array.from(groups.entries()).map(([tableId, groupItems]) => ({
+      tableId,
+      tableLabel: groupItems[0]?.tableLabel ?? "Masa",
+      items: groupItems
+    }));
+  }, [items]);
+
+  const selectedItems = items.filter((item) => selectedItemIds.has(item.orderItemId));
+  const selectedTableIds = new Set(selectedItems.map((item) => item.tableId));
+  const canBulkDeliver =
+    selectedItems.length > 0 && selectedTableIds.size === 1 && actionState !== "submitting";
+
+  return (
+    <main className="min-h-screen bg-stone-100 text-zinc-950">
+      <header className="border-b border-zinc-200 bg-white px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+              ServiceStaffApp
+            </p>
+            <h1 className="text-2xl font-semibold">Servis kuyruğu</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-500">{actor?.displayName ?? "Servis"}</span>
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={() => void loadItems()}
+              type="button"
+            >
+              Yenile
+            </button>
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={onLogout}
+              type="button"
+            >
+              Çıkış yap
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section className="px-4 py-5 sm:px-6">
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          <Metric label="Hazır" value={items.filter((item) => item.deliveryStatus === null).length} />
+          <Metric
+            label="Alındı"
+            value={items.filter((item) => item.deliveryStatus === "picked_up").length}
+          />
+          <Metric label="Seçili" value={selectedItemIds.size} />
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center gap-2 border border-zinc-200 bg-white px-4 py-3">
+          <button
+            className="h-10 border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+            disabled={!canBulkDeliver}
+            onClick={() => void bulkDeliver()}
+            type="button"
+          >
+            {actionState === "submitting" ? "İşleniyor" : "Seçilileri teslim et"}
+          </button>
+          {selectedItems.length > 0 && selectedTableIds.size !== 1 ? (
+            <span className="text-sm text-amber-700">Seçimler aynı masadan olmalı.</span>
+          ) : null}
+        </div>
+
+        {state === "loading" ? (
+          <StateBlock title="Servis kuyruğu yükleniyor" />
+        ) : state === "forbidden" ? (
+          <StateBlock title="Bu oturum servis yetkisine sahip değil" tone="error" />
+        ) : state === "error" ? (
+          <StateBlock title={error ?? "Servis kuyruğu alınamadı"} tone="error" />
+        ) : groupedItems.length === 0 ? (
+          <StateBlock title="Teslim bekleyen ürün yok" />
+        ) : (
+          <div className="space-y-4">
+            {groupedItems.map((group) => (
+              <section className="border border-zinc-200 bg-white" key={group.tableId}>
+                <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+                  <h2 className="text-base font-semibold">{group.tableLabel}</h2>
+                  <span className="text-sm text-zinc-500">{group.items.length} ürün</span>
+                </div>
+                <div className="divide-y divide-zinc-200">
+                  {group.items.map((item) => (
+                    <div
+                      className="grid gap-3 px-4 py-4 md:grid-cols-[44px_minmax(0,1fr)_140px_240px]"
+                      key={item.orderItemId}
+                    >
+                      <input
+                        aria-label={`${item.itemLabel} seç`}
+                        checked={selectedItemIds.has(item.orderItemId)}
+                        className="h-6 w-6 self-center"
+                        onChange={() => toggleSelected(item)}
+                        type="checkbox"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{item.itemLabel}</p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {item.quantity} adet · hazır {formatDate(item.preparationReadyAt)}
+                        </p>
+                      </div>
+                      <StatusBadge
+                        value={item.deliveryStatus === "picked_up" ? "picked_up" : "ready"}
+                      />
+                      <div className="flex flex-wrap gap-2 md:justify-end">
+                        <button
+                          className="h-10 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                          disabled={
+                            item.deliveryStatus === "picked_up" || actionState === "submitting"
+                          }
+                          onClick={() => void transitionItem(item.orderItemId, "pick-up")}
+                          type="button"
+                        >
+                          Alındı
+                        </button>
+                        <button
+                          className="h-10 border border-zinc-950 bg-zinc-950 px-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+                          disabled={actionState === "submitting"}
+                          onClick={() => void transitionItem(item.orderItemId, "deliver")}
+                          type="button"
+                        >
+                          Teslim edildi
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+        {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
+      </section>
+    </main>
+  );
+}
+
+function CashierSignedInScreen({
+  actor,
+  onLogout
+}: {
+  actor: AuthenticatedActor | null;
+  onLogout: () => void;
+}) {
+  const [board, setBoard] = useState<CashierVenueBoard | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
+  const [payments, setPayments] = useState<CashierPayment[]>([]);
+  const [orders, setOrders] = useState<CashierOrder[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "cash" | "transfer">("cash");
+  const [state, setState] = useState<"loading" | "ready" | "error" | "forbidden">("loading");
+  const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (actor?.appScope !== "cashier" || !actor.roles.includes("cashier")) {
+      setState("forbidden");
+      return;
+    }
+    void loadBoard();
+  }, [actor?.appScope, actor?.roles.join("|")]);
+
+  useEffect(() => {
+    const selected = board?.tables.find((table) => table.tableId === selectedTableId) ?? null;
+    if (!selected?.tableSessionId || !selected.checkId) {
+      setBillSummary(null);
+      setPayments([]);
+      setOrders([]);
+      return;
+    }
+    void loadTableDetail(selected);
+  }, [selectedTableId, board?.derivedAt]);
+
+  async function loadBoard() {
+    setState("loading");
+    setError(null);
+    try {
+      const payload = await apiRequest<CashierVenueBoard>("/api/v1/cashier/venue/board", {
+        headers: tenantHeaders()
+      });
+      setBoard(payload);
+      setSelectedTableId((current) => current ?? payload.tables[0]?.tableId ?? null);
+      setState("ready");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setState("error");
+    }
+  }
+
+  async function loadTableDetail(table: CashierTableState) {
+    if (!table.tableSessionId || !table.checkId) {
+      return;
+    }
+    try {
+      const [summaryPayload, paymentPayload, orderPayload] = await Promise.all([
+        apiRequest<BillSummary>(`/api/v1/cashier/table-sessions/${table.tableSessionId}/bill-summary`, {
+          headers: tenantHeaders()
+        }),
+        apiRequest<PaymentList>(`/api/v1/cashier/checks/${table.checkId}/payments`, {
+          headers: tenantHeaders()
+        }),
+        apiRequest<CashierOrderList>(`/api/v1/cashier/table-sessions/${table.tableSessionId}/orders`, {
+          headers: tenantHeaders()
+        })
+      ]);
+      setBillSummary(summaryPayload);
+      setPayments(paymentPayload.items);
+      setOrders(orderPayload.items);
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
+    }
+  }
+
+  async function recordPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const selected = board?.tables.find((table) => table.tableId === selectedTableId) ?? null;
+    const amountMinor = Number(paymentAmount);
+    if (!selected?.checkId || !amountMinor || amountMinor <= 0 || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      const result = await apiRequest<PaymentResult>(
+        `/api/v1/cashier/checks/${selected.checkId}/payments`,
+        {
+          body: JSON.stringify({
+            amountMinor,
+            currency: billSummary?.currency ?? "TRY",
+            method: paymentMethod
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": crypto.randomUUID(),
+            "X-CSRF-Token": crypto.randomUUID(),
+            ...tenantHeaders()
+          },
+          method: "POST"
+        }
+      );
+      setPaymentAmount("");
+      setBillSummary((current) =>
+        current
+          ? {
+              ...current,
+              paidMinor: result.paidMinor,
+              paymentCount: current.paymentCount + (result.duplicate ? 0 : 1),
+              remainingMinor: result.remainingMinor
+            }
+          : current
+      );
+      await loadBoard();
+      setActionState("idle");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
+    }
+  }
+
+  async function closeSession() {
+    const selected = board?.tables.find((table) => table.tableId === selectedTableId) ?? null;
+    if (!selected?.tableSessionId || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      await apiRequest(`/api/v1/cashier/table-sessions/${selected.tableSessionId}/close`, {
+        body: JSON.stringify({reason: null}),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID(),
+          ...tenantHeaders()
+        },
+        method: "POST"
+      });
+      setBillSummary(null);
+      setPayments([]);
+      setOrders([]);
+      await loadBoard();
+      setActionState("idle");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
+    }
+  }
+
+  async function voidPayment(payment: CashierPayment) {
+    const reason = window.prompt("Ödeme iptal nedeni");
+    if (!reason?.trim() || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      const result = await apiRequest<PaymentVoidResult>(
+        `/api/v1/cashier/payments/${payment.paymentId}/void`,
+        {
+          body: JSON.stringify({reason: reason.trim()}),
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": crypto.randomUUID(),
+            "X-CSRF-Token": crypto.randomUUID(),
+            ...tenantHeaders()
+          },
+          method: "POST"
+        }
+      );
+      setBillSummary((current) =>
+        current
+          ? {
+              ...current,
+              paidMinor: result.paidMinor,
+              paymentCount: Math.max(current.paymentCount - (result.duplicate ? 0 : 1), 0),
+              remainingMinor: result.remainingMinor
+            }
+          : current
+      );
+      setPayments((current) =>
+        current.map((item) =>
+          item.paymentId === result.payment.paymentId ? result.payment : item
+        )
+      );
+      await loadBoard();
+      setActionState("idle");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
+    }
+  }
+
+  const selectedTable = board?.tables.find((table) => table.tableId === selectedTableId) ?? null;
+  const occupiedTables = board?.tables.filter((table) => table.status === "occupied").length ?? 0;
+
+  return (
+    <main className="min-h-screen bg-stone-100 text-zinc-950">
+      <header className="border-b border-zinc-200 bg-white px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">CashierApp</p>
+            <h1 className="text-2xl font-semibold">Kasa</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-500">{actor?.displayName ?? "Kasiyer"}</span>
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={() => void loadBoard()}
+              type="button"
+            >
+              Yenile
+            </button>
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={onLogout}
+              type="button"
+            >
+              Çıkış yap
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section className="grid gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="min-w-0">
+          <div className="mb-4 grid gap-3 md:grid-cols-3">
+            <Metric label="Dolu masa" value={occupiedTables} />
+            <Metric label="Toplam masa" value={board?.tables.length ?? 0} />
+            <Metric label="Seçili bakiye" value={selectedTable?.remainingMinor ?? 0} />
+          </div>
+
+          {state === "loading" ? (
+            <StateBlock title="Kasa board yükleniyor" />
+          ) : state === "forbidden" ? (
+            <StateBlock title="Bu oturum kasa yetkisine sahip değil" tone="error" />
+          ) : state === "error" ? (
+            <StateBlock title={error ?? "Kasa board alınamadı"} tone="error" />
+          ) : board === null || board.tables.length === 0 ? (
+            <StateBlock title="Masa yok" />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+              {board.tables.map((table) => (
+                <button
+                  className={`min-h-36 border bg-white px-4 py-4 text-left hover:bg-zinc-50 ${
+                    selectedTableId === table.tableId ? "border-emerald-600" : "border-zinc-200"
+                  }`}
+                  key={table.tableId}
+                  onClick={() => setSelectedTableId(table.tableId)}
+                  type="button"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-base font-semibold">{table.tableLabel}</h2>
+                      <p className="mt-1 truncate text-xs text-zinc-500">{table.hallLabel}</p>
+                    </div>
+                    <StatusBadge value={table.status} />
+                  </div>
+                  <div className="mt-5 grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-zinc-500">Toplam</p>
+                      <p className="mt-1 font-semibold">{table.totalMinor}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500">Ödenen</p>
+                      <p className="mt-1 font-semibold">{table.paidMinor}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500">Kalan</p>
+                      <p className="mt-1 font-semibold">{table.remainingMinor}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <aside className="border border-zinc-200 bg-white">
+          <div className="border-b border-zinc-200 px-4 py-3">
+            <h2 className="text-base font-semibold">{selectedTable?.tableLabel ?? "Masa seçin"}</h2>
+            <p className="mt-1 text-xs text-zinc-500">{selectedTable?.hallLabel ?? "Hesap paneli"}</p>
+          </div>
+          {selectedTable === null ? (
+            <StateBlock title="İşlem için masa seçin" />
+          ) : selectedTable.status !== "occupied" || billSummary === null ? (
+            <StateBlock title="Bu masada açık oturum yok" />
+          ) : (
+            <div className="space-y-4 px-4 py-4">
+              <DetailRows
+                rows={[
+                  ["Toplam", `${billSummary.totalMinor} ${billSummary.currency}`],
+                  ["Ödenen", `${billSummary.paidMinor} ${billSummary.currency}`],
+                  ["Kalan", `${billSummary.remainingMinor} ${billSummary.currency}`],
+                  ["Sipariş", billSummary.orderCount.toString()],
+                  ["Ödeme", billSummary.paymentCount.toString()]
+                ]}
+              />
+              <form className="grid gap-2 border-t border-zinc-200 pt-4" onSubmit={recordPayment}>
+                <input
+                  className="h-10 border border-zinc-300 px-3 text-sm"
+                  max={billSummary.remainingMinor}
+                  min="1"
+                  onChange={(event) => setPaymentAmount(event.target.value)}
+                  placeholder="Tutar minor"
+                  type="number"
+                  value={paymentAmount}
+                />
+                <select
+                  className="h-10 border border-zinc-300 bg-white px-3 text-sm"
+                  onChange={(event) =>
+                    setPaymentMethod(event.target.value as "card" | "cash" | "transfer")
+                  }
+                  value={paymentMethod}
+                >
+                  <option value="cash">Nakit</option>
+                  <option value="card">Kart</option>
+                  <option value="transfer">Transfer</option>
+                </select>
+                <button
+                  className="h-10 border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+                  disabled={
+                    actionState === "submitting" ||
+                    !paymentAmount ||
+                    Number(paymentAmount) <= 0 ||
+                    Number(paymentAmount) > billSummary.remainingMinor
+                  }
+                  type="submit"
+                >
+                  Ödeme al
+                </button>
+              </form>
+              <button
+                className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"
+                disabled={actionState === "submitting" || billSummary.remainingMinor !== 0}
+                onClick={() => void closeSession()}
+                type="button"
+              >
+                Oturumu kapat
+              </button>
+              <div className="border-t border-zinc-200 pt-4">
+                <h3 className="text-sm font-semibold">Siparişler</h3>
+                {orders.length === 0 ? (
+                  <p className="mt-2 text-sm text-zinc-500">Sipariş yok</p>
+                ) : (
+                  <div className="mt-2 max-h-56 divide-y divide-zinc-200 overflow-y-auto">
+                    {orders.map((order) => (
+                      <div className="py-2 text-sm" key={order.orderId}>
+                        <p className="text-xs text-zinc-500">{formatDate(order.submittedAt)}</p>
+                        <div className="mt-1 space-y-1">
+                          {order.items.map((item) => (
+                            <div
+                              className="flex justify-between gap-3"
+                              key={item.orderItemId}
+                            >
+                              <span className={item.voided ? "line-through text-zinc-400" : ""}>
+                                {item.quantity} x {item.name}
+                              </span>
+                              <span className="font-medium">
+                                {item.quantity * item.unitPriceMinor} {item.currency}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-zinc-200 pt-4">
+                <h3 className="text-sm font-semibold">Ödemeler</h3>
+                {payments.length === 0 ? (
+                  <p className="mt-2 text-sm text-zinc-500">Ödeme yok</p>
+                ) : (
+                  <div className="mt-2 divide-y divide-zinc-200">
+                    {payments.map((payment) => (
+                      <div className="py-2 text-sm" key={payment.paymentId}>
+                        <div className="flex justify-between gap-3">
+                          <span>
+                            {payment.method} · {payment.status}
+                          </span>
+                          <span className="font-medium">
+                            {payment.amountMinor} {payment.currency}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between gap-3">
+                          <p className="text-xs text-zinc-500">
+                            {payment.voidedAt
+                              ? `İptal ${formatDate(payment.voidedAt)}`
+                              : formatDate(payment.recordedAt)}
+                          </p>
+                          <button
+                            className="h-8 border border-zinc-300 px-2 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                            disabled={payment.status !== "recorded" || actionState === "submitting"}
+                            onClick={() => void voidPayment(payment)}
+                            type="button"
+                          >
+                            İptal et
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
+            </div>
+          )}
+        </aside>
+      </section>
+    </main>
+  );
+}
+
+type TenantWorkspaceKey = "dashboard" | "halls" | "stations" | "menu" | "staff" | "settings";
+
+const tenantWorkspaces: {key: TenantWorkspaceKey; label: string; path: string}[] = [
+  {key: "dashboard", label: "Dashboard", path: "/admin"},
+  {key: "halls", label: "Salonlar", path: "/admin/halls"},
+  {key: "stations", label: "İstasyonlar", path: "/admin/stations"},
+  {key: "menu", label: "Menü", path: "/admin/menu"},
+  {key: "staff", label: "Personel", path: "/admin/staff"},
+  {key: "settings", label: "Ayarlar", path: "/admin/settings"}
+];
+
+function TenantWorkspace({
+  actor,
+  tenant,
+  workspace
+}: {
+  actor: AuthenticatedActor | null;
+  tenant: TenantProfile;
+  workspace: TenantWorkspaceKey;
+}) {
+  if (workspace === "dashboard") {
+    return (
+      <div className="space-y-5">
+        <div className="grid gap-3 md:grid-cols-3">
+          <Metric label="Starter veri" value={tenant.starterTemplateState === "applied" ? 1 : 0} />
+          <Metric
+            label="Admin bootstrap"
+            value={tenant.tenantAdminBootstrapState === "completed" ? 1 : 0}
+          />
+          <Metric label="DNS hazır" value={tenant.dnsReady ? 1 : 0} />
+        </div>
+        <div className="border border-zinc-200 bg-white px-5 py-5">
+          <h3 className="text-sm font-semibold">Kurulum özeti</h3>
+          <DetailRows
+            rows={[
+              ["Tenant", tenant.name],
+              ["Subdomain", `${tenant.subdomain}.iotables.net`],
+              ["Sektör", tenant.sector ?? "-"],
+              ["Kapasite", tenant.capacity?.toString() ?? "-"],
+              ["Oturum", actor?.roles.join(", ") || "-"]
+            ]}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (workspace === "halls") {
+    return <HallManagementWorkspace />;
+  }
+
+  if (workspace === "stations") {
+    return <StationManagementWorkspace />;
+  }
+
+  if (workspace === "menu") {
+    return <MenuManagementWorkspace />;
+  }
+
+  const copy: Record<TenantWorkspaceKey, [string, string]> = {
+    dashboard: ["Dashboard", "Kurulum özeti."],
+    halls: ["Salon ve masa yönetimi", "Masalar ayrı sayfaya bölünmeden salon bağlamında yönetilecek."],
+    stations: ["İstasyon yönetimi", "Mutfak, kahve ve benzeri hazırlık istasyonları burada yönetilecek."],
+    menu: ["Menü yönetimi", "Ürün, varyant, fiyat, uygunluk ve istasyon yönlendirmesi burada yönetilecek."],
+    staff: ["Personel yönetimi", "Roller, istasyon yetkileri ve salon yetkileri burada yönetilecek."],
+    settings: ["Tenant ayarları", "Profil, operasyonel ayarlar ve audit görünümü burada toplanacak."]
+  };
+  const [title, body] = copy[workspace];
+  return (
+    <section className="border border-zinc-200 bg-white px-5 py-5">
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-2 text-sm text-zinc-600">{body}</p>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <StateBlock title="API bağlantısı sıradaki implementasyon adımı" />
+        <StateBlock title="Detaylar panel/drawer içinde açılacak" />
+      </div>
+    </section>
   );
 }
 
@@ -1086,6 +2513,1463 @@ function TenantDetailPanel({
   );
 }
 
+function HallManagementWorkspace() {
+  const [board, setBoard] = useState<HallTableBoard | null>(null);
+  const [selectedHallId, setSelectedHallId] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [newHallName, setNewHallName] = useState("");
+  const [newHallOrder, setNewHallOrder] = useState("");
+  const [newTableName, setNewTableName] = useState("");
+  const [newTableOrder, setNewTableOrder] = useState("");
+  const [disableReason, setDisableReason] = useState("");
+
+  async function loadBoard() {
+    setState("loading");
+    try {
+      const payload = await apiRequest<HallTableBoard>("/api/v1/tenant-setup/venue/board");
+      setBoard(payload);
+      setSelectedHallId((current) =>
+        payload.halls.some((hall) => hall.hallId === current)
+          ? current
+          : payload.halls[0]?.hallId ?? null
+      );
+      setSelectedTableId((current) =>
+        payload.halls.some((hall) => hall.tables.some((table) => table.tableId === current))
+          ? current
+          : null
+      );
+      setState("ready");
+    } catch {
+      setBoard(null);
+      setState("error");
+    }
+  }
+
+  useEffect(() => {
+    void loadBoard();
+  }, []);
+
+  const selectedHall = board?.halls.find((hall) => hall.hallId === selectedHallId) ?? null;
+  const selectedTable =
+    selectedHall?.tables.find((table) => table.tableId === selectedTableId) ?? null;
+
+  if (state === "loading") {
+    return <StateBlock title="Salon ve masa düzeni yükleniyor" />;
+  }
+  if (state === "error" || board === null) {
+    return <StateBlock title="Salon ve masa düzeni alınamadı" tone="error" />;
+  }
+
+  async function createHall(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!newHallName.trim() || !newHallOrder || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      const created = await apiRequest<HallWithTables>("/api/v1/tenant-setup/halls", {
+        body: JSON.stringify({
+          name: newHallName.trim(),
+          displayOrder: Number(newHallOrder)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setNewHallName("");
+      setNewHallOrder("");
+      await loadBoard();
+      setSelectedHallId(created.hallId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function createTable(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedHall || !newTableName.trim() || !newTableOrder || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      const created = await apiRequest<VenueTable>(
+        `/api/v1/tenant-setup/halls/${selectedHall.hallId}/tables`,
+        {
+          body: JSON.stringify({
+            name: newTableName.trim(),
+            displayOrder: Number(newTableOrder)
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setNewTableName("");
+      setNewTableOrder("");
+      await loadBoard();
+      setSelectedHallId(created.hallId);
+      setSelectedTableId(created.tableId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function disableSelectedTable() {
+    if (!selectedTable || !disableReason.trim() || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<VenueTable>(`/api/v1/tenant-setup/tables/${selectedTable.tableId}/disable`, {
+        body: JSON.stringify({reason: disableReason.trim()}),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setDisableReason("");
+      await loadBoard();
+      setSelectedTableId(selectedTable.tableId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  return (
+    <section className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)_340px]">
+      <aside className="border border-zinc-200 bg-white">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+          <h3 className="text-sm font-semibold">Salonlar</h3>
+          <button
+            className="text-sm font-medium text-emerald-700 hover:text-emerald-900"
+            onClick={() => void loadBoard()}
+            type="button"
+          >
+            Yenile
+          </button>
+        </div>
+        {board.halls.length === 0 ? (
+          <StateBlock title="Henüz salon yok" />
+        ) : (
+          <div className="divide-y divide-zinc-200">
+            {board.halls.map((hall) => (
+              <button
+                className={`w-full px-4 py-3 text-left text-sm hover:bg-zinc-50 ${
+                  selectedHallId === hall.hallId ? "bg-emerald-50" : "bg-white"
+                }`}
+                key={hall.hallId}
+                onClick={() => {
+                  setSelectedHallId(hall.hallId);
+                  setSelectedTableId(null);
+                }}
+                type="button"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{hall.name}</span>
+                  <StatusBadge value={hall.enabled ? "enabled" : "disabled"} />
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">{hall.tables.length} masa</p>
+              </button>
+            ))}
+          </div>
+        )}
+        <form className="space-y-2 border-t border-zinc-200 px-4 py-4" onSubmit={createHall}>
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Salon ekle</p>
+          <input
+            className="h-10 w-full border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setNewHallName(event.target.value)}
+            placeholder="Salon adı"
+            value={newHallName}
+          />
+          <input
+            className="h-10 w-full border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setNewHallOrder(event.target.value)}
+            placeholder="Sıra"
+            type="number"
+            value={newHallOrder}
+          />
+          <button
+            className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+            disabled={!newHallName.trim() || !newHallOrder || actionState === "submitting"}
+            type="submit"
+          >
+            Salon ekle
+          </button>
+        </form>
+      </aside>
+
+      <section className="border border-zinc-200 bg-white">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+          <div>
+            <h3 className="text-sm font-semibold">{selectedHall?.name ?? "Salon seçilmedi"}</h3>
+            <p className="mt-1 text-xs text-zinc-500">Sıralı grid düzeni</p>
+          </div>
+          <span className="text-xs text-zinc-500">
+            {board.derivedAt ? formatDate(board.derivedAt) : ""}
+          </span>
+        </div>
+        {selectedHall === null ? (
+          <StateBlock title="Salon seçin" />
+        ) : (
+          <>
+            {selectedHall.tables.length === 0 ? (
+              <StateBlock title="Bu salonda masa yok" />
+            ) : (
+              <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
+                {selectedHall.tables.map((table) => (
+                  <button
+                    className={`aspect-[4/3] border px-3 py-3 text-left hover:bg-zinc-50 ${
+                      selectedTableId === table.tableId
+                        ? "border-emerald-600 bg-emerald-50"
+                        : "border-zinc-200 bg-white"
+                    }`}
+                    key={table.tableId}
+                    onClick={() => setSelectedTableId(table.tableId)}
+                    type="button"
+                  >
+                    <p className="truncate text-sm font-semibold">{table.name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">Sıra {table.displayOrder}</p>
+                    <div className="mt-3">
+                      <StatusBadge value={table.enabled ? "enabled" : "disabled"} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            <form
+              className="grid gap-2 border-t border-zinc-200 p-4 md:grid-cols-[minmax(0,1fr)_110px_auto]"
+              onSubmit={createTable}
+            >
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setNewTableName(event.target.value)}
+                placeholder="Masa adı"
+                value={newTableName}
+              />
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setNewTableOrder(event.target.value)}
+                placeholder="Sıra"
+                type="number"
+                value={newTableOrder}
+              />
+              <button
+                className="h-10 border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={
+                  !newTableName.trim() || !newTableOrder || actionState === "submitting"
+                }
+                type="submit"
+              >
+                Masa ekle
+              </button>
+            </form>
+          </>
+        )}
+      </section>
+
+      <aside className="border border-zinc-200 bg-white px-4 py-4">
+        <h3 className="text-sm font-semibold">Masa detayı</h3>
+        {selectedTable === null ? (
+          <StateBlock title="Bir masa seçin" />
+        ) : (
+          <div className="mt-4 space-y-4">
+            <DetailRows
+              rows={[
+                ["Masa", selectedTable.name],
+                ["Salon", selectedHall?.name ?? "-"],
+                ["Sıra", selectedTable.displayOrder.toString()],
+                ["Durum", selectedTable.enabled ? "enabled" : "disabled"]
+              ]}
+            />
+            <div className="border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Display provisioning
+              </p>
+              <p className="mt-2 text-sm text-zinc-600">
+                QR ekran claim ve credential işlemleri bu panel içinde açılacak.
+              </p>
+            </div>
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Operasyonlar
+              </p>
+              <input
+                className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setDisableReason(event.target.value)}
+                placeholder="Pasifleştirme nedeni"
+                value={disableReason}
+              />
+              <button
+                className="h-10 w-full border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={
+                  !selectedTable.enabled || !disableReason.trim() || actionState === "submitting"
+                }
+                onClick={() => void disableSelectedTable()}
+                type="button"
+              >
+                Masayı pasifleştir
+              </button>
+            </div>
+          </div>
+        )}
+        {actionError ? <StateBlock title={actionError} tone="error" /> : null}
+      </aside>
+    </section>
+  );
+}
+
+function StationManagementWorkspace() {
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [newStationName, setNewStationName] = useState("");
+  const [newStationOrder, setNewStationOrder] = useState("");
+  const [disableReason, setDisableReason] = useState("");
+
+  async function loadStations(nextSelectedStationId?: string) {
+    setState("loading");
+    try {
+      const payload = await apiRequest<StationList>(
+        "/api/v1/tenant-setup/stations?include_disabled=true"
+      );
+      setStations(payload.items);
+      const selectedCandidate =
+        nextSelectedStationId ?? selectedStationId ?? payload.items[0]?.stationId ?? null;
+      setSelectedStationId(
+        payload.items.some((station) => station.stationId === selectedCandidate)
+          ? selectedCandidate
+          : payload.items[0]?.stationId ?? null
+      );
+      setState("ready");
+    } catch {
+      setStations([]);
+      setState("error");
+    }
+  }
+
+  useEffect(() => {
+    void loadStations();
+  }, []);
+
+  const selectedStation =
+    stations.find((station) => station.stationId === selectedStationId) ?? null;
+
+  async function createStation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!newStationName.trim() || !newStationOrder || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      const created = await apiRequest<Station>("/api/v1/tenant-setup/stations", {
+        body: JSON.stringify({
+          name: newStationName.trim(),
+          displayOrder: Number(newStationOrder)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setNewStationName("");
+      setNewStationOrder("");
+      await loadStations(created.stationId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function disableSelectedStation() {
+    if (!selectedStation || !disableReason.trim() || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<Station>(`/api/v1/tenant-setup/stations/${selectedStation.stationId}/disable`, {
+        body: JSON.stringify({reason: disableReason.trim()}),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setDisableReason("");
+      await loadStations(selectedStation.stationId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  if (state === "loading") {
+    return <StateBlock title="İstasyonlar yükleniyor" />;
+  }
+  if (state === "error") {
+    return <StateBlock title="İstasyonlar alınamadı" tone="error" />;
+  }
+
+  return (
+    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="border border-zinc-200 bg-white">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+          <div>
+            <h3 className="text-sm font-semibold">İstasyonlar</h3>
+            <p className="mt-1 text-xs text-zinc-500">Hazırlık kuyruğu kontrolleri burada yoktur</p>
+          </div>
+          <button
+            className="text-sm font-medium text-emerald-700 hover:text-emerald-900"
+            onClick={() => void loadStations()}
+            type="button"
+          >
+            Yenile
+          </button>
+        </div>
+        {stations.length === 0 ? (
+          <StateBlock title="Henüz istasyon yok" />
+        ) : (
+          <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+            {stations.map((station) => (
+              <button
+                className={`border px-4 py-4 text-left hover:bg-zinc-50 ${
+                  selectedStationId === station.stationId
+                    ? "border-emerald-600 bg-emerald-50"
+                    : "border-zinc-200 bg-white"
+                }`}
+                key={station.stationId}
+                onClick={() => setSelectedStationId(station.stationId)}
+                type="button"
+              >
+                <p className="truncate text-sm font-semibold">{station.name}</p>
+                <p className="mt-1 text-xs text-zinc-500">Sıra {station.displayOrder}</p>
+                <div className="mt-3">
+                  <StatusBadge value={station.enabled ? "enabled" : "disabled"} />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        <form
+          className="grid gap-2 border-t border-zinc-200 p-4 md:grid-cols-[minmax(0,1fr)_110px_auto]"
+          onSubmit={createStation}
+        >
+          <input
+            className="h-10 border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setNewStationName(event.target.value)}
+            placeholder="İstasyon adı"
+            value={newStationName}
+          />
+          <input
+            className="h-10 border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setNewStationOrder(event.target.value)}
+            placeholder="Sıra"
+            type="number"
+            value={newStationOrder}
+          />
+          <button
+            className="h-10 border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+            disabled={!newStationName.trim() || !newStationOrder || actionState === "submitting"}
+            type="submit"
+          >
+            İstasyon ekle
+          </button>
+        </form>
+      </section>
+
+      <aside className="border border-zinc-200 bg-white px-4 py-4">
+        <h3 className="text-sm font-semibold">İstasyon detayı</h3>
+        {selectedStation === null ? (
+          <StateBlock title="Bir istasyon seçin" />
+        ) : (
+          <div className="mt-4 space-y-4">
+            <DetailRows
+              rows={[
+                ["İstasyon", selectedStation.name],
+                ["Sıra", selectedStation.displayOrder.toString()],
+                ["Durum", selectedStation.enabled ? "enabled" : "disabled"],
+                ["Güncelleme", formatDate(selectedStation.updatedAt)]
+              ]}
+            />
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Operasyonlar
+              </p>
+              <input
+                className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setDisableReason(event.target.value)}
+                placeholder="Pasifleştirme nedeni"
+                value={disableReason}
+              />
+              <button
+                className="h-10 w-full border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={
+                  !selectedStation.enabled ||
+                  !disableReason.trim() ||
+                  actionState === "submitting"
+                }
+                onClick={() => void disableSelectedStation()}
+                type="button"
+              >
+                İstasyonu pasifleştir
+              </button>
+            </div>
+          </div>
+        )}
+        {actionError ? <StateBlock title={actionError} tone="error" /> : null}
+      </aside>
+    </section>
+  );
+}
+
+function MenuManagementWorkspace() {
+  const [catalog, setCatalog] = useState<MenuSetupCatalog | null>(null);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryOrder, setNewCategoryOrder] = useState("");
+  const [productName, setProductName] = useState("");
+  const [productStationId, setProductStationId] = useState("");
+  const [variantName, setVariantName] = useState("Standart");
+  const [variantPrice, setVariantPrice] = useState("");
+  const [detailVariantName, setDetailVariantName] = useState("");
+  const [detailVariantPrice, setDetailVariantPrice] = useState("");
+  const [modifierGroupName, setModifierGroupName] = useState("");
+  const [modifierOptionName, setModifierOptionName] = useState("");
+  const [modifierOptionPrice, setModifierOptionPrice] = useState("0");
+  const [availabilityReason, setAvailabilityReason] = useState("");
+
+  async function loadMenu(nextCategoryId?: string, nextProductId?: string) {
+    setState("loading");
+    try {
+      const [menuPayload, stationPayload] = await Promise.all([
+        apiRequest<MenuSetupCatalog>("/api/v1/tenant-setup/menu?include_disabled=true"),
+        apiRequest<StationList>("/api/v1/tenant-setup/stations?include_disabled=true")
+      ]);
+      setCatalog(menuPayload);
+      setStations(stationPayload.items);
+      const categoryCandidate =
+        nextCategoryId ?? selectedCategoryId ?? menuPayload.categories[0]?.categoryId ?? null;
+      const selectedCategory = menuPayload.categories.find(
+        (category) => category.categoryId === categoryCandidate
+      );
+      setSelectedCategoryId(
+        selectedCategory?.categoryId ?? menuPayload.categories[0]?.categoryId ?? null
+      );
+      setSelectedProductId(
+        nextProductId ??
+          (selectedCategory?.products.some((product) => product.productId === selectedProductId)
+            ? selectedProductId
+            : null)
+      );
+      setProductStationId((current) => current || stationPayload.items[0]?.stationId || "");
+      setState("ready");
+    } catch {
+      setCatalog(null);
+      setStations([]);
+      setState("error");
+    }
+  }
+
+  useEffect(() => {
+    void loadMenu();
+  }, []);
+
+  const selectedCategory =
+    catalog?.categories.find((category) => category.categoryId === selectedCategoryId) ?? null;
+  const selectedProduct =
+    selectedCategory?.products.find((product) => product.productId === selectedProductId) ?? null;
+
+  async function createCategory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!newCategoryName.trim() || !newCategoryOrder || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      const created = await apiRequest<MenuCategory>("/api/v1/tenant-setup/menu/categories", {
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          displayOrder: Number(newCategoryOrder)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setNewCategoryName("");
+      setNewCategoryOrder("");
+      await loadMenu(created.categoryId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function createProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedCategory ||
+      !productName.trim() ||
+      !productStationId ||
+      !variantName.trim() ||
+      !variantPrice ||
+      actionState === "submitting"
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      const created = await apiRequest<ProductService>("/api/v1/tenant-setup/menu/products", {
+        body: JSON.stringify({
+          categoryId: selectedCategory.categoryId,
+          stationId: productStationId,
+          name: productName.trim(),
+          variants: [
+            {
+              name: variantName.trim(),
+              priceMinor: Number(variantPrice)
+            }
+          ]
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setProductName("");
+      setVariantName("Standart");
+      setVariantPrice("");
+      await loadMenu(created.categoryId, created.productId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function disableSelectedCategory() {
+    if (!selectedCategory || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<MenuCategory>(
+        `/api/v1/tenant-setup/menu/categories/${selectedCategory.categoryId}/disable`,
+        {
+          body: JSON.stringify({reason: "tenant_admin_action"}),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      await loadMenu(selectedCategory.categoryId, selectedProductId ?? undefined);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function disableSelectedProduct() {
+    if (!selectedProduct || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<ProductService>(
+        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/disable`,
+        {
+          body: JSON.stringify({reason: "tenant_admin_action"}),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function addVariant(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedProduct ||
+      !detailVariantName.trim() ||
+      !detailVariantPrice ||
+      actionState === "submitting"
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<ProductVariant>(
+        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/variants`,
+        {
+          body: JSON.stringify({
+            name: detailVariantName.trim(),
+            priceMinor: Number(detailVariantPrice),
+            displayOrder: selectedProduct.variants.length + 1,
+            isDefault: selectedProduct.variants.length === 0
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setDetailVariantName("");
+      setDetailVariantPrice("");
+      await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function saveSimpleModifierConfig(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedProduct ||
+      !modifierGroupName.trim() ||
+      !modifierOptionName.trim() ||
+      actionState === "submitting"
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<ModifierGroup[]>(
+        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/modifiers`,
+        {
+          body: JSON.stringify({
+            groups: [
+              {
+                name: modifierGroupName.trim(),
+                required: false,
+                minSelections: 0,
+                maxSelections: 1,
+                displayOrder: 1,
+                options: [
+                  {
+                    name: modifierOptionName.trim(),
+                    priceDeltaMinor: Number(modifierOptionPrice || "0")
+                  }
+                ]
+              }
+            ]
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setModifierGroupName("");
+      setModifierOptionName("");
+      setModifierOptionPrice("0");
+      await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function markUnavailable() {
+    if (!selectedProduct || !availabilityReason.trim() || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<AvailabilityOverride>(
+        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/availability`,
+        {
+          body: JSON.stringify({
+            state: "unavailable",
+            reason: availabilityReason.trim()
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setAvailabilityReason("");
+      await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  if (state === "loading") {
+    return <StateBlock title="Menü yükleniyor" />;
+  }
+  if (state === "error" || catalog === null) {
+    return <StateBlock title="Menü alınamadı" tone="error" />;
+  }
+
+  return (
+    <section className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)_360px]">
+      <aside className="border border-zinc-200 bg-white">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+          <h3 className="text-sm font-semibold">Kategoriler</h3>
+          <button
+            className="text-sm font-medium text-emerald-700 hover:text-emerald-900"
+            onClick={() => void loadMenu()}
+            type="button"
+          >
+            Yenile
+          </button>
+        </div>
+        {catalog.categories.length === 0 ? (
+          <StateBlock title="Henüz kategori yok" />
+        ) : (
+          <div className="divide-y divide-zinc-200">
+            {catalog.categories.map((category) => (
+              <button
+                className={`w-full px-4 py-3 text-left text-sm hover:bg-zinc-50 ${
+                  selectedCategoryId === category.categoryId ? "bg-emerald-50" : "bg-white"
+                }`}
+                key={category.categoryId}
+                onClick={() => {
+                  setSelectedCategoryId(category.categoryId);
+                  setSelectedProductId(null);
+                }}
+                type="button"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{category.name}</span>
+                  <StatusBadge value={category.enabled ? "enabled" : "disabled"} />
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">{category.products.length} ürün</p>
+              </button>
+            ))}
+          </div>
+        )}
+        <form className="space-y-2 border-t border-zinc-200 px-4 py-4" onSubmit={createCategory}>
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Kategori ekle</p>
+          <input
+            className="h-10 w-full border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setNewCategoryName(event.target.value)}
+            placeholder="Kategori adı"
+            value={newCategoryName}
+          />
+          <input
+            className="h-10 w-full border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setNewCategoryOrder(event.target.value)}
+            placeholder="Sıra"
+            type="number"
+            value={newCategoryOrder}
+          />
+          <button
+            className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+            disabled={!newCategoryName.trim() || !newCategoryOrder || actionState === "submitting"}
+            type="submit"
+          >
+            Kategori ekle
+          </button>
+        </form>
+      </aside>
+
+      <section className="border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-200 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold">
+                {selectedCategory?.name ?? "Kategori seçilmedi"}
+              </h3>
+              <p className="mt-1 text-xs text-zinc-500">Ürünler ve station routing</p>
+            </div>
+            {selectedCategory ? (
+              <button
+                className="h-9 border border-zinc-300 px-3 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={!selectedCategory.enabled || actionState === "submitting"}
+                onClick={() => void disableSelectedCategory()}
+                type="button"
+              >
+                Pasifleştir
+              </button>
+            ) : null}
+          </div>
+        </div>
+        {selectedCategory === null ? (
+          <StateBlock title="Kategori seçin" />
+        ) : selectedCategory.products.length === 0 ? (
+          <StateBlock title="Bu kategoride ürün yok" />
+        ) : (
+          <div className="divide-y divide-zinc-200">
+            {selectedCategory.products.map((product) => (
+              <button
+                className={`grid w-full gap-2 px-4 py-4 text-left hover:bg-zinc-50 md:grid-cols-[minmax(0,1fr)_160px] ${
+                  selectedProductId === product.productId ? "bg-emerald-50" : "bg-white"
+                }`}
+                key={product.productId}
+                onClick={() => setSelectedProductId(product.productId)}
+                type="button"
+              >
+                <div>
+                  <p className="truncate text-sm font-semibold">{product.name}</p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {product.variants[0]?.priceMinor ?? 0} minor
+                  </p>
+                </div>
+                <StatusBadge value={product.enabled ? "enabled" : "disabled"} />
+              </button>
+            ))}
+          </div>
+        )}
+        <form
+          className="grid gap-2 border-t border-zinc-200 p-4 md:grid-cols-2"
+          onSubmit={createProduct}
+        >
+          <input
+            className="h-10 border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setProductName(event.target.value)}
+            placeholder="Ürün adı"
+            value={productName}
+          />
+          <select
+            className="h-10 border border-zinc-300 bg-white px-3 text-sm"
+            onChange={(event) => setProductStationId(event.target.value)}
+            value={productStationId}
+          >
+            <option value="">İstasyon seç</option>
+            {stations
+              .filter((station) => station.enabled)
+              .map((station) => (
+                <option key={station.stationId} value={station.stationId}>
+                  {station.name}
+                </option>
+              ))}
+          </select>
+          <input
+            className="h-10 border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setVariantName(event.target.value)}
+            placeholder="Varyant"
+            value={variantName}
+          />
+          <input
+            className="h-10 border border-zinc-300 px-3 text-sm"
+            onChange={(event) => setVariantPrice(event.target.value)}
+            placeholder="Fiyat minor"
+            type="number"
+            value={variantPrice}
+          />
+          <button
+            className="h-10 border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100 md:col-span-2"
+            disabled={
+              !selectedCategory ||
+              !productName.trim() ||
+              !productStationId ||
+              !variantName.trim() ||
+              !variantPrice ||
+              actionState === "submitting"
+            }
+            type="submit"
+          >
+            Ürün ekle
+          </button>
+        </form>
+      </section>
+
+      <aside className="border border-zinc-200 bg-white px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold">Ürün detayı</h3>
+          {selectedProduct ? (
+            <button
+              className="h-9 border border-zinc-300 px-3 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+              disabled={!selectedProduct.enabled || actionState === "submitting"}
+              onClick={() => void disableSelectedProduct()}
+              type="button"
+            >
+              Pasifleştir
+            </button>
+          ) : null}
+        </div>
+        {selectedProduct === null ? (
+          <StateBlock title="Bir ürün seçin" />
+        ) : (
+          <div className="mt-4 space-y-4">
+            <DetailRows
+              rows={[
+                ["Ürün", selectedProduct.name],
+                [
+                  "Station",
+                  stations.find((item) => item.stationId === selectedProduct.stationId)?.name ??
+                    "-"
+                ],
+                ["Durum", selectedProduct.enabled ? "enabled" : "disabled"],
+                ["Varyant", selectedProduct.variants[0]?.name ?? "-"],
+                ["Fiyat", selectedProduct.variants[0]?.priceMinor.toString() ?? "-"],
+                ["Modifier", selectedProduct.modifierGroups.length.toString()],
+                ["Uygunluk", selectedProduct.availability[0]?.state ?? "default"]
+              ]}
+            />
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Varyant ekle
+              </p>
+              <form className="grid gap-2" onSubmit={addVariant}>
+                <input
+                  className="h-10 border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setDetailVariantName(event.target.value)}
+                  placeholder="Varyant adı"
+                  value={detailVariantName}
+                />
+                <input
+                  className="h-10 border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setDetailVariantPrice(event.target.value)}
+                  placeholder="Fiyat minor"
+                  type="number"
+                  value={detailVariantPrice}
+                />
+                <button
+                  className="h-10 border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                  disabled={
+                    !detailVariantName.trim() ||
+                    !detailVariantPrice ||
+                    actionState === "submitting"
+                  }
+                  type="submit"
+                >
+                  Varyant ekle
+                </button>
+              </form>
+            </div>
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Modifier config
+              </p>
+              <form className="grid gap-2" onSubmit={saveSimpleModifierConfig}>
+                <input
+                  className="h-10 border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setModifierGroupName(event.target.value)}
+                  placeholder="Grup adı"
+                  value={modifierGroupName}
+                />
+                <input
+                  className="h-10 border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setModifierOptionName(event.target.value)}
+                  placeholder="Seçenek adı"
+                  value={modifierOptionName}
+                />
+                <input
+                  className="h-10 border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setModifierOptionPrice(event.target.value)}
+                  placeholder="Fiyat farkı minor"
+                  type="number"
+                  value={modifierOptionPrice}
+                />
+                <button
+                  className="h-10 border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                  disabled={
+                    !modifierGroupName.trim() ||
+                    !modifierOptionName.trim() ||
+                    actionState === "submitting"
+                  }
+                  type="submit"
+                >
+                  Modifier kaydet
+                </button>
+              </form>
+            </div>
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Uygunluk
+              </p>
+              <input
+                className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setAvailabilityReason(event.target.value)}
+                placeholder="Pasiflik nedeni"
+                value={availabilityReason}
+              />
+              <button
+                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={!availabilityReason.trim() || actionState === "submitting"}
+                onClick={() => void markUnavailable()}
+                type="button"
+              >
+                Geçici unavailable yap
+              </button>
+            </div>
+          </div>
+        )}
+        {actionError ? <StateBlock title={actionError} tone="error" /> : null}
+      </aside>
+    </section>
+  );
+}
+
+function CustomerMenuApp() {
+  const [menu, setMenu] = useState<CustomerMenu | null>(null);
+  const [cart, setCart] = useState<CustomerCart | null>(null);
+  const [presence, setPresence] = useState<PresenceState | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [presenceState, setPresenceState] = useState<"idle" | "checking" | "fresh" | "required">(
+    "idle"
+  );
+  const [cartActionState, setCartActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "error" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadCustomerMenu() {
+    setState("loading");
+    setError(null);
+    try {
+      const payload = await apiRequest<CustomerMenu>("/api/v1/customer/menu", {
+        headers: tenantHeaders()
+      });
+      setMenu(payload);
+      setSelectedCategoryId((current) => current ?? payload.categories[0]?.categoryId ?? null);
+      setState("ready");
+    } catch (requestError) {
+      setMenu(null);
+      setError(errorMessageFrom(requestError));
+      setState("error");
+    }
+  }
+
+  useEffect(() => {
+    void loadCustomerMenu();
+  }, []);
+
+  useEffect(() => {
+    const qrToken = customerQrTokenFromLocation();
+    if (qrToken) {
+      void redeemQrToken(qrToken);
+      return;
+    }
+    void loadPresenceState();
+    void loadCart();
+  }, []);
+
+  async function redeemQrToken(qrToken: string) {
+    setPresenceState("checking");
+    try {
+      const payload = await apiRequest<PresenceRedeemResult>(
+        "/api/v1/customer/table-presence/redeem",
+        {
+          body: JSON.stringify({qrToken}),
+          headers: {
+            "Content-Type": "application/json",
+            ...tenantHeaders()
+          },
+          method: "POST"
+        }
+      );
+      setPresence({...payload, fresh: true});
+      setPresenceState("fresh");
+      await loadCart();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("qrToken");
+      url.searchParams.delete("token");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    } catch {
+      setPresence(null);
+      setPresenceState("required");
+    }
+  }
+
+  async function loadPresenceState() {
+    setPresenceState("checking");
+    try {
+      const payload = await apiRequest<PresenceState>("/api/v1/customer/table-presence", {
+        headers: tenantHeaders()
+      });
+      setPresence(payload);
+      setPresenceState(payload.fresh ? "fresh" : "required");
+    } catch {
+      setPresence(null);
+      setPresenceState("required");
+    }
+  }
+
+  async function loadCart() {
+    try {
+      const payload = await apiRequest<CustomerCart>("/api/v1/customer/cart", {
+        headers: tenantHeaders()
+      });
+      setCart(payload);
+    } catch {
+      setCart(null);
+    }
+  }
+
+  async function addSelectedProductToCart() {
+    const variant = selectedProduct?.variants[0];
+    if (!selectedProduct || !variant || cartActionState === "submitting") {
+      return;
+    }
+    setCartActionState("submitting");
+    try {
+      const payload = await apiRequest<CustomerCart>("/api/v1/customer/cart/items", {
+        body: JSON.stringify({
+          clientCartItemId: `${selectedProduct.productId}:${variant.variantId}`,
+          productId: selectedProduct.productId,
+          variantId: variant.variantId,
+          modifierOptionIds: [],
+          quantity: 1,
+          note: null
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID(),
+          ...tenantHeaders()
+        },
+        method: "POST"
+      });
+      setCart(payload);
+      setCartActionState("idle");
+    } catch {
+      setCartActionState("error");
+    }
+  }
+
+  async function submitCart() {
+    if (!cart || cart.items.length === 0 || submitState === "submitting") {
+      return;
+    }
+    setSubmitState("submitting");
+    try {
+      await apiRequest("/api/v1/customer/orders", {
+        body: JSON.stringify({
+          cartVersion: cart.version,
+          cartItemIds: cart.items.map((item) => item.clientCartItemId)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": crypto.randomUUID(),
+          "X-CSRF-Token": crypto.randomUUID(),
+          ...tenantHeaders()
+        },
+        method: "POST"
+      });
+      await loadCart();
+      setSubmitState("done");
+    } catch {
+      setSubmitState("error");
+    }
+  }
+
+  const selectedCategory =
+    menu?.categories.find((category) => category.categoryId === selectedCategoryId) ?? null;
+  const selectedProduct =
+    selectedCategory?.products.find((product) => product.productId === selectedProductId) ?? null;
+
+  if (state === "loading") {
+    return (
+      <main className="min-h-screen bg-stone-100 px-4 py-5 text-zinc-950">
+        <StateBlock title="Menü yükleniyor" />
+      </main>
+    );
+  }
+
+  if (state === "error" || menu === null) {
+    return (
+      <main className="min-h-screen bg-stone-100 px-4 py-5 text-zinc-950">
+        <StateBlock title={error ?? "Menü alınamadı"} tone="error" />
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-stone-100 text-zinc-950">
+      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white px-4 py-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">IoTables</p>
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">Menü</h1>
+          <div className="flex items-center gap-2">
+            <span className="border border-zinc-200 px-2 py-1 text-xs text-zinc-600">
+              {presenceState === "fresh"
+                ? `QR doğrulandı · ${formatDate(presence?.freshUntil ?? menu.derivedAt)}`
+                : presenceState === "checking"
+                  ? "QR kontrol ediliyor"
+                  : "Sipariş için güncel QR gerekir"}
+            </span>
+            <span className="border border-zinc-200 px-2 py-1 text-xs font-medium">
+              Sepet {cart?.items.length ?? 0} · {cart?.displaySubtotalMinor ?? 0}
+            </span>
+          </div>
+        </div>
+      </header>
+      <section className="px-4 py-4">
+        {menu.categories.length === 0 ? (
+          <StateBlock title="Şu anda siparişe açık ürün yok" />
+        ) : (
+          <div className="space-y-4">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {menu.categories.map((category) => (
+                <button
+                  className={`h-10 shrink-0 border px-4 text-sm font-medium ${
+                    selectedCategoryId === category.categoryId
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-950"
+                      : "border-zinc-300 bg-white"
+                  }`}
+                  key={category.categoryId}
+                  onClick={() => {
+                    setSelectedCategoryId(category.categoryId);
+                    setSelectedProductId(null);
+                  }}
+                  type="button"
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {(selectedCategory?.products ?? []).map((product) => (
+                <button
+                  className={`min-h-36 border bg-white px-4 py-4 text-left hover:bg-zinc-50 ${
+                    selectedProductId === product.productId
+                      ? "border-emerald-600"
+                      : "border-zinc-200"
+                  }`}
+                  key={product.productId}
+                  onClick={() => setSelectedProductId(product.productId)}
+                  type="button"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-base font-semibold">{product.name}</h2>
+                      {product.description ? (
+                        <p className="mt-1 text-sm text-zinc-600">{product.description}</p>
+                      ) : null}
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold">
+                      {product.variants[0]?.priceMinor ?? 0}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-xs text-zinc-500">
+                    {product.variants.length} varyant · {product.modifierGroups.length} seçenek grubu
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+      {selectedProduct ? (
+        <aside className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white px-4 py-4 shadow-lg md:left-auto md:right-6 md:bottom-6 md:w-96 md:border">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">{selectedProduct.name}</h2>
+              <p className="mt-1 text-sm text-zinc-600">
+                {selectedProduct.description ?? "Ürün detayları"}
+              </p>
+            </div>
+            <button
+              className="h-9 border border-zinc-300 px-3 text-sm font-medium"
+              onClick={() => setSelectedProductId(null)}
+              type="button"
+            >
+              Kapat
+            </button>
+          </div>
+          <div className="mt-4 space-y-3 text-sm">
+            {selectedProduct.variants.map((variant) => (
+              <div className="flex justify-between border-b border-zinc-200 py-2" key={variant.variantId}>
+                <span>{variant.name}</span>
+                <span className="font-medium">{variant.priceMinor}</span>
+              </div>
+            ))}
+            {selectedProduct.modifierGroups.map((group) => (
+              <div className="border-b border-zinc-200 py-2" key={group.groupId}>
+                <p className="font-medium">{group.name}</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {group.required ? "Zorunlu" : "Opsiyonel"} · {group.options.length} seçenek
+                </p>
+              </div>
+            ))}
+          </div>
+          <button
+            className="mt-4 h-11 w-full border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+            disabled={!selectedProduct.variants[0] || cartActionState === "submitting"}
+            onClick={() => void addSelectedProductToCart()}
+            type="button"
+          >
+            {cartActionState === "error" ? "Sepete eklenemedi" : "Sepete ekle"}
+          </button>
+        </aside>
+      ) : null}
+      {cart && cart.items.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 border-t border-zinc-200 bg-white px-4 py-3 md:left-6 md:right-auto md:bottom-6 md:w-80 md:border">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">{cart.items.length} ürün</p>
+              <p className="text-xs text-zinc-500">{cart.displaySubtotalMinor} {cart.currency}</p>
+            </div>
+            <button
+              className="h-10 border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+              disabled={submitState === "submitting"}
+              onClick={() => void submitCart()}
+              type="button"
+            >
+              {submitState === "done"
+                ? "Sipariş alındı"
+                : submitState === "error"
+                  ? "Tekrar dene"
+                  : "Sipariş ver"}
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </main>
+  );
+}
+
 function DetailRows({ rows }: { rows: [string, string][] }) {
   return (
     <dl className="divide-y divide-zinc-200 border-y border-zinc-200">
@@ -1340,6 +4224,72 @@ function auditMetadataSummary(metadata: Record<string, unknown>): string {
   }
   const keys = Object.keys(metadata);
   return keys.length > 0 ? keys.join(", ") : "Ek detay yok";
+}
+
+function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "tenant" {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("app") === "cashier") {
+    return "cashier";
+  }
+  if (params.get("app") === "customer") {
+    return "customer";
+  }
+  if (params.get("app") === "service") {
+    return "service";
+  }
+  if (params.get("app") === "tenant") {
+    return "tenant";
+  }
+  if (window.location.pathname.startsWith("/order")) {
+    return "customer";
+  }
+  if (window.location.pathname.startsWith("/cashier")) {
+    return "cashier";
+  }
+  if (window.location.pathname.startsWith("/service")) {
+    return "service";
+  }
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname.endsWith(".iotables.net") && hostname !== "platform.iotables.net"
+    ? "tenant"
+    : "platform";
+}
+
+function tenantSubdomainFromLocation(): string {
+  const params = new URLSearchParams(window.location.search);
+  const explicitTenant = params.get("tenant")?.trim().toLowerCase();
+  if (explicitTenant) {
+    return explicitTenant;
+  }
+
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname.endsWith(".iotables.net") ? hostname.replace(".iotables.net", "") : "demo";
+}
+
+function customerQrTokenFromLocation(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("qrToken")?.trim() || params.get("token")?.trim() || null;
+}
+
+function tenantHeaders(): Record<string, string> {
+  const hostname = window.location.hostname.toLowerCase();
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return {"X-Tenant-Subdomain": tenantSubdomainFromLocation()};
+  }
+  return {};
+}
+
+function tenantWorkspaceFromPath(pathname: string): TenantWorkspaceKey {
+  const workspace = tenantWorkspaces.find((item) => item.path === pathname);
+  return workspace?.key ?? "dashboard";
+}
+
+function tenantWorkspacePath(workspace: TenantWorkspaceKey): string {
+  return tenantWorkspaces.find((item) => item.key === workspace)?.path ?? "/admin";
+}
+
+function tenantWorkspaceLabel(workspace: TenantWorkspaceKey): string {
+  return tenantWorkspaces.find((item) => item.key === workspace)?.label ?? "Dashboard";
 }
 
 function formatDate(value: string): string {

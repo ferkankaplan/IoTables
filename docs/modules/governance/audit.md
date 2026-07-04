@@ -69,6 +69,12 @@ Minimum v1 action names:
 | `user.disabled` | User disable |
 | `password.changed` | First password setup or later password change |
 | `otp.verified` | Successful OTP verification |
+| `venue_layout.changed` | Hall/table setup change |
+| `table.disabled` | Table disabled by Tenant Admin |
+| `station.changed` | Station setup change |
+| `station.disabled` | Station disabled by Tenant Admin |
+| `menu_catalog.changed` | Category/product/variant/modifier setup change |
+| `availability.changed` | Product or variant availability override |
 | `table_display.provisioned` | ESP32/table display provisioning |
 | `table_display.revoked` | Display credential revoke/rotation |
 | `order.submitted` | Accepted customer order |

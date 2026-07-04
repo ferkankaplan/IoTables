@@ -1110,6 +1110,12 @@ Minimum v1 action names:
 | `user.disabled` | Access |
 | `password.changed` | Access |
 | `otp.verified` | Access |
+| `venue_layout.changed` | Tenant Setup |
+| `table.disabled` | Tenant Setup |
+| `station.changed` | Tenant Setup |
+| `station.disabled` | Tenant Setup |
+| `menu_catalog.changed` | Tenant Setup |
+| `availability.changed` | Tenant Setup |
 | `table_display.provisioned` | Tenant Setup |
 | `table_display.revoked` | Tenant Setup |
 | `order.submitted` | Ordering |
