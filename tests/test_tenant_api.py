@@ -79,8 +79,11 @@ def make_client(
     *,
     actor: ActorContext | None = None,
     service: FakeTenantRegistryQueryService | None = None,
+    tenant_root_domains: list[str] | None = None,
 ) -> TestClient:
     app = create_app()
+    if tenant_root_domains is not None:
+        app.state.settings.tenant_root_domains = tenant_root_domains
     app.state.session_resolver = FakeSessionResolver(actor)
     if service is not None:
         app.dependency_overrides[get_tenant_registry_query_service_for_tenant] = lambda: service
@@ -99,6 +102,38 @@ def test_tenant_context_resolves_from_local_tenant_header() -> None:
     assert response.json()["tenantId"] == str(TENANT_ID)
     assert response.json()["subdomain"] == "demo-cafe"
     assert service.subdomain == "demo-cafe"
+
+
+def test_tenant_context_resolves_from_production_host() -> None:
+    service = FakeTenantRegistryQueryService()
+    client = make_client(service=service)
+
+    response = client.get("/api/tenant/context", headers={"Host": "demo-cafe.iotables.net"})
+
+    assert response.status_code == 200
+    assert response.json()["subdomain"] == "demo-cafe"
+    assert service.subdomain == "demo-cafe"
+
+
+def test_tenant_context_resolves_from_configured_staging_host() -> None:
+    service = FakeTenantRegistryQueryService()
+    client = make_client(service=service, tenant_root_domains=["iotables.net", "tabflow.uk"])
+
+    response = client.get("/api/tenant/context", headers={"Host": "demo-cafe.tabflow.uk"})
+
+    assert response.status_code == 200
+    assert response.json()["subdomain"] == "demo-cafe"
+    assert service.subdomain == "demo-cafe"
+
+
+def test_tenant_context_ignores_platform_host() -> None:
+    service = FakeTenantRegistryQueryService()
+    client = make_client(service=service, tenant_root_domains=["iotables.net", "tabflow.uk"])
+
+    response = client.get("/api/tenant/context", headers={"Host": "platform.tabflow.uk"})
+
+    assert response.status_code == 404
+    assert service.subdomain is None
 
 
 def test_tenant_profile_requires_session() -> None:

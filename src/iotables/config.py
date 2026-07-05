@@ -29,6 +29,10 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:5173"],
         alias="IOTABLES_CORS_ORIGINS",
     )
+    tenant_root_domains: list[str] = Field(
+        default_factory=lambda: ["iotables.net"],
+        alias="IOTABLES_TENANT_ROOT_DOMAINS",
+    )
 
     @field_validator("environment")
     @classmethod
@@ -56,6 +60,26 @@ class Settings(BaseSettings):
         if "*" in value:
             raise ValueError("wildcard CORS origin is not allowed")
         return value
+
+    @field_validator("tenant_root_domains")
+    @classmethod
+    def validate_tenant_root_domains(cls, value: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for item in value:
+            root_domain = item.strip().lower().removeprefix(".")
+            if (
+                not root_domain
+                or root_domain == "*"
+                or "://" in root_domain
+                or "/" in root_domain
+                or " " in root_domain
+            ):
+                raise ValueError("tenant_root_domains must contain bare domain names")
+            if root_domain not in normalized:
+                normalized.append(root_domain)
+        if not normalized:
+            raise ValueError("tenant_root_domains must not be empty")
+        return normalized
 
 
 @lru_cache

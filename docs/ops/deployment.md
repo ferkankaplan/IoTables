@@ -199,11 +199,12 @@ IOTABLES_ENV=production
 IOTABLES_DATABASE_URL=postgresql+asyncpg://iotables:<strong database password>@db:5432/iotables
 IOTABLES_SECURITY_SECRET_KEY=<strong application secret>
 IOTABLES_CORS_ORIGINS=["https://platform.iotables.net"]
+IOTABLES_TENANT_ROOT_DOMAINS=["iotables.net"]
 IOTABLES_HTTP_PORT=80
 IOTABLES_HTTPS_PORT=443
 ```
 
-For staging, the same file shape applies on the staging VPS, but `IOTABLES_ENV=staging` and CORS/domain values must use `tabflow.uk`, such as `["https://platform.tabflow.uk"]`.
+For staging, the same file shape applies on the staging VPS, but `IOTABLES_ENV=staging`, CORS, and tenant root domain values must use `tabflow.uk`, such as `IOTABLES_CORS_ORIGINS=["https://platform.tabflow.uk"]` and `IOTABLES_TENANT_ROOT_DOMAINS=["tabflow.uk"]`.
 
 The VPS `.env` file is host-owned configuration and must not be committed. If public package visibility is disabled for GHCR images, the deployment user also needs registry credentials with permission to pull the repository packages.
 
@@ -257,7 +258,7 @@ Database migrations should complete before code paths depend on new schema. Dest
 ## Tenant Provisioning and DNS
 
 - PlatformApp creates tenant records and starter data through the provisioning workflow.
-- DNS records for `[tenant].iotables.net` are manual in the current release.
+- DNS records for tenant subdomains are manual in the current release: `[tenant].tabflow.uk` in staging and `[tenant].iotables.net` in production.
 - Platform DNS readiness is an explicit PlatformApp state, not an automated DNS provider result.
 - Provisioning and starter templates must be idempotent and durable per tenant.
 - Starter templates must never rerun on server restart, deployment, migration, or release upgrade.

@@ -37,7 +37,7 @@ Source context:
 | App | environment name, service name, public base URLs, log level. |
 | Database | async runtime database URL, migration database URL if separate, pool size/timeouts. |
 | Security | session secret, CSRF secret, cookie domain, secure cookie flag, allowed hosts. |
-| Platform | platform host, tenant root domain, tenant subdomain policy. |
+| Platform | platform host, environment-owned tenant root domains, tenant subdomain policy. |
 | Auth | password policy, session TTL, setup-token TTL, TOTP issuer. |
 | OTP/SMS | provider mode, sender config, send limits, challenge TTL, fake provider switch for local/test only. |
 | QR/Table Presence | token TTL, redemption freshness window, display credential policy. |
@@ -119,6 +119,7 @@ Startup validation must check runtime-owned settings, and deployment validation 
 - secure cookies are enabled in production;
 - allowed hosts/origins are explicit;
 - database URL points to the intended environment;
+- tenant root domains match the deployed namespace, such as `tabflow.uk` for staging and `iotables.net` for production;
 - production and staging origin TLS files exist on the VPS before deployment and are not committed to git;
 - provider fake mode is disabled in production;
 - tenant root domain/platform host are consistent;
