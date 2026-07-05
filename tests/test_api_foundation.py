@@ -1,7 +1,8 @@
 import json
 import logging
+from collections.abc import AsyncIterator
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 from fastapi.testclient import TestClient
 
 from iotables.api.errors import ApiError
@@ -115,6 +116,37 @@ def test_domain_api_error_uses_standard_error_envelope() -> None:
         "code": "invalid_state",
         "message": "The current state does not allow this action.",
         "requestId": "req_domain",
+        "details": {},
+        "fieldErrors": [],
+    }
+
+
+def test_domain_api_error_survives_async_yield_dependency_unwind() -> None:
+    app = create_app()
+
+    async def dependency_with_unwind() -> AsyncIterator[None]:
+        yield None
+
+    @app.get("/api/test/domain-error-with-yield")
+    async def domain_error_probe(_: None = Depends(dependency_with_unwind)) -> None:
+        raise ApiError(
+            status_code=401,
+            code="invalid_credentials",
+            message="Invalid username or password.",
+        )
+
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/test/domain-error-with-yield",
+        headers={"X-Request-Id": "req_domain_yield"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["error"] == {
+        "code": "invalid_credentials",
+        "message": "Invalid username or password.",
+        "requestId": "req_domain_yield",
         "details": {},
         "fieldErrors": [],
     }
