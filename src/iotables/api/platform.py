@@ -75,7 +75,6 @@ class ProvisioningResultResponse(BaseModel):
     subdomain: str
     starter_template_applied: bool = Field(alias="starterTemplateApplied")
     failure_summary: str | None = Field(alias="failureSummary")
-    dns_ready: bool = Field(alias="dnsReady")
 
 
 class ProvisioningStateResponse(BaseModel):
@@ -85,7 +84,6 @@ class ProvisioningStateResponse(BaseModel):
     template_key: str | None = Field(alias="templateKey")
     template_version: int | None = Field(alias="templateVersion")
     failure_summary: str | None = Field(alias="failureSummary")
-    dns_ready: bool = Field(alias="dnsReady")
     created_at: str = Field(alias="createdAt")
     updated_at: str = Field(alias="updatedAt")
 
@@ -104,7 +102,6 @@ class TenantHealthSummaryResponse(BaseModel):
     name: str
     subdomain: str
     status: str
-    dns_ready: bool = Field(alias="dnsReady")
     sector: str | None
     provisioning_state: str = Field(alias="provisioningState")
     last_lifecycle_event_at: str | None = Field(alias="lastLifecycleEventAt")
@@ -132,7 +129,6 @@ class TenantProfileResponse(BaseModel):
     capacity: int | None
     address: str | None
     status: str
-    dns_ready: bool = Field(alias="dnsReady")
     provisioning_state: str = Field(alias="provisioningState")
     starter_template_state: str = Field(alias="starterTemplateState")
     tenant_admin_bootstrap_state: str = Field(alias="tenantAdminBootstrapState")
@@ -189,10 +185,6 @@ class TenantProfileUpdateRequest(BaseModel):
         if "address" in self.model_fields_set:
             fields["address"] = self.address
         return TenantProfileUpdateCommand(fields=fields)
-
-
-class TenantDnsReadyRequest(BaseModel):
-    dns_ready: bool = Field(alias="dnsReady")
 
 
 class TenantStatusChangeRequest(BaseModel):
@@ -395,29 +387,6 @@ async def update_tenant_profile(
             actor=actor,
             tenant_id=tenant_id,
             command=payload.to_command(),
-        )
-    ).as_api_payload()
-
-
-@router.post(
-    "/tenants/{tenant_id}/dns-ready",
-    response_model=TenantProfileResponse,
-    dependencies=[CSRF_DEP],
-)
-async def set_tenant_dns_ready(
-    tenant_id: UUID,
-    payload: TenantDnsReadyRequest,
-    actor: Annotated[ActorContext, PLATFORM_SCOPE_DEP],
-    service: Annotated[
-        TenantRegistryMutationService,
-        Depends(get_tenant_registry_mutation_service),
-    ],
-) -> dict[str, Any]:
-    return (
-        await service.set_dns_ready(
-            actor=actor,
-            tenant_id=tenant_id,
-            dns_ready=payload.dns_ready,
         )
     ).as_api_payload()
 

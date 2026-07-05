@@ -19,7 +19,7 @@ Source context:
 - Components may show high-level health summaries, but they must not expose or mutate tenant runtime orders, payments, sessions, carts, preparation, or delivery state.
 - Components preserve tenant list context while opening creation, detail, settings, audit, and recovery surfaces.
 - Components must show pending, stale, blocked, and failure states for mutating actions.
-- Components must not provide DNS automation or starter-data rerun controls in the current release.
+- Components must not provide tenant-level DNS controls, DNS automation, or starter-data rerun controls in the current release.
 
 ## Component Map
 
@@ -28,13 +28,12 @@ Source context:
 | `PlatformShell` | Platform route frame, authenticated session state, logout, app navigation. | Session check |
 | `PlatformLogin` | Username/password login and blocked setup states. | Identity and Access |
 | `PlatformHealthSummary` | High-level tenant lifecycle/setup/health counters. | Tenant health list |
-| `TenantHealthList` | Tenant list with filters, lifecycle, DNS, provisioning, starter, and health flags. | Tenant Registry |
+| `TenantHealthList` | Tenant list with filters, lifecycle, provisioning, starter, and health flags. | Tenant Registry |
 | `TenantCreateDrawer` | Tenant creation form, sector template preview, idempotent submit, provisioning result. | Provisioning, Sector Starter Templates |
-| `TenantDetailPanel` | Selected tenant profile, lifecycle, setup, DNS, starter, admin bootstrap, and safe health summary. | Tenant Registry, Provisioning |
+| `TenantDetailPanel` | Selected tenant profile, lifecycle, setup, starter, admin bootstrap, and safe health summary. | Tenant Registry, Provisioning |
 | `TenantSettingsPanel` | Editable platform-owned tenant profile fields. | Tenant Registry |
 | `TenantAuditPanel` | Platform audit/lifecycle timeline for selected tenant. | Audit, Tenant Registry |
 | `ProvisioningStatePanel` | Provisioning progress, failed state, recovery summary, retry action. | Provisioning |
-| `DnsReadinessControl` | Manual DNS readiness flag and audit-visible state. | Tenant Registry |
 | `TenantLifecycleDialog` | Suspend/reactivate confirmation with reason. | Tenant Registry |
 | `PlatformStateMessage` | Loading, empty, unauthorized, stale, blocked, and retry states. | UI states, copy |
 
@@ -66,7 +65,6 @@ Source context:
 - suspended tenant count;
 - provisioning tenant count;
 - provisioning failed count;
-- DNS not ready count;
 - health unknown/degraded count.
 
 `TenantHealthList` owns:
@@ -75,7 +73,6 @@ Source context:
 - cursor/pagination controls;
 - selected-row state;
 - lifecycle/status badges;
-- DNS readiness indicator;
 - safe high-level health flags;
 - empty and partial-health states.
 
@@ -92,8 +89,7 @@ It does not own tenant runtime drill-downs.
 - current release scope notice;
 - create submit state;
 - idempotent replay result;
-- provisioning result summary;
-- DNS manual checklist prompt after creation.
+- provisioning result summary.
 
 Validation responsibilities:
 
@@ -111,7 +107,6 @@ Backend remains responsible for final authorization, uniqueness, idempotency, pr
 
 - immutable identity display;
 - lifecycle state;
-- DNS readiness;
 - provisioning state;
 - starter application state;
 - tenant admin bootstrap summary;
@@ -138,7 +133,6 @@ It displays tenant name and subdomain as immutable. It must state that sector ch
 - starter application status;
 - failed phase if exposed safely;
 - redacted failure summary;
-- DNS checklist state;
 - recovery summary;
 - retry action for allowed failed provisioning.
 
@@ -150,16 +144,7 @@ Retry behavior:
 - stale state requires refresh before retry;
 - success updates detail/list state only after backend acceptance.
 
-## DNS and Lifecycle Components
-
-`DnsReadinessControl` owns:
-
-- manual ready/not-ready flag;
-- clear manual-DNS copy;
-- pending state;
-- audited update expectation.
-
-It must not provide DNS provider credentials, DNS record creation, DNS verification automation, or automatic subdomain management in the current release.
+## Lifecycle Components
 
 `TenantLifecycleDialog` owns:
 
@@ -184,7 +169,6 @@ Use `PlatformStateMessage` for:
 - partial health unavailable;
 - tenant row/detail stale;
 - provisioning failed;
-- DNS not ready;
 - access denied;
 - audit empty/filtered empty.
 
@@ -198,7 +182,7 @@ State messages must use [copy.md](copy.md) and remain platform-safe.
 | Tenant GSM | PlatformApp can edit; changes are audited and affect future OTP flows. |
 | Sector | PlatformApp can select/edit classification; starter data applies only during tenant creation. |
 | Starter data | PlatformApp can request through Provisioning and view application state; cannot rerun by profile edit. |
-| DNS | PlatformApp can track manual readiness only. |
+| DNS | PlatformApp has no tenant-level DNS state; wildcard routing belongs to deployment/ops. |
 | Tenant health | High-level safe summary only. |
 | Runtime tenant data | No normal PlatformApp mutation or detail drill-down. |
 | Audit | Platform-level/redacted events only. |
@@ -212,6 +196,6 @@ The component model is acceptable when:
 - login/setup gates hide tenant data until Platform Owner access is valid;
 - tenant creation has pending, duplicate replay, failure, and success representation;
 - provisioning recovery does not duplicate create-tenant behavior;
-- DNS readiness is manual-only;
+- no tenant-level DNS control is exposed;
 - lifecycle actions require reason and backend acceptance;
 - forbidden current release runtime controls cannot be reached from any component.

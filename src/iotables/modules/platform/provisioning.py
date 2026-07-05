@@ -57,7 +57,6 @@ class ProvisioningResult:
     subdomain: str
     starter_template_applied: bool
     failure_summary: str | None
-    dns_ready: bool
 
     def as_api_payload(self) -> dict[str, Any]:
         return {
@@ -66,7 +65,6 @@ class ProvisioningResult:
             "subdomain": self.subdomain,
             "starterTemplateApplied": self.starter_template_applied,
             "failureSummary": self.failure_summary,
-            "dnsReady": self.dns_ready,
         }
 
 
@@ -78,7 +76,6 @@ class ProvisioningState:
     template_key: str | None
     template_version: int | None
     failure_summary: str | None
-    dns_ready: bool
     created_at: datetime
     updated_at: datetime
 
@@ -90,7 +87,6 @@ class ProvisioningState:
             "templateKey": self.template_key,
             "templateVersion": self.template_version,
             "failureSummary": self.failure_summary,
-            "dnsReady": self.dns_ready,
             "createdAt": self.created_at.isoformat(),
             "updatedAt": self.updated_at.isoformat(),
         }
@@ -122,7 +118,6 @@ class TenantHealthSummary:
     name: str
     subdomain: str
     status: str
-    dns_ready: bool
     sector: str | None
     provisioning_state: str
     last_lifecycle_event_at: datetime | None
@@ -136,7 +131,6 @@ class TenantHealthSummary:
             "name": self.name,
             "subdomain": self.subdomain,
             "status": self.status,
-            "dnsReady": self.dns_ready,
             "sector": self.sector,
             "provisioningState": self.provisioning_state,
             "lastLifecycleEventAt": iso_or_none(self.last_lifecycle_event_at),
@@ -156,7 +150,6 @@ class TenantProfile:
     capacity: int | None
     address: str | None
     status: str
-    dns_ready: bool
     provisioning_state: str
     starter_template_state: str
     tenant_admin_bootstrap_state: str
@@ -174,7 +167,6 @@ class TenantProfile:
             "capacity": self.capacity,
             "address": self.address,
             "status": self.status,
-            "dnsReady": self.dns_ready,
             "provisioningState": self.provisioning_state,
             "starterTemplateState": self.starter_template_state,
             "tenantAdminBootstrapState": self.tenant_admin_bootstrap_state,
@@ -353,13 +345,11 @@ class TenantRegistryQueryService:
             capacity=row["capacity"],
             address=row["address"],
             status=row["status"],
-            dns_ready=row["dns_ready"],
             provisioning_state=row["setup_state"] or row["status"],
             starter_template_state=row["starter_template_state"] or "unknown",
             tenant_admin_bootstrap_state=row["tenant_admin_bootstrap_state"] or "unknown",
             health_flags=health_flags(
                 status=row["status"],
-                dns_ready=row["dns_ready"],
                 runtime_error_summary=row["runtime_error_summary"],
             ),
             created_at=row["created_at"],
@@ -409,13 +399,11 @@ class TenantRegistryQueryService:
             name=row["name"],
             subdomain=row["subdomain"],
             status=row["status"],
-            dns_ready=row["dns_ready"],
             sector=row["sector"],
             provisioning_state=row["setup_state"] or row["status"],
             last_lifecycle_event_at=row["last_lifecycle_event_at"],
             health_flags=health_flags(
                 status=row["status"],
-                dns_ready=row["dns_ready"],
                 runtime_error_summary=row["runtime_error_summary"],
             ),
             created_at=row["created_at"],
@@ -491,43 +479,6 @@ class TenantRegistryMutationService:
                     target_id=str(tenant_id),
                     metadata={"changedFields": changed_fields},
                     created_at=values["updated_at"],
-                )
-
-        return await self.query_service.get_tenant_profile(tenant_id)
-
-    async def set_dns_ready(
-        self,
-        *,
-        actor: ActorContext,
-        tenant_id: UUID,
-        dns_ready: bool,
-    ) -> TenantProfile:
-        if actor.user_id is None:
-            raise not_authorized()
-
-        async with self._transaction():
-            current = await self._lock_tenant(tenant_id)
-            if current["dns_ready"] != dns_ready:
-                now = utc_now()
-                await self.session.execute(
-                    update(tenants)
-                    .where(tenants.c.id == tenant_id)
-                    .values(dns_ready=dns_ready, updated_at=now)
-                )
-                await self.session.execute(
-                    update(tenant_health)
-                    .where(tenant_health.c.tenant_id == tenant_id)
-                    .values(dns_ready=dns_ready, updated_at=now)
-                )
-                await insert_audit_event(
-                    session=self.session,
-                    tenant_id=tenant_id,
-                    actor_user_id=actor.user_id,
-                    action="tenant.dns_ready_changed",
-                    target_type="tenant",
-                    target_id=str(tenant_id),
-                    metadata={"dnsReady": dns_ready},
-                    created_at=now,
                 )
 
         return await self.query_service.get_tenant_profile(tenant_id)
@@ -993,7 +944,6 @@ class TenantProvisioningService:
                 capacity=command.capacity,
                 address=command.address,
                 status="provisioning",
-                dns_ready=False,
                 created_at=now,
                 updated_at=now,
             )
@@ -1051,7 +1001,6 @@ class TenantProvisioningService:
                 setup_state="ready",
                 starter_template_state="applied" if starter_applied else "not_selected",
                 tenant_admin_bootstrap_state="first_password_required",
-                dns_ready=False,
                 updated_at=now,
             )
         )
@@ -1097,7 +1046,7 @@ class TenantProvisioningService:
             action="tenant.activated",
             target_type="tenant",
             target_id=str(tenant_id),
-            metadata={"dnsReady": False},
+            metadata={},
             created_at=now,
         )
 
@@ -1107,7 +1056,6 @@ class TenantProvisioningService:
             subdomain=command.subdomain,
             starter_template_applied=starter_applied,
             failure_summary=None,
-            dns_ready=False,
         )
 
     async def _apply_starter_template(
@@ -1348,7 +1296,6 @@ class TenantProvisioningService:
             failure_summary=(
                 starter_row["failure_summary"] if starter_row else tenant_row["provisioning_error"]
             ),
-            dns_ready=tenant_row["dns_ready"],
             created_at=tenant_row["created_at"],
             updated_at=tenant_row["updated_at"],
         )
@@ -1474,7 +1421,6 @@ class TenantProvisioningService:
             subdomain=payload["subdomain"],
             starter_template_applied=payload["starterTemplateApplied"],
             failure_summary=payload["failureSummary"],
-            dns_ready=payload["dnsReady"],
         )
 
     def _constraint_name(self, exc: IntegrityError) -> str | None:
@@ -1509,7 +1455,6 @@ def iso_or_none(value: datetime | None) -> str | None:
 def health_flags(
     *,
     status: str,
-    dns_ready: bool,
     runtime_error_summary: str | None,
 ) -> tuple[str, ...]:
     flags: list[str] = []
@@ -1517,8 +1462,6 @@ def health_flags(
         flags.append("provisioning_failed")
     if status == "suspended":
         flags.append("suspended")
-    if not dns_ready:
-        flags.append("dns_not_ready")
     if runtime_error_summary:
         flags.append("runtime_health_unknown")
     return tuple(flags)

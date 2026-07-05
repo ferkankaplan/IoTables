@@ -39,7 +39,7 @@ The current release excludes customer payment, waiter-entered orders, pickup/pac
 6. Provisioning applies the selected sector starter template exactly once.
 7. Governance records starter template completion.
 8. Provisioning moves tenant to `active` after required setup records commit.
-9. Platform Owner marks manual DNS readiness when DNS is configured outside the app.
+9. Tenant host availability relies on the environment wildcard DNS namespace that was configured during deployment.
 
 Acceptance criteria:
 
@@ -47,6 +47,7 @@ Acceptance criteria:
 - Tenant GSM is editable but audited.
 - Starter data does not rerun after restart, deployment, migration, release upgrade, or tenant edit.
 - Failed provisioning leaves a recoverable `provisioning_failed` state instead of partial silent success.
+- PlatformApp does not expose a tenant-level DNS state; missing wildcard DNS is an environment/deployment fault.
 
 ### 2. Tenant Admin Configures Operation
 

@@ -62,28 +62,30 @@ Ownership:
 
 - PlatformApp + Platform/Provisioning + Tenant Registry + Access + Sector Starter Templates + Tenant Setup + Governance.
 
-### P-03: Manual DNS Readiness
+### P-03: Wildcard Tenant Host Availability
 
 Happy path:
 
-1. Platform Owner manually creates DNS outside the app.
-2. Platform Owner marks DNS readiness in PlatformApp.
-3. Tenant health summary reflects DNS readiness.
+1. Deployment config provides the environment wildcard tenant namespace.
+2. Platform Owner creates a tenant with a unique subdomain.
+3. Provisioning activates the tenant after required setup records commit.
+4. The tenant public host is derived from the immutable subdomain and environment root domain.
+5. PlatformApp displays the derived tenant host without exposing a tenant-level DNS action.
 
 Branches:
 
 | Branch | Expected Result |
 | --- | --- |
-| DNS readiness not marked | Tenant may still be active internally, but PlatformApp health shows DNS not ready |
-| Platform Owner marks readiness incorrectly | PlatformApp records the change; correction is another audited readiness update |
+| Wildcard DNS missing or misconfigured | Treat as deployment/ops fault; do not create a per-tenant recovery state |
+| Tenant subdomain route fails while wildcard environment is healthy | Investigate tenant resolution or runtime routing; Tenant Registry remains the tenant identity source |
 
 Result:
 
-- DNS is tracked as a manual checklist state, not automated.
+- Tenant host availability is a deployment namespace guarantee, not mutable tenant state.
 
 Ownership:
 
-- PlatformApp + Platform.
+- PlatformApp + Platform + Ops.
 
 ### P-04: Suspend and Reactivate Tenant
 
@@ -116,7 +118,7 @@ Ownership:
 Happy path:
 
 1. Platform Owner opens dashboard or Tenant List.
-2. PlatformApp lists tenants with identity, subdomain, lifecycle state, DNS readiness, setup state, and high-level health.
+2. PlatformApp lists tenants with identity, subdomain, lifecycle state, setup state, and high-level health.
 3. Platform Owner opens Tenant Detail.
 4. PlatformApp shows platform-owned tenant metadata, lifecycle, setup state, starter template state, tenant admin bootstrap state, and audit summary.
 
@@ -124,7 +126,6 @@ Branches:
 
 | Branch | Expected Result |
 | --- | --- |
-| Tenant has no DNS readiness | Health shows DNS not ready |
 | Tenant provisioning failed | Detail shows failure state and recovery affordance |
 | Tenant suspended | Detail shows suspended state and reason/audit |
 | Platform Owner attempts runtime mutation from detail | Reject unless explicit support/recovery workflow exists |

@@ -20,7 +20,7 @@ Source context:
 
 ## Test Scope
 
-PlatformApp tests prove that the Platform Owner can authenticate, create tenants safely, inspect tenant health, track manual DNS readiness, manage tenant lifecycle, edit audited platform-owned profile fields, and recover failed provisioning without becoming a tenant runtime operator.
+PlatformApp tests prove that the Platform Owner can authenticate, create tenants safely, inspect tenant health, rely on environment wildcard tenant routing, manage tenant lifecycle, edit audited platform-owned profile fields, and recover failed provisioning without becoming a tenant runtime operator.
 
 Out of scope for this test plan:
 
@@ -37,8 +37,8 @@ Out of scope for this test plan:
 | Scenario | Coverage |
 | --- | --- |
 | P-01 Platform Owner Login | Platform Owner completes username/password login before dashboard access. |
-| P-02 Create Tenant With Cafe Starter | Required tenant identity is submitted, provisioning applies `cafe.v1` once, tenant becomes active, and DNS checklist remains manual. |
-| P-03 Manual DNS Readiness | Platform Owner marks DNS readiness and tenant health reflects the manual flag. |
+| P-02 Create Tenant With Cafe Starter | Required tenant identity is submitted, provisioning applies `cafe.v1` once, tenant becomes active, and tenant host is derived from the wildcard namespace. |
+| P-03 Wildcard Tenant Host Availability | PlatformApp exposes the derived tenant host without tenant-level DNS mutation. |
 | P-04 Suspend and Reactivate Tenant | Platform Owner suspends/reactivates with reason and tenant runtime availability follows lifecycle state. |
 | P-05 List and Inspect Tenants | Dashboard/list/detail show platform-owned metadata, lifecycle, setup, starter, and high-level health. |
 | P-06 Update Tenant GSM | GSM update validates, audits, and affects future OTP targets only. |
@@ -73,12 +73,12 @@ Out of scope for this test plan:
 | Tenant admin creation failure | Tenant not activated; failure state visible and recoverable. |
 | Audit failure for critical event | Tenant creation fails or enters recoverable failure according to audit policy. |
 
-### DNS, Lifecycle, and Settings
+### Host Routing, Lifecycle, and Settings
 
 | Branch | Expected Test Result |
 | --- | --- |
-| DNS readiness not marked | Health shows DNS not ready; tenant runtime mutation is not implied. |
-| DNS readiness changed incorrectly | Change is recorded; correction is another audited update. |
+| Wildcard DNS missing in environment | Treat as deployment/ops failure; no per-tenant DNS recovery control appears. |
+| Tenant subdomain route fails while wildcard environment is healthy | Tenant resolution/runtime routing is investigated; tenant identity state is not mutated by a DNS flag. |
 | Suspend without reason | Rejected with reason-required message. |
 | Tenant already suspended | Current suspended state is returned or shown idempotently. |
 | Reactivate invalid transition | Rejected with safe lifecycle error. |
@@ -114,7 +114,7 @@ Out of scope for this test plan:
 | Tenant becomes `active` only after required setup records commit | Transaction/integration tests. |
 | Provisioning failure is visible and recoverable | Browser, API, and recovery tests. |
 | Starter template is applied exactly once | Database/integration/idempotency tests. |
-| Manual DNS readiness is trackable but not automated | Browser and API tests; no DNS provider side effect. |
+| Tenant host routing is provided by wildcard DNS and not tenant-level state | Browser/API contract tests prove no DNS control or endpoint is exposed. |
 | PlatformApp cannot mutate tenant runtime orders/payments/sessions/preparation/delivery | Negative UI and API authorization tests. |
 
 ## UI State Coverage
@@ -126,7 +126,7 @@ Every state in [ui-states.md](ui-states.md) requires a UI test or documented non
 | Login | loading, invalid credentials, first password change required |
 | Dashboard / Tenant List | loading, empty tenant list, partial health unavailable, tenant row stale, platform auth expired |
 | Create Tenant | pristine, validating, submitting, provisioning, provisioning failed, success |
-| Tenant Detail | loading, not found, suspended, provisioning, provisioning failed, DNS not ready, health unavailable |
+| Tenant Detail | loading, not found, suspended, provisioning, provisioning failed, health unavailable |
 | Tenant Audit | loading, empty audit, filtered empty, access denied |
 
 ## API Usage Coverage
@@ -150,7 +150,6 @@ PlatformApp executable tests must cover the app-visible behavior of these endpoi
 | `GET /api/platform/sectors` | Supported sector options. |
 | `GET /api/platform/sectors/{sector}/starter-template` | Starter preview only; no template mutation. |
 | `GET /api/platform/tenants/{tenantId}/starter-template-application` | Starter application state. |
-| `POST /api/platform/tenants/{tenantId}/dns-ready` | Manual DNS flag update and audit expectation. |
 | `POST /api/platform/tenants/{tenantId}/status` | Suspend/reactivate with reason and lifecycle validation. |
 | `GET /api/platform/tenants/{tenantId}/lifecycle-events` | Selected tenant lifecycle timeline without runtime detail leakage. |
 | `GET /api/platform/audit-events` | Redacted platform audit events only. |
@@ -176,7 +175,7 @@ Required tests:
 
 Required checks:
 
-- login, TOTP, tenant creation, settings save, DNS readiness, suspend/reactivate, audit, and provisioning retry work by keyboard;
+- login, TOTP, tenant creation, settings save, suspend/reactivate, audit, and provisioning retry work by keyboard;
 - drawers and dialogs trap and restore focus;
 - status badges and health flags have text alternatives;
 - tenant table/list row focus and selected state are visible;
@@ -192,7 +191,7 @@ Tests must assert that:
 - tenant creation copy marks name, subdomain, and GSM as required;
 - immutable identity copy appears for tenant name/subdomain;
 - sector copy says starter data does not rerun after creation;
-- DNS copy says manual readiness and does not imply automation;
+- tenant host copy says routing uses the deployed wildcard namespace and does not imply per-tenant DNS mutation;
 - lifecycle dialogs mention reason/audit consequences;
 - forbidden platform claims and runtime action labels from [copy.md](copy.md) are absent.
 

@@ -38,7 +38,6 @@ tenants = Table(
     Column("capacity", Integer),
     Column("address", Text),
     Column("status", Text, nullable=False),
-    Column("dns_ready", Boolean, nullable=False),
     Column("provisioning_error", Text),
     Column("created_at", timestamp_tz, nullable=False),
     Column("updated_at", timestamp_tz, nullable=False),
@@ -87,7 +86,6 @@ tenant_health = Table(
     Column("setup_state", Text, nullable=False),
     Column("starter_template_state", Text, nullable=False),
     Column("tenant_admin_bootstrap_state", Text, nullable=False),
-    Column("dns_ready", Boolean, nullable=False),
     Column("runtime_error_summary", Text),
     Column("updated_at", timestamp_tz, nullable=False),
 )
@@ -2010,7 +2008,7 @@ audit_events = Table(
         "'platform_owner.created', 'platform_owner.totp_enrolled', "
         "'tenant.created', 'tenant.provisioning_failed', 'tenant.activated', "
         "'tenant.suspended', 'tenant.gsm_changed', 'tenant.profile_updated', "
-        "'tenant.dns_ready_changed', 'starter_template.applied', "
+        "'starter_template.applied', "
         "'user.created', 'user.disabled', 'password.changed', 'otp.verified', "
         "'venue_layout.changed', 'table.disabled', "
         "'station.changed', 'station.disabled', "

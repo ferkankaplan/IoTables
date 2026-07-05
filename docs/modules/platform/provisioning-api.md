@@ -45,9 +45,8 @@ Provisioning owns tenant creation orchestration. It is the only public PlatformA
 | `subdomain` | string | Immutable tenant subdomain. |
 | `starterTemplateApplied` | boolean | True only when template application committed. |
 | `failureSummary` | string/null | Redacted safe failure summary. |
-| `dnsReady` | boolean | Manual platform flag; provisioning does not automate DNS. |
 
-`ProvisioningState` includes `tenantId`, `tenantStatus`, `starterApplicationStatus`, `templateKey`, `templateVersion`, `failureSummary`, `dnsReady`, `createdAt`, and `updatedAt`.
+`ProvisioningState` includes `tenantId`, `tenantStatus`, `starterApplicationStatus`, `templateKey`, `templateVersion`, `failureSummary`, `createdAt`, and `updatedAt`.
 
 `ProvisioningRecoverySummary` includes `tenantId`, `missingRequiredRecords`, `completedPhases`, `failedPhase`, `safeRetryAllowed`, and redacted `failureSummary`.
 

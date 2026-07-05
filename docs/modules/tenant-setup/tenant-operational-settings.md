@@ -16,7 +16,7 @@ It is the source for `public_display_name` and `service_delivery_tracking_enable
 
 ## Not Owned
 
-- Immutable tenant name, subdomain, lifecycle status, DNS readiness, GSM, address, capacity, and sector classification, owned by Platform / Tenant Registry.
+- Immutable tenant name, subdomain, lifecycle status, GSM, address, capacity, and sector classification, owned by Platform / Tenant Registry.
 - Staff roles and scopes, owned by Access / Staff Access.
 - Service delivery queue execution, owned by Fulfillment / Service Delivery.
 - Customer orders, table sessions, payments, and cashier corrections.

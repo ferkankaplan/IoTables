@@ -91,7 +91,6 @@ Owned by: Platform / Tenant Registry
 | `capacity` | Optional, editable |
 | `address` | Optional, editable |
 | `status` | `provisioning` / `active` / `suspended` / `provisioning_failed` |
-| `dnsReady` | Manual DNS setup checklist flag |
 | `provisioningError` | Safe error summary when provisioning fails |
 | `createdAt`, `updatedAt` | Timestamps |
 
@@ -103,7 +102,7 @@ Invariants:
 - suspended tenants cannot perform runtime operations.
 - new tenants start as `provisioning`.
 - tenants become `active` only after required setup records commit successfully.
-- manual DNS setup is tracked, not automated, in the current release.
+- tenant host routing depends on the environment wildcard DNS namespace and is not tenant state.
 - capacity is informational in the current release and does not enforce package limits.
 
 ### TenantOperationalSettings
@@ -135,7 +134,6 @@ Owned by: Platform / Tenant Registry
 | `setupState` | Provisioning/setup readiness summary |
 | `starterTemplateState` | Starter application summary |
 | `tenantAdminBootstrapState` | First admin readiness summary |
-| `dnsReady` | Manual DNS readiness |
 | `runtimeErrorSummary` | Safe platform-visible summary only |
 
 Invariants:

@@ -58,9 +58,8 @@ Frontend visibility is never authorization proof.
 | Contract | Allowed Caller | Required Scope Checks | Domain Guards |
 | --- | --- | --- | --- |
 | `tenant_registry.register_identity` | Provisioning | Provisioning was started by Platform Owner | Name/subdomain/GSM required; subdomain unique |
-| `tenant_registry.update_profile` | PlatformApp, TenantApp | Platform Owner global or Tenant Admin own tenant | TenantApp cannot change name, subdomain, lifecycle, DNS readiness, or platform-only health |
+| `tenant_registry.update_profile` | PlatformApp, TenantApp | Platform Owner global or Tenant Admin own tenant | TenantApp cannot change name, subdomain, lifecycle, or platform-only health |
 | `tenant_registry.change_status` | PlatformApp | Platform Owner | Valid lifecycle transition; reason required for suspend/reactivate/recovery |
-| `tenant_registry.set_dns_ready` | PlatformApp | Platform Owner | Manual checklist only; no DNS automation |
 | `tenant_registry.mark_provisioning_failed` | Provisioning | Internal provisioning workflow | Tenant not active; redacted failure summary |
 | `tenant_registry.activate_tenant` | Provisioning | Internal provisioning workflow | Required setup records committed |
 | `provisioning.start_tenant` | PlatformApp | Platform Owner | Required tenant fields; supported sector; starter idempotency |

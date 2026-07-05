@@ -20,7 +20,7 @@ Current release tenant creation implies these product boundaries:
 
 - one tenant represents one restaurant/location;
 - ordering channel is dine-in table QR only;
-- DNS is manual outside the application;
+- tenant host routing depends on environment wildcard DNS configured outside the application;
 - CustomerApp cannot take payments;
 - CashierApp records operational payments only;
 - no fiscal/e-Adisyon/ÖKC integration;

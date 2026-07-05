@@ -31,7 +31,7 @@ PlatformApp uses a small set of durable routes. Secondary records open as contex
 | Dashboard | `/` | Durable page | Platform health and tenant status overview. |
 | Tenant Workspace | `/tenants` | Durable page | Tenant list, filters, health, selected tenant detail panel. |
 | Create Tenant | `/tenants/new` | Drawer route | Tenant creation form and provisioning result without leaving tenant workspace. |
-| Tenant Detail | `/tenants/:tenantId` | Detail panel route | Profile, lifecycle, DNS, provisioning, starter, and health summary. |
+| Tenant Detail | `/tenants/:tenantId` | Detail panel route | Profile, lifecycle, provisioning, starter, and health summary. |
 | Tenant Settings | `/tenants/:tenantId/settings` | Detail panel tab/route | Editable platform-owned tenant fields. |
 | Tenant Audit | `/tenants/:tenantId/audit` | Detail panel tab/route | Platform-level audit and lifecycle timeline. |
 
@@ -62,7 +62,7 @@ Dashboard gives a compact platform overview, not tenant runtime control.
 | Platform header                   Logout       |
 +------------------------------------------------+
 | Health summary: active / failed / suspended    |
-| DNS not ready / provisioning failed / unknown  |
+| provisioning failed / unknown health           |
 +------------------------------------------------+
 | Tenant health list preview                     |
 | [Tenant row] [Tenant row] [Tenant row]         |
@@ -104,7 +104,6 @@ Tenant list row fields:
 | Tenant name | Immutable platform identity. |
 | Subdomain | Immutable tenant domain. |
 | Status | `provisioning`, `active`, `suspended`, `provisioning_failed`. |
-| DNS readiness | Manual checklist status. |
 | Sector | Optional classification. |
 | Provisioning state | Setup/starter/admin bootstrap summary. |
 | Health flags | High-level safe platform health only. |
@@ -116,7 +115,7 @@ Tenant list states:
 | Loading | Keep filters/header stable; show list skeleton. |
 | Empty tenant list | Show create tenant action. |
 | Partial health unavailable | Show unknown/degraded health without hiding identity metadata. |
-| Tenant row stale | Disable lifecycle/DNS actions until refresh. |
+| Tenant row stale | Disable lifecycle actions until refresh. |
 | Platform auth expired | Redirect to login and do not keep tenant data visible. |
 
 ## Create Tenant Drawer
@@ -148,9 +147,9 @@ Create Tenant states:
 | Duplicate submit replay | Show original provisioning result; do not create a parallel tenant. |
 | Provisioning | Show reserved tenant identity and setup progress. |
 | Provisioning failed | Show redacted safe failure and recovery affordance when available. |
-| Success | Show tenant identity, subdomain, status, starter state, admin bootstrap state, and DNS checklist. |
+| Success | Show tenant identity, tenant host, status, starter state, and admin bootstrap state. |
 
-Create Tenant must not claim DNS is created automatically. It must show manual DNS as a post-creation checklist item.
+Create Tenant must not claim DNS is created automatically. It must show that tenant host routing depends on the already-deployed wildcard namespace.
 
 ## Tenant Detail Panel
 
@@ -161,7 +160,6 @@ Detail sections:
 - identity: name, subdomain, created time;
 - editable profile: GSM, sector, capacity, address;
 - lifecycle: current status, last status event, suspend/reactivate action;
-- DNS readiness: manual flag and last update;
 - provisioning: setup state, failed phase, recovery summary;
 - starter data: selected template, version, applied/failed state;
 - tenant admin bootstrap: pending/completed summary;
@@ -177,9 +175,8 @@ Detail states:
 | Suspended | Show suspended badge, reason where allowed, and reactivate action. |
 | Provisioning | Show setup progress and block normal lifecycle shortcuts. |
 | Provisioning failed | Show failure state and recovery action if allowed. |
-| DNS not ready | Show checklist warning, not runtime mutation. |
 | Health unavailable | Show unknown/degraded summary without blocking profile edits. |
-| Stale detail | Refresh before allowing lifecycle, DNS, or retry actions. |
+| Stale detail | Refresh before allowing lifecycle or retry actions. |
 
 ## Tenant Settings
 
@@ -213,7 +210,6 @@ It shows platform-level events only:
 - tenant creation;
 - provisioning state changes;
 - starter template applied/failed/recovery-needed;
-- DNS readiness changes;
 - lifecycle changes;
 - GSM updates;
 - platform support/recovery actions when available.
@@ -229,7 +225,7 @@ States:
 
 Audit must not show raw OTP, secrets, provider payloads, runtime order/payment detail, or stack traces.
 
-## Lifecycle and DNS Actions
+## Lifecycle Actions
 
 Sensitive actions use explicit dialogs.
 
@@ -237,7 +233,6 @@ Sensitive actions use explicit dialogs.
 | --- | --- | --- |
 | Suspend tenant | Dialog | Reason required; pending disables confirm. |
 | Reactivate tenant | Dialog | Reason required; stale state refresh before confirm. |
-| Mark DNS ready/not ready | Confirmation or inline guarded control | Manual checklist copy; no DNS automation claim. |
 | Retry failed provisioning | Recovery drawer/dialog | Shows safe summary; does not rerun completed starter data. |
 | Update GSM | Settings save with sensitive-change message | Audit expectation visible. |
 
@@ -255,7 +250,7 @@ No layout may depend on viewport-width font scaling. Tenant names, domains, fail
 
 ## Accessibility
 
-- Login, tenant creation, lifecycle dialogs, DNS control, and provisioning retry must work by keyboard.
+- Login, tenant creation, lifecycle dialogs, and provisioning retry must work by keyboard.
 - Drawers and dialogs must trap focus while open and restore focus on close.
 - Status badges require accessible text, not color alone.
 - Destructive/sensitive dialogs must identify the tenant and action consequence.
@@ -298,7 +293,7 @@ This wireframe package is valid when:
 
 - every PlatformApp scenario has a visible path;
 - every state in [ui-states.md](ui-states.md) appears in a surface above;
-- tenant creation shows required fields, idempotent pending/replay behavior, provisioning result, and DNS checklist;
+- tenant creation shows required fields, idempotent pending/replay behavior, provisioning result, and derived tenant host;
 - lifecycle and sensitive profile actions require backend acceptance before success;
 - platform health stays high-level and does not become tenant runtime control;
 - no forbidden current release control appears.
