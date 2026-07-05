@@ -152,13 +152,21 @@ Repository-owned deployment files:
 
 The first VPS setup is manual and must install Docker with the Compose plugin, create the `/opt/iotables` release directory, create a deployment user with least-privilege Docker access, and write the environment-specific `.env` file in the release directory. After that, a push to the mapped branch performs the release.
 
+The deployment user convention is:
+
+```text
+iotables-deploy
+```
+
+Staging and production must use separate Ed25519 SSH key pairs. The private key belongs only in the matching GitHub Environment secret. The public key is installed only on the matching VPS under the `iotables-deploy` user's `authorized_keys`. Do not reuse a human SSH key, root SSH key, or GitHub account key as a deployment key.
+
 Required GitHub Environment secrets:
 
 | Secret | Purpose |
 | --- | --- |
 | `DEPLOY_HOST` | VPS hostname or IP for the selected GitHub environment. |
-| `DEPLOY_USER` | SSH user used by the workflow. |
-| `DEPLOY_SSH_PRIVATE_KEY` | Private key for the deployment user. |
+| `DEPLOY_USER` | SSH user used by the workflow; current convention is `iotables-deploy`. |
+| `DEPLOY_SSH_PRIVATE_KEY` | Private key for the environment-specific deployment user key pair. |
 | `DEPLOY_SSH_PORT` | Optional SSH port; defaults to `22`. |
 | `DEPLOY_HEALTH_URL` | Public smoke URL for the selected GitHub environment, for example `https://iotables.net/health` or `https://tabflow.uk/health`. |
 
