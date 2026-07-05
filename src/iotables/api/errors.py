@@ -23,7 +23,9 @@ class FieldError:
         }
 
 
-@dataclass(frozen=True)
+# Exception instances must stay mutable because async generator dependencies may
+# reassign traceback/context fields while unwinding.
+@dataclass
 class ApiError(Exception):
     code: str
     message: str
