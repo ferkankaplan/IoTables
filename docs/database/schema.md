@@ -1,6 +1,6 @@
 # PostgreSQL Schema
 
-This document defines the v1 physical PostgreSQL schema for IoTables.
+This document defines the current release physical PostgreSQL schema for IoTables.
 
 It is derived from [../data-model.md](../data-model.md) and the owning module documents. It does not replace them. App documents define behavior; module documents define ownership and invariants; this document defines how those decisions are stored.
 
@@ -8,10 +8,10 @@ It is derived from [../data-model.md](../data-model.md) and the owning module do
 
 - Database: PostgreSQL 18.4 target, as recorded in [../stack.md](../stack.md).
 - Application shape: modular monolith.
-- PostgreSQL schema namespace: `public` in v1.
+- PostgreSQL schema namespace: `public` in the current release.
 - Tenant model: shared tables with `tenant_id` on every tenant-owned record.
 - Physical multi-tenant isolation: row-level ownership through `tenant_id`, enforced by foreign keys, service guards, and tests.
-- Separate PostgreSQL schemas per module are out of v1. Module boundaries are enforced by code ownership, migrations, and documented table ownership.
+- Separate PostgreSQL schemas per module are out of the current release. Module boundaries are enforced by code ownership, migrations, and documented table ownership.
 
 ## Type Conventions
 
@@ -20,7 +20,7 @@ It is derived from [../data-model.md](../data-model.md) and the owning module do
 | Primary IDs | `uuid` | Application-generated UUIDs are preferred so tests and domain services do not depend on database-side UUID generation. |
 | Timestamps | `timestamptz` | Store all times as timezone-aware UTC values. |
 | Money | `bigint` minor units | Store TRY kurus or other ISO currency minor units. Do not store money as floating point. |
-| Currency | `char(3)` | ISO 4217 code, `TRY` default in v1. |
+| Currency | `char(3)` | ISO 4217 code, `TRY` default in the current release. |
 | Status/enums | `text` with named `CHECK` constraints | Easier Alembic evolution than PostgreSQL enum types while preserving database enforcement. |
 | Secrets/tokens | `text` hash or encrypted `bytea` | Raw password, OTP, session, QR token, and display credential values are never stored. |
 | Flexible snapshots | `jsonb` | Only for immutable order snapshots, modifier selections, audit metadata, and redacted side-effect payload refs. |
@@ -42,7 +42,7 @@ These are stored as `text` columns with named `CHECK` constraints.
 
 | Value Set | Values |
 | --- | --- |
-| `tenant_sector` | `cafe` in v1 |
+| `tenant_sector` | `cafe` in the current release |
 | `tenant_status` | `provisioning`, `active`, `suspended`, `provisioning_failed` |
 | `starter_application_status` | `pending`, `applied`, `failed`, `recovery_needed` |
 | `tenant_provisioning_idempotency_status` | `processing`, `completed`, `failed` |
@@ -57,8 +57,8 @@ These are stored as `text` columns with named `CHECK` constraints.
 | `idempotency_status` | `processing`, `completed`, `failed` |
 | `table_session_status` | `open`, `closed` |
 | `check_status` | `open`, `closed` |
-| `order_status` | `submitted` in v1 |
-| `order_channel` | `dine_in_qr` in v1 |
+| `order_status` | `submitted` in the current release |
+| `order_channel` | `dine_in_qr` in the current release |
 | `preparation_status` | `pending`, `preparing`, `ready`, `cannot_prepare` |
 | `delivery_status` | `picked_up`, `delivered` |
 | `payment_method` | `cash`, `card`, `transfer` |
@@ -85,7 +85,7 @@ Owned by: Platform / Tenant Registry
 | `subdomain` | `text` | Required, immutable, lowercase unique |
 | `gsm_number` | `text` | Required, editable, audited |
 | `sector` | `text` | Nullable; `tenant_sector` check when present |
-| `capacity` | `integer` | Optional, informational in v1 |
+| `capacity` | `integer` | Optional, informational in the current release |
 | `address` | `text` | Optional |
 | `status` | `text` | `tenant_status` check |
 | `dns_ready` | `boolean` | Manual DNS checklist flag |
@@ -140,7 +140,7 @@ Owned by: Platform / Tenant Registry
 
 Owned by: Platform / Sector Starter Templates
 
-Starter template definitions are code/config artifacts in v1. This table is the durable proof that a template was applied to a tenant.
+Starter template definitions are code/config artifacts in the current release. This table is the durable proof that a template was applied to a tenant.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -159,7 +159,7 @@ Starter template definitions are code/config artifacts in v1. This table is the 
 
 Owned by: Platform / Provisioning
 
-Stores HTTP idempotency reservations and completed replay payloads for `POST /api/v1/platform/tenants`.
+Stores HTTP idempotency reservations and completed replay payloads for `POST /api/platform/tenants`.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -383,7 +383,7 @@ Owned by: Menu Catalog
 | `product_service_id` | `uuid` | FK to `product_services.id` |
 | `name` | `text` | Variant label |
 | `price_minor` | `bigint` | Current price in minor currency unit |
-| `currency_code` | `char(3)` | `TRY` default in v1 |
+| `currency_code` | `char(3)` | `TRY` default in the current release |
 | `display_order` | `integer` | Variant order |
 | `is_default` | `boolean` | At most one default per product |
 | `enabled` | `boolean` | Disabled variants cannot be ordered |
@@ -435,7 +435,7 @@ Owned by: Menu Catalog
 | `modifier_group_id` | `uuid` | FK to `modifier_groups.id` |
 | `name` | `text` | Option label |
 | `price_delta_minor` | `bigint` | Signed price delta |
-| `currency_code` | `char(3)` | `TRY` default in v1 |
+| `currency_code` | `char(3)` | `TRY` default in the current release |
 | `available` | `boolean` | Orderability |
 | `display_order` | `integer` | UI order |
 | `created_at` | `timestamptz` | Creation time |
@@ -483,7 +483,7 @@ Owned by: Ordering / Table Presence
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `table_id` | `uuid` | FK to `venue_tables.id` |
 | `token_hash` | `text` | Unique one-time QR token hash |
-| `expires_at` | `timestamptz` | 60 seconds in v1 |
+| `expires_at` | `timestamptz` | 60 seconds in the current release |
 | `consumed_at` | `timestamptz` | Atomic consumption time |
 | `created_at` | `timestamptz` | Issued time |
 
@@ -501,7 +501,7 @@ Owned by: Customer Ordering
 | `table_session_id` | `uuid` | Nullable FK to `table_sessions.id` |
 | `cookie_token_hash` | `text` | Unique browser session token hash |
 | `presence_valid_until` | `timestamptz` | Fresh QR presence window |
-| `expires_at` | `timestamptz` | 30 minutes in v1 |
+| `expires_at` | `timestamptz` | 30 minutes in the current release |
 | `last_seen_at` | `timestamptz` | Last activity |
 | `created_at` | `timestamptz` | Session creation |
 | `updated_at` | `timestamptz` | Presence/session update |
@@ -635,7 +635,7 @@ Owned by: Table Session and Billing
 | `order_item_id` | `uuid` | Nullable FK to `order_items.id` |
 | `type` | `text` | `price_adjustment_type` check |
 | `amount_minor` | `bigint` | Signed amount |
-| `currency_code` | `char(3)` | `TRY` default in v1 |
+| `currency_code` | `char(3)` | `TRY` default in the current release |
 | `reason` | `text` | Required for correction |
 | `created_by_user_id` | `uuid` | FK to `users.id` |
 | `created_at` | `timestamptz` | Append-only time |
@@ -658,7 +658,7 @@ Owned by: Table Session and Billing
 
 Owned by: Payments
 
-V1 represents `PaymentVoid` as immutable void fields on this table plus a required `cashier_corrections` row. No separate `payment_voids` table is created in v1.
+V1 represents `PaymentVoid` as immutable void fields on this table plus a required `cashier_corrections` row. No separate `payment_voids` table is created in the current release.
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -666,7 +666,7 @@ V1 represents `PaymentVoid` as immutable void fields on this table plus a requir
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `check_id` | `uuid` | FK to `checks.id` |
 | `amount_minor` | `bigint` | Positive payment amount |
-| `currency_code` | `char(3)` | `TRY` default in v1 |
+| `currency_code` | `char(3)` | `TRY` default in the current release |
 | `method` | `text` | `payment_method` check |
 | `status` | `text` | `payment_status` check |
 | `cashier_user_id` | `uuid` | FK to `users.id` |
@@ -835,7 +835,7 @@ Owned by: OTP / Messaging
 | `purpose` | `text` | `otp_purpose` check |
 | `target_gsm` | `text` | Snapshot at challenge creation |
 | `code_hash` | `text` | Non-recoverable OTP hash |
-| `expires_at` | `timestamptz` | 5 minutes in v1 |
+| `expires_at` | `timestamptz` | 5 minutes in the current release |
 | `verified_at` | `timestamptz` | Nullable success time |
 | `created_at` | `timestamptz` | Challenge creation |
 
@@ -848,7 +848,7 @@ Owned by: OTP / Messaging
 | `id` | `uuid` | Primary key |
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `otp_challenge_id` | `uuid` | FK to `otp_challenges.id` |
-| `attempt_no` | `integer` | Monotonic per challenge; v1 range 1-5 |
+| `attempt_no` | `integer` | Monotonic per challenge; current release range 1-5 |
 | `result` | `text` | `otp_attempt_result` check |
 | `created_at` | `timestamptz` | Attempt time |
 
@@ -861,7 +861,7 @@ Owned by: OTP / Messaging
 | `id` | `uuid` | Primary key |
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `otp_challenge_id` | `uuid` | FK to `otp_challenges.id` |
-| `delivery_no` | `integer` | Monotonic per challenge; v1 range 1-3 |
+| `delivery_no` | `integer` | Monotonic per challenge; current release range 1-3 |
 | `provider` | `text` | SMS adapter name |
 | `provider_message_ref` | `text` | Nullable provider reference |
 | `status` | `text` | `message_delivery_status` check; queued/sent/failed lifecycle guarded |
@@ -887,7 +887,7 @@ Owned by: Audit
 | `metadata` | `jsonb` | Safe JSON object metadata, no secrets |
 | `created_at` | `timestamptz` | Append-only event time |
 
-Allowed v1 action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `tenant.dns_ready_changed`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `venue_layout.changed`, `table.disabled`, `station.changed`, `station.disabled`, `menu_catalog.changed`, `availability.changed`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
+Allowed current release action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `tenant.dns_ready_changed`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `venue_layout.changed`, `table.disabled`, `station.changed`, `station.disabled`, `menu_catalog.changed`, `availability.changed`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
 
 ### `outbox_messages`
 
@@ -924,11 +924,11 @@ Owned by: Reliable Side Effects
 | `result` | `text` | `external_effect_result` check with completion lifecycle guard |
 | `result_summary` | `text` | Redacted provider response summary required for non-success results |
 
-## Not Persisted as Tables in V1
+## Not Persisted as Tables in Current Release
 
-| Concept | V1 Storage Decision |
+| Concept | Current Release Storage Decision |
 | --- | --- |
-| `Sector` | Stored as checked `tenants.sector`; sector metadata can live in code/config for v1. |
+| `Sector` | Stored as checked `tenants.sector`; sector metadata can live in code/config for the current release. |
 | `StarterTemplate` | Stored as versioned code/config; durable application proof is `starter_template_applications`. |
 | `TableState` | Query/read model derived from table/session/order/fulfillment/payment tables. |
 | `BillSummary` | Calculated from Check, OrderItem snapshots, corrections, adjustments, and payments. |

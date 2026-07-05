@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for v1.
+Accepted for the current release.
 
 ## Context
 
@@ -26,7 +26,7 @@ Sources:
 
 ## Decision
 
-The six apps are the semantic foundation of IoTables v1.
+The six apps are the semantic foundation of IoTables the current release.
 
 The required derivation direction is:
 

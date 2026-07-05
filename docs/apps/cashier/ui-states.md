@@ -24,12 +24,12 @@
 | User lacks cashier role | Block app access |
 | OTP required/expired | Continue first-login setup; do not open workspace |
 | Payment amount zero/negative | Block submit |
-| Payment exceeds remaining balance | Block/reject in v1 |
+| Payment exceeds remaining balance | Block/reject in the current release |
 | Duplicate payment submit | Disable while pending; backend returns original payment |
 | Check closed | Block payment/correction |
 | Remaining balance above zero | Disable close session |
 | Item void target not `pending` or `cannot_prepare` | Block/reject item void |
-| Any payment exists on Check | Block/reject item void in v1 |
+| Any payment exists on Check | Block/reject item void in the current release |
 | Payment already voided | Show voided state |
 | Reason missing for correction/void | Block submit and focus reason |
 | Stale session state | Refresh panel and require user to retry action |

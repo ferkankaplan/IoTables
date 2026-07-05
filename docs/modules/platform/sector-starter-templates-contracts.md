@@ -13,7 +13,7 @@ Source module: [sector-starter-templates.md](sector-starter-templates.md)
 
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
-| `sector_starter_templates.list_sectors` | PlatformApp | none | Platform Owner only in v1 | Supported sector enum and labels |
+| `sector_starter_templates.list_sectors` | PlatformApp | none | Platform Owner only in the current release | Supported sector enum and labels |
 | `sector_starter_templates.get_template` | PlatformApp, Provisioning | sector/template version | Platform preview or internal provisioning use | Immutable template definition |
 | `sector_starter_templates.get_application_state` | PlatformApp, TenantApp, Provisioning | tenantId | Platform all tenants; TenantApp own tenant only | Starter application status and template identity |
 
@@ -40,7 +40,7 @@ The `cafe.v1` template creates tenant-owned records through owning modules:
 
 | Failure | Meaning |
 | --- | --- |
-| `unsupported_sector` | Selected sector has no active v1 starter template. |
+| `unsupported_sector` | Selected sector has no active current release starter template. |
 | `template_already_applied` | Durable application record is already applied. |
 | `template_version_retired` | Requested template cannot be used for new tenants. |
 | `starter_record_invalid` | Template would create invalid tenant setup data. |

@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted for v1.
+Accepted for the current release.
 
 ## Context
 
-IoTables has six user-facing apps, but those apps are not the same thing as internal modules. The product needs coherent boundaries for tenant provisioning, access control, tenant setup, ordering, fulfillment, settlement, and governance without the deployment and operational cost of separate services in v1.
+IoTables has six user-facing apps, but those apps are not the same thing as internal modules. The product needs coherent boundaries for tenant provisioning, access control, tenant setup, ordering, fulfillment, settlement, and governance without the deployment and operational cost of separate services in the current release.
 
 The current module map already defines IoTables as a modular monolith where apps call context/module interfaces and internal state stays behind the owning boundary.
 
@@ -18,7 +18,7 @@ Sources:
 
 ## Decision
 
-IoTables v1 is a modular monolith.
+IoTables current release is a modular monolith.
 
 Bounded contexts are the primary architecture units:
 
@@ -37,7 +37,7 @@ Internal modules live inside these contexts. They expose explicit commands, quer
 - The repository structure, package boundaries, migrations, tests, and API contracts must follow the bounded context map.
 - A new capability must merge into the owning context instead of creating a parallel top-level module.
 - Cross-context mutation must go through commands or events.
-- Contexts may share a deployment unit and database in v1, but they must not share ownership of aggregates.
+- Contexts may share a deployment unit and database in the current release, but they must not share ownership of aggregates.
 - Future service extraction, if ever needed, must preserve the same public context interfaces.
 
 ## Synchronization Points

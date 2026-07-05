@@ -139,7 +139,7 @@ It does not own station queue execution. Queue mutation belongs to StationStaffA
 `ProductDetailPanel` must:
 
 - block orderable state without one enabled station;
-- block multi-station routing in v1;
+- block multi-station routing in the current release;
 - show disabled-station conflicts;
 - show invalid variant/modifier/price states;
 - keep historical orders safe by disabling instead of hard-deleting when history exists.

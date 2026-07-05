@@ -1,6 +1,6 @@
 # Wireframe Rules
 
-This document defines how v1 wireframe documents should be written for IoTables apps.
+This document defines how current release wireframe documents should be written for IoTables apps.
 
 Wireframes are app-level semantic documents. They describe user workflow, layout responsibility, state, and interaction boundaries. They do not define React implementation details, CSS tokens, or database/API behavior.
 
@@ -24,7 +24,7 @@ Every app `wireframes.md` must include:
 5. Pending/duplicate-submit behavior for mutating actions.
 6. Accessibility notes for focus, keyboard, touch targets, and visible state.
 7. Data visibility boundaries, linked to app `visibility.md`.
-8. Out-of-scope UI that must not appear in v1.
+8. Out-of-scope UI that must not appear in the current release.
 
 ## Page and Overlay Rules
 
@@ -121,4 +121,4 @@ Before an app wireframe is accepted:
 - every mutating action has pending, blocked, stale, and failure states;
 - every surface preserves context unless a durable page is justified;
 - every visible status is allowed by the app visibility document;
-- no v1 out-of-scope control appears.
+- no current release out-of-scope control appears.

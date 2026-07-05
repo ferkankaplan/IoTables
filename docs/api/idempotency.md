@@ -35,7 +35,7 @@ A command becomes header-required only after its module contract and database mo
 
 ## State-Guarded Commands
 
-These commands are protected by domain state checks, locks, unique constraints, and audit/correction rules. They may accept an `Idempotency-Key`, but v1 must not require it until the persistence model explicitly defines storage and replay behavior.
+These commands are protected by domain state checks, locks, unique constraints, and audit/correction rules. They may accept an `Idempotency-Key`, but current release must not require it until the persistence model explicitly defines storage and replay behavior.
 
 | Command | Current Guard |
 | --- | --- |
@@ -78,11 +78,11 @@ Same key + different request:
 | Operation | Minimum Retention |
 | --- | --- |
 | Tenant provisioning | Preserve with tenant/provisioning history. |
-| Order submit | Long enough to cover mobile/browser retries; v1 target at least 24 hours. |
-| Payment record | Long enough to cover cashier/network retries and audit; v1 target at least 7 days. |
+| Order submit | Long enough to cover mobile/browser retries; current release target at least 24 hours. |
+| Payment record | Long enough to cover cashier/network retries and audit; current release target at least 7 days. |
 | Payment void | Preserve with payment audit history. |
 | Cashier correction | Preserve with correction audit history. |
-| Bulk delivery | Long enough to cover service staff retries and same-day operational audit; v1 target at least 24 hours. |
+| Bulk delivery | Long enough to cover service staff retries and same-day operational audit; current release target at least 24 hours. |
 
 Retention can be tightened later only after operational requirements are known.
 

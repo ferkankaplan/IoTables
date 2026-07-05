@@ -510,7 +510,7 @@ export function App() {
         params.set("q", searchText.trim());
       }
       const payload = await apiRequest<TenantListResponse>(
-        `/api/v1/platform/tenants?${params.toString()}`
+        `/api/platform/tenants?${params.toString()}`
       );
       const nextItems = append ? [...tenants, ...payload.items] : payload.items;
       setTenants(nextItems);
@@ -533,7 +533,7 @@ export function App() {
     let active = true;
     async function loadSession() {
       try {
-        const payload = await apiRequest<SessionResponse>("/api/v1/auth/session");
+        const payload = await apiRequest<SessionResponse>("/api/auth/session");
         if (active) {
           setActor(payload.actor);
           setAuthState(payload.actor ? "authenticated" : "anonymous");
@@ -570,7 +570,7 @@ export function App() {
       setDetailState("loading");
       try {
         const payload = await apiRequest<TenantProfile>(
-          `/api/v1/platform/tenants/${selectedTenantId}`
+          `/api/platform/tenants/${selectedTenantId}`
         );
         if (active) {
           setSelectedTenant(payload);
@@ -599,7 +599,7 @@ export function App() {
   }, [tenants]);
 
   async function logout() {
-    await apiRequest("/api/v1/auth/logout", {
+    await apiRequest("/api/auth/logout", {
       headers: {"X-CSRF-Token": crypto.randomUUID()},
       method: "POST"
     });
@@ -874,7 +874,7 @@ function PlatformLoginScreen({
     setState("submitting");
     setError(null);
     try {
-      const result = await apiRequest<LoginResponse>("/api/v1/auth/login", {
+      const result = await apiRequest<LoginResponse>("/api/auth/login", {
         body: JSON.stringify({
           appScope: "platform",
           username: username.trim(),
@@ -963,7 +963,7 @@ function TenantLoginScreen({
     setState("submitting");
     setError(null);
     try {
-      const result = await apiRequest<LoginResponse>("/api/v1/auth/login", {
+      const result = await apiRequest<LoginResponse>("/api/auth/login", {
         body: JSON.stringify({
           appScope,
           username: username.trim(),
@@ -977,7 +977,7 @@ function TenantLoginScreen({
       });
       if (result.status === "first_password_required" && result.setupToken) {
         const beginResult = await apiRequest<FirstPasswordSetupState>(
-          "/api/v1/auth/first-password/begin",
+          "/api/auth/first-password/begin",
           {
             body: JSON.stringify({setupToken: result.setupToken}),
             headers: {"Content-Type": "application/json"},
@@ -1008,7 +1008,7 @@ function TenantLoginScreen({
     setState("submitting");
     setError(null);
     try {
-      const result = await apiRequest<LoginResponse>("/api/v1/auth/first-password/complete", {
+      const result = await apiRequest<LoginResponse>("/api/auth/first-password/complete", {
         body: JSON.stringify(
           setupState?.otpRequired
             ? {
@@ -1123,7 +1123,7 @@ function TenantSignedInScreen({
       }
       setState("loading");
       try {
-        const payload = await apiRequest<TenantProfile>("/api/v1/tenant/profile");
+        const payload = await apiRequest<TenantProfile>("/api/tenant/profile");
         if (active) {
           setTenant(payload);
           setState("ready");
@@ -1255,7 +1255,7 @@ function ServiceStaffSignedInScreen({
       }
       setState("loading");
       try {
-        const payload = await apiRequest<ServiceReadyItemList>("/api/v1/service-staff/ready-items", {
+        const payload = await apiRequest<ServiceReadyItemList>("/api/service-staff/ready-items", {
           headers: tenantHeaders()
         });
         if (active) {
@@ -1280,7 +1280,7 @@ function ServiceStaffSignedInScreen({
   async function loadItems() {
     setError(null);
     try {
-      const payload = await apiRequest<ServiceReadyItemList>("/api/v1/service-staff/ready-items", {
+      const payload = await apiRequest<ServiceReadyItemList>("/api/service-staff/ready-items", {
         headers: tenantHeaders()
       });
       setItems(payload.items);
@@ -1299,7 +1299,7 @@ function ServiceStaffSignedInScreen({
     setActionState("submitting");
     setError(null);
     try {
-      await apiRequest<DeliveryState>(`/api/v1/service-staff/items/${orderItemId}/${action}`, {
+      await apiRequest<DeliveryState>(`/api/service-staff/items/${orderItemId}/${action}`, {
         headers: {
           "X-CSRF-Token": crypto.randomUUID(),
           ...tenantHeaders()
@@ -1327,7 +1327,7 @@ function ServiceStaffSignedInScreen({
     setActionState("submitting");
     setError(null);
     try {
-      await apiRequest<BulkDeliveryResult>("/api/v1/service-staff/items/bulk-deliver", {
+      await apiRequest<BulkDeliveryResult>("/api/service-staff/items/bulk-deliver", {
         body: JSON.stringify({
           tableId,
           orderItemIds: selectedItems.map((item) => item.orderItemId)
@@ -1543,7 +1543,7 @@ function CashierSignedInScreen({
     setState("loading");
     setError(null);
     try {
-      const payload = await apiRequest<CashierVenueBoard>("/api/v1/cashier/venue/board", {
+      const payload = await apiRequest<CashierVenueBoard>("/api/cashier/venue/board", {
         headers: tenantHeaders()
       });
       setBoard(payload);
@@ -1561,13 +1561,13 @@ function CashierSignedInScreen({
     }
     try {
       const [summaryPayload, paymentPayload, orderPayload] = await Promise.all([
-        apiRequest<BillSummary>(`/api/v1/cashier/table-sessions/${table.tableSessionId}/bill-summary`, {
+        apiRequest<BillSummary>(`/api/cashier/table-sessions/${table.tableSessionId}/bill-summary`, {
           headers: tenantHeaders()
         }),
-        apiRequest<PaymentList>(`/api/v1/cashier/checks/${table.checkId}/payments`, {
+        apiRequest<PaymentList>(`/api/cashier/checks/${table.checkId}/payments`, {
           headers: tenantHeaders()
         }),
-        apiRequest<CashierOrderList>(`/api/v1/cashier/table-sessions/${table.tableSessionId}/orders`, {
+        apiRequest<CashierOrderList>(`/api/cashier/table-sessions/${table.tableSessionId}/orders`, {
           headers: tenantHeaders()
         })
       ]);
@@ -1591,7 +1591,7 @@ function CashierSignedInScreen({
     setError(null);
     try {
       const result = await apiRequest<PaymentResult>(
-        `/api/v1/cashier/checks/${selected.checkId}/payments`,
+        `/api/cashier/checks/${selected.checkId}/payments`,
         {
           body: JSON.stringify({
             amountMinor,
@@ -1634,7 +1634,7 @@ function CashierSignedInScreen({
     setActionState("submitting");
     setError(null);
     try {
-      await apiRequest(`/api/v1/cashier/table-sessions/${selected.tableSessionId}/close`, {
+      await apiRequest(`/api/cashier/table-sessions/${selected.tableSessionId}/close`, {
         body: JSON.stringify({reason: null}),
         headers: {
           "Content-Type": "application/json",
@@ -1663,7 +1663,7 @@ function CashierSignedInScreen({
     setError(null);
     try {
       const result = await apiRequest<PaymentVoidResult>(
-        `/api/v1/cashier/payments/${payment.paymentId}/void`,
+        `/api/cashier/payments/${payment.paymentId}/void`,
         {
           body: JSON.stringify({reason: reason.trim()}),
           headers: {
@@ -2071,7 +2071,7 @@ function TenantDetailPanel({
     setLifecycleState("loading");
     try {
       const payload = await apiRequest<TenantLifecycleEventListResponse>(
-        `/api/v1/platform/tenants/${tenantId}/lifecycle-events?limit=5`
+        `/api/platform/tenants/${tenantId}/lifecycle-events?limit=5`
       );
       setLifecycleEvents(payload.items);
       setLifecycleState("ready");
@@ -2086,7 +2086,7 @@ function TenantDetailPanel({
     try {
       const params = new URLSearchParams({tenantId, limit: "5"});
       const payload = await apiRequest<AuditEventListResponse>(
-        `/api/v1/platform/audit-events?${params.toString()}`
+        `/api/platform/audit-events?${params.toString()}`
       );
       setAuditEvents(payload.items);
       setAuditState("ready");
@@ -2106,9 +2106,9 @@ function TenantDetailPanel({
     setProvisioningPanelState("loading");
     try {
       const [statePayload, summaryPayload] = await Promise.all([
-        apiRequest<ProvisioningState>(`/api/v1/platform/tenants/${tenantId}/provisioning`),
+        apiRequest<ProvisioningState>(`/api/platform/tenants/${tenantId}/provisioning`),
         apiRequest<ProvisioningRecoverySummary>(
-          `/api/v1/platform/tenants/${tenantId}/provisioning/recovery-summary`
+          `/api/platform/tenants/${tenantId}/provisioning/recovery-summary`
         )
       ]);
       setProvisioningState(statePayload);
@@ -2134,7 +2134,7 @@ function TenantDetailPanel({
     setActionError(null);
     try {
       await apiRequest<ProvisioningState>(
-        `/api/v1/platform/tenants/${tenant.tenantId}/provisioning/retry`,
+        `/api/platform/tenants/${tenant.tenantId}/provisioning/retry`,
         {
           body: JSON.stringify({recoveryNote: recoveryNote.trim() || null}),
           headers: {
@@ -2145,7 +2145,7 @@ function TenantDetailPanel({
         }
       );
       const updated = await apiRequest<TenantProfile>(
-        `/api/v1/platform/tenants/${tenant.tenantId}`
+        `/api/platform/tenants/${tenant.tenantId}`
       );
       onTenantChanged(updated);
       refreshTenantEvidence(updated.tenantId);
@@ -2166,7 +2166,7 @@ function TenantDetailPanel({
     setActionError(null);
     try {
       const updated = await apiRequest<TenantProfile>(
-        `/api/v1/platform/tenants/${tenant.tenantId}/profile`,
+        `/api/platform/tenants/${tenant.tenantId}/profile`,
         {
           body: JSON.stringify({
             address: form.address.trim() || null,
@@ -2199,7 +2199,7 @@ function TenantDetailPanel({
     setActionError(null);
     try {
       const updated = await apiRequest<TenantProfile>(
-        `/api/v1/platform/tenants/${tenant.tenantId}/dns-ready`,
+        `/api/platform/tenants/${tenant.tenantId}/dns-ready`,
         {
           body: JSON.stringify({dnsReady}),
           headers: {
@@ -2234,7 +2234,7 @@ function TenantDetailPanel({
     setActionError(null);
     try {
       const updated = await apiRequest<TenantProfile>(
-        `/api/v1/platform/tenants/${tenant.tenantId}/status`,
+        `/api/platform/tenants/${tenant.tenantId}/status`,
         {
           body: JSON.stringify({nextStatus, reason: reason.trim()}),
           headers: {
@@ -2484,7 +2484,7 @@ function HallManagementWorkspace() {
   async function loadBoard() {
     setState("loading");
     try {
-      const payload = await apiRequest<HallTableBoard>("/api/v1/tenant-setup/venue/board");
+      const payload = await apiRequest<HallTableBoard>("/api/tenant-setup/venue/board");
       setBoard(payload);
       setSelectedHallId((current) =>
         payload.halls.some((hall) => hall.hallId === current)
@@ -2526,7 +2526,7 @@ function HallManagementWorkspace() {
     setActionState("submitting");
     setActionError(null);
     try {
-      const created = await apiRequest<HallWithTables>("/api/v1/tenant-setup/halls", {
+      const created = await apiRequest<HallWithTables>("/api/tenant-setup/halls", {
         body: JSON.stringify({
           name: newHallName.trim(),
           displayOrder: Number(newHallOrder)
@@ -2557,7 +2557,7 @@ function HallManagementWorkspace() {
     setActionError(null);
     try {
       const created = await apiRequest<VenueTable>(
-        `/api/v1/tenant-setup/halls/${selectedHall.hallId}/tables`,
+        `/api/tenant-setup/halls/${selectedHall.hallId}/tables`,
         {
           body: JSON.stringify({
             name: newTableName.trim(),
@@ -2589,7 +2589,7 @@ function HallManagementWorkspace() {
     setActionState("submitting");
     setActionError(null);
     try {
-      await apiRequest<VenueTable>(`/api/v1/tenant-setup/tables/${selectedTable.tableId}/disable`, {
+      await apiRequest<VenueTable>(`/api/tenant-setup/tables/${selectedTable.tableId}/disable`, {
         body: JSON.stringify({reason: disableReason.trim()}),
         headers: {
           "Content-Type": "application/json",
@@ -2804,7 +2804,7 @@ function StationManagementWorkspace() {
     setState("loading");
     try {
       const payload = await apiRequest<StationList>(
-        "/api/v1/tenant-setup/stations?include_disabled=true"
+        "/api/tenant-setup/stations?include_disabled=true"
       );
       setStations(payload.items);
       const selectedCandidate =
@@ -2836,7 +2836,7 @@ function StationManagementWorkspace() {
     setActionState("submitting");
     setActionError(null);
     try {
-      const created = await apiRequest<Station>("/api/v1/tenant-setup/stations", {
+      const created = await apiRequest<Station>("/api/tenant-setup/stations", {
         body: JSON.stringify({
           name: newStationName.trim(),
           displayOrder: Number(newStationOrder)
@@ -2864,7 +2864,7 @@ function StationManagementWorkspace() {
     setActionState("submitting");
     setActionError(null);
     try {
-      await apiRequest<Station>(`/api/v1/tenant-setup/stations/${selectedStation.stationId}/disable`, {
+      await apiRequest<Station>(`/api/tenant-setup/stations/${selectedStation.stationId}/disable`, {
         body: JSON.stringify({reason: disableReason.trim()}),
         headers: {
           "Content-Type": "application/json",
@@ -3025,8 +3025,8 @@ function MenuManagementWorkspace() {
     setState("loading");
     try {
       const [menuPayload, stationPayload] = await Promise.all([
-        apiRequest<MenuSetupCatalog>("/api/v1/tenant-setup/menu?include_disabled=true"),
-        apiRequest<StationList>("/api/v1/tenant-setup/stations?include_disabled=true")
+        apiRequest<MenuSetupCatalog>("/api/tenant-setup/menu?include_disabled=true"),
+        apiRequest<StationList>("/api/tenant-setup/stations?include_disabled=true")
       ]);
       setCatalog(menuPayload);
       setStations(stationPayload.items);
@@ -3070,7 +3070,7 @@ function MenuManagementWorkspace() {
     setActionState("submitting");
     setActionError(null);
     try {
-      const created = await apiRequest<MenuCategory>("/api/v1/tenant-setup/menu/categories", {
+      const created = await apiRequest<MenuCategory>("/api/tenant-setup/menu/categories", {
         body: JSON.stringify({
           name: newCategoryName.trim(),
           displayOrder: Number(newCategoryOrder)
@@ -3106,7 +3106,7 @@ function MenuManagementWorkspace() {
     setActionState("submitting");
     setActionError(null);
     try {
-      const created = await apiRequest<ProductService>("/api/v1/tenant-setup/menu/products", {
+      const created = await apiRequest<ProductService>("/api/tenant-setup/menu/products", {
         body: JSON.stringify({
           categoryId: selectedCategory.categoryId,
           stationId: productStationId,
@@ -3143,7 +3143,7 @@ function MenuManagementWorkspace() {
     setActionError(null);
     try {
       await apiRequest<MenuCategory>(
-        `/api/v1/tenant-setup/menu/categories/${selectedCategory.categoryId}/disable`,
+        `/api/tenant-setup/menu/categories/${selectedCategory.categoryId}/disable`,
         {
           body: JSON.stringify({reason: "tenant_admin_action"}),
           headers: {
@@ -3169,7 +3169,7 @@ function MenuManagementWorkspace() {
     setActionError(null);
     try {
       await apiRequest<ProductService>(
-        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/disable`,
+        `/api/tenant-setup/menu/products/${selectedProduct.productId}/disable`,
         {
           body: JSON.stringify({reason: "tenant_admin_action"}),
           headers: {
@@ -3201,7 +3201,7 @@ function MenuManagementWorkspace() {
     setActionError(null);
     try {
       await apiRequest<ProductVariant>(
-        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/variants`,
+        `/api/tenant-setup/menu/products/${selectedProduct.productId}/variants`,
         {
           body: JSON.stringify({
             name: detailVariantName.trim(),
@@ -3240,7 +3240,7 @@ function MenuManagementWorkspace() {
     setActionError(null);
     try {
       await apiRequest<ModifierGroup[]>(
-        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/modifiers`,
+        `/api/tenant-setup/menu/products/${selectedProduct.productId}/modifiers`,
         {
           body: JSON.stringify({
             groups: [
@@ -3285,7 +3285,7 @@ function MenuManagementWorkspace() {
     setActionError(null);
     try {
       await apiRequest<AvailabilityOverride>(
-        `/api/v1/tenant-setup/menu/products/${selectedProduct.productId}/availability`,
+        `/api/tenant-setup/menu/products/${selectedProduct.productId}/availability`,
         {
           body: JSON.stringify({
             state: "unavailable",
@@ -3624,7 +3624,7 @@ function CustomerMenuApp() {
     setState("loading");
     setError(null);
     try {
-      const payload = await apiRequest<CustomerMenu>("/api/v1/customer/menu", {
+      const payload = await apiRequest<CustomerMenu>("/api/customer/menu", {
         headers: tenantHeaders()
       });
       setMenu(payload);
@@ -3655,7 +3655,7 @@ function CustomerMenuApp() {
     setPresenceState("checking");
     try {
       const payload = await apiRequest<PresenceRedeemResult>(
-        "/api/v1/customer/table-presence/redeem",
+        "/api/customer/table-presence/redeem",
         {
           body: JSON.stringify({qrToken}),
           headers: {
@@ -3681,7 +3681,7 @@ function CustomerMenuApp() {
   async function loadPresenceState() {
     setPresenceState("checking");
     try {
-      const payload = await apiRequest<PresenceState>("/api/v1/customer/table-presence", {
+      const payload = await apiRequest<PresenceState>("/api/customer/table-presence", {
         headers: tenantHeaders()
       });
       setPresence(payload);
@@ -3694,7 +3694,7 @@ function CustomerMenuApp() {
 
   async function loadCart() {
     try {
-      const payload = await apiRequest<CustomerCart>("/api/v1/customer/cart", {
+      const payload = await apiRequest<CustomerCart>("/api/customer/cart", {
         headers: tenantHeaders()
       });
       setCart(payload);
@@ -3710,7 +3710,7 @@ function CustomerMenuApp() {
     }
     setCartActionState("submitting");
     try {
-      const payload = await apiRequest<CustomerCart>("/api/v1/customer/cart/items", {
+      const payload = await apiRequest<CustomerCart>("/api/customer/cart/items", {
         body: JSON.stringify({
           clientCartItemId: `${selectedProduct.productId}:${variant.variantId}`,
           productId: selectedProduct.productId,
@@ -3739,7 +3739,7 @@ function CustomerMenuApp() {
     }
     setSubmitState("submitting");
     try {
-      await apiRequest("/api/v1/customer/orders", {
+      await apiRequest("/api/customer/orders", {
         body: JSON.stringify({
           cartVersion: cart.version,
           cartItemIds: cart.items.map((item) => item.clientCartItemId)
@@ -3961,7 +3961,7 @@ function CreateTenantDrawer({
     setState("submitting");
     setError(null);
     try {
-      const payload = await apiRequest<ProvisioningResult>("/api/v1/platform/tenants", {
+      const payload = await apiRequest<ProvisioningResult>("/api/platform/tenants", {
         body: JSON.stringify({
           name: form.name.trim(),
           subdomain: form.subdomain.trim(),

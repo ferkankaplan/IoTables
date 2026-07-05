@@ -1,6 +1,6 @@
 # Apps
 
-This folder is the product-semantic source for IoTables v1.
+This folder is the product-semantic source for IoTables the current release.
 
 Each app has its own folder. Shared cross-app rules live under `_shared` to avoid duplicated matrices and global decisions.
 
@@ -25,7 +25,7 @@ Each app has its own folder. Shared cross-app rules live under `_shared` to avoi
 | [_shared/branch-coverage-checklist.md](_shared/branch-coverage-checklist.md) | Required branch coverage before API contracts |
 | [_shared/scenario-format.md](_shared/scenario-format.md) | Format and scope rule for app scenarios |
 | [_shared/cross-app-state-visibility.md](_shared/cross-app-state-visibility.md) | Full cross-app state visibility matrix |
-| [_shared/v1-out-of-scope.md](_shared/v1-out-of-scope.md) | Global out-of-scope scenario requests |
+| [_shared/current-release-out-of-scope.md](_shared/current-release-out-of-scope.md) | Global out-of-scope scenario requests |
 | [_shared/copy-style.md](_shared/copy-style.md) | Shared app copy rules and user-facing wording patterns |
 | [_shared/accessibility-responsive.md](_shared/accessibility-responsive.md) | Shared accessibility, responsive, focus, and touch rules |
 | [_shared/component-model.md](_shared/component-model.md) | Shared product-level UI component responsibilities |

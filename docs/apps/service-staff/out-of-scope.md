@@ -1,6 +1,6 @@
 # ServiceStaffApp Out of Scope
 
-This document lists behaviors this app must not implement in v1.
+This document lists behaviors this app must not implement in the current release.
 
 ## Not Authorized
 - It does not create or suspend tenants.
@@ -12,4 +12,4 @@ This document lists behaviors this app must not implement in v1.
 - It does not change item price snapshots.
 - It does not rewrite station preparation state except through an explicit correction workflow.
 
-See also: [../_shared/v1-out-of-scope.md](../_shared/v1-out-of-scope.md).
+See also: [../_shared/current-release-out-of-scope.md](../_shared/current-release-out-of-scope.md).

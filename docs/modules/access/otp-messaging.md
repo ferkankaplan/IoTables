@@ -44,12 +44,12 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 - OTPs are short-lived.
 - OTP values must be stored hashed or otherwise non-recoverable.
 - OTP verification is required for tenant admin first password setup.
-- OTP verification is required for cashier first password setup and is sent to tenant GSM in v1.
-- Station and service staff do not require OTP in v1.
+- OTP verification is required for cashier first password setup and is sent to tenant GSM in the current release.
+- Station and service staff do not require OTP in the current release.
 - OTP retries must be rate-limited.
-- V1 OTP lifetime is 5 minutes.
-- V1 allows at most 5 verification attempts per tenant/challenge.
-- V1 allows at most 3 send attempts per tenant/challenge with cooldown between sends.
+- Current release OTP lifetime is 5 minutes.
+- The current release allows at most 5 verification attempts per tenant/challenge.
+- The current release allows at most 3 send attempts per tenant/challenge with cooldown between sends.
 - Concrete SMS provider selection is an adapter/configuration decision, not an app/module contract. The module depends on a provider interface and records delivery attempts regardless of provider.
 
 ## Operational Safety
@@ -64,9 +64,9 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
-| OtpChallenge | created -> sent -> verified / expired / locked | tenant, user, purpose, targetGsm, codeHash, expiresAt, verifiedAt | Code stored hashed/non-recoverable; 5 minute lifetime in v1; verification idempotent after success; existing challenge target must not silently change if tenant GSM changes | Retain safe challenge metadata for audit/rate-limit review; never retain plaintext code |
-| OtpAttempt | recorded per verification attempt | tenant, challenge, attemptNo, result, createdAt | At most 5 verification attempts per tenant/challenge in v1; attempt numbers unique per tenant/challenge | Append-only security record |
-| MessageDelivery | queued -> sent / failed | tenant, challenge, deliveryNo, provider, providerMessageRef, status, redacted errorSummary | At most 3 send attempts per tenant/challenge in v1; provider response must not store OTP code/secrets/raw sensitive payload | Preserve attempts for troubleshooting and abuse review according to retention policy |
+| OtpChallenge | created -> sent -> verified / expired / locked | tenant, user, purpose, targetGsm, codeHash, expiresAt, verifiedAt | Code stored hashed/non-recoverable; 5 minute lifetime in the current release; verification idempotent after success; existing challenge target must not silently change if tenant GSM changes | Retain safe challenge metadata for audit/rate-limit review; never retain plaintext code |
+| OtpAttempt | recorded per verification attempt | tenant, challenge, attemptNo, result, createdAt | At most 5 verification attempts per tenant/challenge in the current release; attempt numbers unique per tenant/challenge | Append-only security record |
+| MessageDelivery | queued -> sent / failed | tenant, challenge, deliveryNo, provider, providerMessageRef, status, redacted errorSummary | At most 3 send attempts per tenant/challenge in the current release; provider response must not store OTP code/secrets/raw sensitive payload | Preserve attempts for troubleshooting and abuse review according to retention policy |
 
 ## App Surfaces
 

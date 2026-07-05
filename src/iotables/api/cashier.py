@@ -296,7 +296,7 @@ def payment_request_hash(
     normalized_payload = {
         "actorUserId": str(actor.user_id),
         "tenantId": str(actor.tenant_id),
-        "route": "POST /api/v1/cashier/checks/{checkId}/payments",
+        "route": "POST /api/cashier/checks/{checkId}/payments",
         "checkId": str(check_id),
         "amountMinor": payload.amount_minor,
         "currency": payload.currency,
@@ -316,7 +316,7 @@ def payment_void_request_hash(
     normalized_payload = {
         "actorUserId": str(actor.user_id),
         "tenantId": str(actor.tenant_id),
-        "route": "POST /api/v1/cashier/payments/{paymentId}/void",
+        "route": "POST /api/cashier/payments/{paymentId}/void",
         "paymentId": str(payment_id),
         "reason": payload.reason.strip(),
     }

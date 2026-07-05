@@ -47,7 +47,7 @@ Required states:
 | No station role | Block app access. |
 | Tenant unavailable/suspended | Block station access. |
 
-Station staff first-password change does not require OTP in v1.
+Station staff first-password change does not require OTP in the current release.
 
 ## Station Selector
 
@@ -209,9 +209,9 @@ Never show:
 - raw internal IDs as authority;
 - stack traces or provider payloads.
 
-## V1 Out-of-Scope UI
+## Current Release Out-of-Scope UI
 
-The following UI must not appear in StationStaffApp v1:
+The following UI must not appear in StationStaffApp the current release:
 
 - create/edit halls, tables, stations, products, prices, categories, staff, or tenant settings;
 - create customer order;
@@ -232,4 +232,4 @@ This wireframe package is valid when:
 - authorized station scope is visible but not trusted to frontend state;
 - all live transitions have pending, stale, unauthorized, duplicate-safe, and failure behavior;
 - `cannot_prepare` requires a reason and stays operational, not financial;
-- no forbidden v1 control appears.
+- no forbidden current release control appears.

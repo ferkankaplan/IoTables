@@ -60,4 +60,4 @@
 
 - Customer copy should avoid security jargon such as token, idempotency, hash, credential, or session internals.
 - Preferred concepts: "Scan the current QR", "This item is no longer available", "Review your cart", "Order received".
-- Do not offer customer payment, cancellation, discount, refund, or close-session actions in v1.
+- Do not offer customer payment, cancellation, discount, refund, or close-session actions in the current release.

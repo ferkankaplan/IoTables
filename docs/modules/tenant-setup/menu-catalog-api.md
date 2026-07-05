@@ -11,18 +11,18 @@ Customer prices are display estimates. Order submission always revalidates and p
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/customer/menu` | CustomerApp | `menu_catalog.get_customer_menu` | Customer session optional; tenant active | Host-derived tenant | `CustomerMenu` | `tenant_unavailable` |
-| `GET` | `/api/v1/tenant-setup/menu` | TenantApp | `menu_catalog.list_menu_setup` | Tenant Admin session | Query: `includeDisabled?` | `MenuSetupCatalog` | `not_authorized` |
-| `GET` | `/api/v1/tenant-setup/menu/products/{productId}` | TenantApp | `menu_catalog.get_product_service` | Tenant Admin session | Path: `productId` | `ProductService` | `not_found_or_hidden` |
-| `POST` | `/api/v1/tenant-setup/menu/categories` | TenantApp | `menu_catalog.create_category` | Tenant Admin session + CSRF | Body: `CategoryWriteRequest` | `Category` | `duplicate_category`, `validation_failed` |
-| `PATCH` | `/api/v1/tenant-setup/menu/categories/{categoryId}` | TenantApp | `menu_catalog.update_category` | Tenant Admin session + CSRF | Body: editable category fields | `Category` | `not_found_or_hidden`, `validation_failed` |
-| `POST` | `/api/v1/tenant-setup/menu/categories/{categoryId}/disable` | TenantApp | `menu_catalog.disable_category` | Tenant Admin session + CSRF | Body: `reason` | `Category` | `reason_required` |
-| `POST` | `/api/v1/tenant-setup/menu/products` | TenantApp | `menu_catalog.create_product_service` | Tenant Admin session + CSRF | Body: `ProductWriteRequest` | `ProductService` | `station_unavailable`, `validation_failed` |
-| `PATCH` | `/api/v1/tenant-setup/menu/products/{productId}` | TenantApp | `menu_catalog.update_product_service` | Tenant Admin session + CSRF | Body: editable product fields | `ProductService` | `station_unavailable`, `validation_failed` |
-| `POST` | `/api/v1/tenant-setup/menu/products/{productId}/disable` | TenantApp | `menu_catalog.disable_product_service` | Tenant Admin session + CSRF | Body: `reason` | `ProductService` | `reason_required` |
-| `POST` | `/api/v1/tenant-setup/menu/products/{productId}/variants` | TenantApp | `menu_catalog.manage_variant` | Tenant Admin session + CSRF | Body: `VariantWriteRequest` | `ProductVariant` | `validation_failed` |
-| `POST` | `/api/v1/tenant-setup/menu/products/{productId}/modifiers` | TenantApp | `menu_catalog.manage_modifiers` | Tenant Admin session + CSRF | Body: `ModifierConfigRequest` | `ModifierConfig` | `validation_failed` |
-| `POST` | `/api/v1/tenant-setup/menu/products/{productId}/availability` | TenantApp | `menu_catalog.set_availability` | Tenant Admin session + CSRF | Body: `AvailabilityRequest` | `AvailabilityOverride` | `validation_failed` |
+| `GET` | `/api/customer/menu` | CustomerApp | `menu_catalog.get_customer_menu` | Customer session optional; tenant active | Host-derived tenant | `CustomerMenu` | `tenant_unavailable` |
+| `GET` | `/api/tenant-setup/menu` | TenantApp | `menu_catalog.list_menu_setup` | Tenant Admin session | Query: `includeDisabled?` | `MenuSetupCatalog` | `not_authorized` |
+| `GET` | `/api/tenant-setup/menu/products/{productId}` | TenantApp | `menu_catalog.get_product_service` | Tenant Admin session | Path: `productId` | `ProductService` | `not_found_or_hidden` |
+| `POST` | `/api/tenant-setup/menu/categories` | TenantApp | `menu_catalog.create_category` | Tenant Admin session + CSRF | Body: `CategoryWriteRequest` | `Category` | `duplicate_category`, `validation_failed` |
+| `PATCH` | `/api/tenant-setup/menu/categories/{categoryId}` | TenantApp | `menu_catalog.update_category` | Tenant Admin session + CSRF | Body: editable category fields | `Category` | `not_found_or_hidden`, `validation_failed` |
+| `POST` | `/api/tenant-setup/menu/categories/{categoryId}/disable` | TenantApp | `menu_catalog.disable_category` | Tenant Admin session + CSRF | Body: `reason` | `Category` | `reason_required` |
+| `POST` | `/api/tenant-setup/menu/products` | TenantApp | `menu_catalog.create_product_service` | Tenant Admin session + CSRF | Body: `ProductWriteRequest` | `ProductService` | `station_unavailable`, `validation_failed` |
+| `PATCH` | `/api/tenant-setup/menu/products/{productId}` | TenantApp | `menu_catalog.update_product_service` | Tenant Admin session + CSRF | Body: editable product fields | `ProductService` | `station_unavailable`, `validation_failed` |
+| `POST` | `/api/tenant-setup/menu/products/{productId}/disable` | TenantApp | `menu_catalog.disable_product_service` | Tenant Admin session + CSRF | Body: `reason` | `ProductService` | `reason_required` |
+| `POST` | `/api/tenant-setup/menu/products/{productId}/variants` | TenantApp | `menu_catalog.manage_variant` | Tenant Admin session + CSRF | Body: `VariantWriteRequest` | `ProductVariant` | `validation_failed` |
+| `POST` | `/api/tenant-setup/menu/products/{productId}/modifiers` | TenantApp | `menu_catalog.manage_modifiers` | Tenant Admin session + CSRF | Body: `ModifierConfigRequest` | `ModifierConfig` | `validation_failed` |
+| `POST` | `/api/tenant-setup/menu/products/{productId}/availability` | TenantApp | `menu_catalog.set_availability` | Tenant Admin session + CSRF | Body: `AvailabilityRequest` | `AvailabilityOverride` | `validation_failed` |
 
 ## Internal-Only Contracts
 

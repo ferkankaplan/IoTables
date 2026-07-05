@@ -252,9 +252,9 @@ def test_cashier_board_and_bill_summary_use_cashier_scope() -> None:
     client = TestClient(app)
     client.cookies.set("iotables_session", "cashier-token")
 
-    board = client.get("/api/v1/cashier/venue/board")
-    active = client.get(f"/api/v1/cashier/tables/{TABLE_ID}/active-session")
-    summary = client.get(f"/api/v1/cashier/table-sessions/{TABLE_SESSION_ID}/bill-summary")
+    board = client.get("/api/cashier/venue/board")
+    active = client.get(f"/api/cashier/tables/{TABLE_ID}/active-session")
+    summary = client.get(f"/api/cashier/table-sessions/{TABLE_SESSION_ID}/bill-summary")
 
     assert board.status_code == 200
     assert board.json()["tables"][0]["remainingMinor"] == 600
@@ -272,7 +272,7 @@ def test_cashier_table_session_orders_use_ordering_contract() -> None:
     client = TestClient(app)
     client.cookies.set("iotables_session", "cashier-token")
 
-    response = client.get(f"/api/v1/cashier/table-sessions/{TABLE_SESSION_ID}/orders")
+    response = client.get(f"/api/cashier/table-sessions/{TABLE_SESSION_ID}/orders")
 
     assert response.status_code == 200
     assert response.json()["items"][0]["items"][0]["name"] == "Americano"
@@ -290,17 +290,17 @@ def test_cashier_record_payment_requires_csrf_and_idempotency_key() -> None:
     payload = {"amountMinor": 600, "currency": "TRY", "method": "cash"}
 
     missing_csrf = client.post(
-        f"/api/v1/cashier/checks/{CHECK_ID}/payments",
+        f"/api/cashier/checks/{CHECK_ID}/payments",
         headers={"Idempotency-Key": "pay-1"},
         json=payload,
     )
     missing_key = client.post(
-        f"/api/v1/cashier/checks/{CHECK_ID}/payments",
+        f"/api/cashier/checks/{CHECK_ID}/payments",
         headers={"X-CSRF-Token": "csrf"},
         json=payload,
     )
     paid = client.post(
-        f"/api/v1/cashier/checks/{CHECK_ID}/payments",
+        f"/api/cashier/checks/{CHECK_ID}/payments",
         headers={"X-CSRF-Token": "csrf", "Idempotency-Key": "pay-1"},
         json=payload,
     )
@@ -323,9 +323,9 @@ def test_cashier_close_session_requires_csrf_and_binds_actor() -> None:
     client = TestClient(app)
     client.cookies.set("iotables_session", "cashier-token")
 
-    missing_csrf = client.post(f"/api/v1/cashier/table-sessions/{TABLE_SESSION_ID}/close")
+    missing_csrf = client.post(f"/api/cashier/table-sessions/{TABLE_SESSION_ID}/close")
     closed = client.post(
-        f"/api/v1/cashier/table-sessions/{TABLE_SESSION_ID}/close",
+        f"/api/cashier/table-sessions/{TABLE_SESSION_ID}/close",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "ödendi"},
     )
@@ -347,17 +347,17 @@ def test_cashier_void_payment_requires_csrf_idempotency_and_reason() -> None:
     client.cookies.set("iotables_session", "cashier-token")
 
     missing_csrf = client.post(
-        f"/api/v1/cashier/payments/{PAYMENT_ID}/void",
+        f"/api/cashier/payments/{PAYMENT_ID}/void",
         headers={"Idempotency-Key": "void-1"},
         json={"reason": "hatalı ödeme"},
     )
     missing_key = client.post(
-        f"/api/v1/cashier/payments/{PAYMENT_ID}/void",
+        f"/api/cashier/payments/{PAYMENT_ID}/void",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "hatalı ödeme"},
     )
     voided = client.post(
-        f"/api/v1/cashier/payments/{PAYMENT_ID}/void",
+        f"/api/cashier/payments/{PAYMENT_ID}/void",
         headers={"X-CSRF-Token": "csrf", "Idempotency-Key": "void-1"},
         json={"reason": "hatalı ödeme"},
     )

@@ -4,7 +4,7 @@ This document defines success response shape, common headers, and primitive valu
 
 ## Envelope Decision
 
-V1 does not use a universal success envelope.
+The current release does not use a universal success envelope.
 
 Rules:
 

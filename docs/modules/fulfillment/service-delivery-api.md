@@ -9,13 +9,13 @@ Service Delivery owns picked-up and delivered states after preparation readiness
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/service-staff/ready-items` | ServiceStaffApp | `service_delivery.list_ready_items` | ServiceStaff session | Query: `hallId?`, `status?`, `cursor`, `limit` | `ServiceReadyItemList` | `service_tracking_disabled`, `outside_hall_scope` |
-| `GET` | `/api/v1/service-staff/recent-deliveries` | ServiceStaffApp | `service_delivery.list_recent_deliveries` | ServiceStaff session | Query: `hallId?`, `cursor`, `limit` | `ServiceRecentDeliveryList` | `service_tracking_disabled`, `outside_hall_scope` |
-| `GET` | `/api/v1/service-staff/workload` | ServiceStaffApp | `service_delivery.get_service_workload` | ServiceStaff session | Query: `hallId?` | `ServiceWorkload` | `service_tracking_disabled`, `outside_hall_scope` |
-| `POST` | `/api/v1/service-staff/items/{orderItemId}/pick-up` | ServiceStaffApp | `service_delivery.mark_picked_up` | ServiceStaff session + CSRF | Path: `orderItemId` | `DeliveryState` | `not_ready_for_delivery`, `outside_hall_scope`, `invalid_delivery_transition` |
-| `POST` | `/api/v1/service-staff/items/{orderItemId}/deliver` | ServiceStaffApp | `service_delivery.mark_delivered` | ServiceStaff session + CSRF | Path: `orderItemId` | `DeliveryState` | `not_ready_for_delivery`, `outside_hall_scope`, `invalid_delivery_transition` |
-| `POST` | `/api/v1/service-staff/items/bulk-deliver` | ServiceStaffApp | `service_delivery.bulk_mark_delivered` | ServiceStaff session + CSRF + `Idempotency-Key` | Body: `BulkDeliverRequest` | `BulkDeliveryResult` | `bulk_mixed_table`, `bulk_item_invalid`, `idempotency_conflict`, `service_tracking_disabled` |
-| `GET` | `/api/v1/cashier/order-items/{orderItemId}/delivery` | CashierApp | `service_delivery.read_delivery_state` | Cashier session | Path: `orderItemId` | `DeliveryReadState` | `missing_role`, `not_found_or_hidden` |
+| `GET` | `/api/service-staff/ready-items` | ServiceStaffApp | `service_delivery.list_ready_items` | ServiceStaff session | Query: `hallId?`, `status?`, `cursor`, `limit` | `ServiceReadyItemList` | `service_tracking_disabled`, `outside_hall_scope` |
+| `GET` | `/api/service-staff/recent-deliveries` | ServiceStaffApp | `service_delivery.list_recent_deliveries` | ServiceStaff session | Query: `hallId?`, `cursor`, `limit` | `ServiceRecentDeliveryList` | `service_tracking_disabled`, `outside_hall_scope` |
+| `GET` | `/api/service-staff/workload` | ServiceStaffApp | `service_delivery.get_service_workload` | ServiceStaff session | Query: `hallId?` | `ServiceWorkload` | `service_tracking_disabled`, `outside_hall_scope` |
+| `POST` | `/api/service-staff/items/{orderItemId}/pick-up` | ServiceStaffApp | `service_delivery.mark_picked_up` | ServiceStaff session + CSRF | Path: `orderItemId` | `DeliveryState` | `not_ready_for_delivery`, `outside_hall_scope`, `invalid_delivery_transition` |
+| `POST` | `/api/service-staff/items/{orderItemId}/deliver` | ServiceStaffApp | `service_delivery.mark_delivered` | ServiceStaff session + CSRF | Path: `orderItemId` | `DeliveryState` | `not_ready_for_delivery`, `outside_hall_scope`, `invalid_delivery_transition` |
+| `POST` | `/api/service-staff/items/bulk-deliver` | ServiceStaffApp | `service_delivery.bulk_mark_delivered` | ServiceStaff session + CSRF + `Idempotency-Key` | Body: `BulkDeliverRequest` | `BulkDeliveryResult` | `bulk_mixed_table`, `bulk_item_invalid`, `idempotency_conflict`, `service_tracking_disabled` |
+| `GET` | `/api/cashier/order-items/{orderItemId}/delivery` | CashierApp | `service_delivery.read_delivery_state` | Cashier session | Path: `orderItemId` | `DeliveryReadState` | `missing_role`, `not_found_or_hidden` |
 
 ## Response Schemas
 
@@ -54,7 +54,7 @@ The API layer computes the normalized request hash from actor, table, route, and
 
 - `ready -> picked_up -> delivered` is allowed.
 - Direct `ready -> delivered` is allowed.
-- Delivered items cannot move backward in v1.
+- Delivered items cannot move backward in the current release.
 
 ## Idempotency
 

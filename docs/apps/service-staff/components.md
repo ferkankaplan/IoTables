@@ -55,7 +55,7 @@ Source context:
 - invalid credential state;
 - no-role state.
 
-Service staff first-password flow must not show OTP controls in v1.
+Service staff first-password flow must not show OTP controls in the current release.
 
 `ServiceDisabledState` owns:
 
@@ -191,4 +191,4 @@ The component model is acceptable when:
 - single-item transitions have pending/stale behavior;
 - bulk delivery same-table and idempotent behavior is represented;
 - recent deliveries are read-only;
-- forbidden v1 controls cannot be reached from any component.
+- forbidden current release controls cannot be reached from any component.

@@ -11,15 +11,15 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/platform/tenants` | PlatformApp | `tenant_registry.get_health` | Platform Owner session | Query: `status`, `sector`, `q`, `cursor`, `limit` | `TenantHealthList` | `not_authorized` |
-| `GET` | `/api/v1/platform/tenants/{tenantId}` | PlatformApp | `tenant_registry.get_profile` | Platform Owner session | Path: `tenantId` | `TenantProfile` | `not_authorized`, `not_found_or_hidden` |
-| `PATCH` | `/api/v1/platform/tenants/{tenantId}/profile` | PlatformApp | `tenant_registry.update_profile` | Platform Owner session + CSRF | Body: `gsmNumber?`, `sector?`, `capacity?`, `address?` | `TenantProfile` | `immutable_identity`, `validation_failed` |
-| `POST` | `/api/v1/platform/tenants/{tenantId}/status` | PlatformApp | `tenant_registry.change_status` | Platform Owner session + CSRF | Body: `nextStatus`, `reason` | `TenantProfile` | `invalid_lifecycle_transition`, `reason_required` |
-| `POST` | `/api/v1/platform/tenants/{tenantId}/dns-ready` | PlatformApp | `tenant_registry.set_dns_ready` | Platform Owner session + CSRF | Body: `dnsReady` | `TenantProfile` | `not_authorized`, `validation_failed` |
-| `GET` | `/api/v1/platform/tenants/{tenantId}/lifecycle-events` | PlatformApp | `tenant_registry.get_lifecycle_events` | Platform Owner session | Query: `cursor`, `limit` | `TenantLifecycleEventList` | `not_authorized` |
-| `GET` | `/api/v1/tenant/context` | TenantApp, runtime apps | `tenant_registry.resolve_by_subdomain` | Public safe read | Host-derived subdomain | `TenantContext` | `tenant_unavailable` |
-| `GET` | `/api/v1/tenant/profile` | TenantApp | `tenant_registry.get_profile` | Tenant Admin session | Host-derived tenant | `TenantProfile` | `not_authorized`, `tenant_unavailable` |
-| `PATCH` | `/api/v1/tenant/profile` | TenantApp | `tenant_registry.update_profile` | Tenant Admin session + CSRF | Body: editable profile fields except `name`, `subdomain`, `status`, `dnsReady` | `TenantProfile` | `immutable_identity`, `not_authorized` |
+| `GET` | `/api/platform/tenants` | PlatformApp | `tenant_registry.get_health` | Platform Owner session | Query: `status`, `sector`, `q`, `cursor`, `limit` | `TenantHealthList` | `not_authorized` |
+| `GET` | `/api/platform/tenants/{tenantId}` | PlatformApp | `tenant_registry.get_profile` | Platform Owner session | Path: `tenantId` | `TenantProfile` | `not_authorized`, `not_found_or_hidden` |
+| `PATCH` | `/api/platform/tenants/{tenantId}/profile` | PlatformApp | `tenant_registry.update_profile` | Platform Owner session + CSRF | Body: `gsmNumber?`, `sector?`, `capacity?`, `address?` | `TenantProfile` | `immutable_identity`, `validation_failed` |
+| `POST` | `/api/platform/tenants/{tenantId}/status` | PlatformApp | `tenant_registry.change_status` | Platform Owner session + CSRF | Body: `nextStatus`, `reason` | `TenantProfile` | `invalid_lifecycle_transition`, `reason_required` |
+| `POST` | `/api/platform/tenants/{tenantId}/dns-ready` | PlatformApp | `tenant_registry.set_dns_ready` | Platform Owner session + CSRF | Body: `dnsReady` | `TenantProfile` | `not_authorized`, `validation_failed` |
+| `GET` | `/api/platform/tenants/{tenantId}/lifecycle-events` | PlatformApp | `tenant_registry.get_lifecycle_events` | Platform Owner session | Query: `cursor`, `limit` | `TenantLifecycleEventList` | `not_authorized` |
+| `GET` | `/api/tenant/context` | TenantApp, runtime apps | `tenant_registry.resolve_by_subdomain` | Public safe read | Host-derived subdomain | `TenantContext` | `tenant_unavailable` |
+| `GET` | `/api/tenant/profile` | TenantApp | `tenant_registry.get_profile` | Tenant Admin session | Host-derived tenant | `TenantProfile` | `not_authorized`, `tenant_unavailable` |
+| `PATCH` | `/api/tenant/profile` | TenantApp | `tenant_registry.update_profile` | Tenant Admin session + CSRF | Body: editable profile fields except `name`, `subdomain`, `status`, `dnsReady` | `TenantProfile` | `immutable_identity`, `not_authorized` |
 
 ## Request Schemas
 

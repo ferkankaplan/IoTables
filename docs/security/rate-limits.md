@@ -1,6 +1,6 @@
 # Rate Limit Strategy
 
-This document defines v1 rate limit requirements.
+This document defines current release rate limit requirements.
 
 It is downstream of:
 
@@ -49,7 +49,7 @@ It is downstream of:
 
 When storing rate limit keys, avoid raw secrets. Use normalized identifiers, stable hashes, or HMAC-derived keys where raw values are sensitive.
 
-## V1 Default Limits
+## Current Release Default Limits
 
 These are initial production defaults. They may be tightened or relaxed through configuration after real operational data exists, but changing them must not weaken module invariants.
 

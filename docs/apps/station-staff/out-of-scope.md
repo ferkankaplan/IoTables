@@ -1,6 +1,6 @@
 # StationStaffApp Out of Scope
 
-This document lists behaviors this app must not implement in v1.
+This document lists behaviors this app must not implement in the current release.
 
 ## Not Authorized
 - It does not create or suspend tenants.
@@ -12,4 +12,4 @@ This document lists behaviors this app must not implement in v1.
 - It does not mark items as delivered to the customer.
 - It does not reassign products to stations unless an explicit tenant admin workflow exists.
 
-See also: [../_shared/v1-out-of-scope.md](../_shared/v1-out-of-scope.md).
+See also: [../_shared/current-release-out-of-scope.md](../_shared/current-release-out-of-scope.md).

@@ -20,7 +20,7 @@ It is downstream of [schema.md](schema.md), [indexes-constraints.md](indexes-con
 | Migration tool | Alembic |
 | ORM model source | SQLAlchemy 2 async models |
 | PostgreSQL target | PostgreSQL 18.4 |
-| Migration topology | Single linear head in v1 |
+| Migration topology | Single linear head in the current release |
 | Migration execution | Deployment step before application rollout |
 | Startup behavior | App startup must not auto-run migrations |
 
@@ -48,7 +48,7 @@ Each migration description should state:
 
 ## Migration Categories
 
-| Category | Allowed in V1 | Rollback Expectation |
+| Category | Allowed in Current Release | Rollback Expectation |
 | --- | --- | --- |
 | Add table | Yes | Drop table is acceptable before data is used; after use, rollback needs approval. |
 | Add nullable column | Yes | Drop column is acceptable only before deployed code depends on it. |
@@ -56,7 +56,7 @@ Each migration description should state:
 | Add check/unique/FK | Yes, after data validation | Downgrade may drop constraint, but production rollback must consider invalid data risk. |
 | Add index | Yes | Drop index is normally safe but may hurt performance. |
 | Rename table/column | Avoid unless necessary | Requires compatibility plan; simple downgrade is not enough. |
-| Drop table/column | Avoid in v1 | Requires explicit approval, backup, and proof no code/data path uses it. |
+| Drop table/column | Avoid in the current release | Requires explicit approval, backup, and proof no code/data path uses it. |
 | Data backfill | Yes, if bounded and idempotent | Must include compensating or forward-fix plan. |
 | Business state migration | Rare | Must be module-owned, audited when meaningful, and never disguised as seed logic. |
 
@@ -126,7 +126,7 @@ Examples:
 | --- | --- |
 | Add `currency_code` with default `TRY` to price rows | Schema plus deterministic backfill |
 | Populate a derived read-model table from source records | Rebuildable backfill |
-| Apply new starter menu items to all existing tenants | Not a migration; out of v1 unless explicit product rollout tool exists |
+| Apply new starter menu items to all existing tenants | Not a migration; out of the current release unless explicit product rollout tool exists |
 | Retry failed SMS messages | Not a migration; belongs to reliable side-effect recovery |
 
 ## One-Time Business Migrations
@@ -197,7 +197,7 @@ Minimum checks after migration:
 | Money | Minor-unit money columns contain valid non-floating values. |
 | Audit/outbox | Append-only and retry records remain readable. |
 
-## Initial V1 Migration Shape
+## Initial Production Migration Shape
 
 The first implementation migration should create the schema in dependency order:
 

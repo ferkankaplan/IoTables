@@ -62,12 +62,12 @@ Auth rules:
 
 - The ESP32 must authenticate with a table display credential before receiving a QR payload.
 - The backend resolves tenant and table from the credential; it must not trust table IDs sent by the ESP32.
-- Only one active table display credential exists per table in v1.
+- Only one active table display credential exists per table in the current release.
 - Re-provisioning a table display rotates the credential and revokes the previous active credential.
 - Revoked, disabled, or wrong-table credentials must fail closed.
 - Table display credentials are not customer QR tokens and must never be embedded in QR payloads.
 
-Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodically, and after a customer redeems a QR the next fetch returns a fresh token. Push, SSE, or WebSocket display updates are out of scope for v1.
+Token rotation in the current release is poll-based. The ESP32 fetches the current QR periodically, and after a customer redeems a QR the next fetch returns a fresh token. Push, SSE, or WebSocket display updates are out of scope for the current release.
 
 ## Flow Rules
 
@@ -91,7 +91,7 @@ Token rotation in v1 is poll-based. The ESP32 fetches the current QR periodicall
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
 | TableDisplayClaim | created -> consumed / expired | tenant, table, claimHash, createdByUserId, expiresAt, consumedAt | One-time claim; atomic consumption; raw claim is never stored | Owned by Tenant Setup / Table Display Provisioning; retain safe metadata for provisioning audit |
-| TableDisplayCredential | active -> revoked / rotated | tenant, table, credentialHash, status, provisionedAt, revokedAt, lastSeenAt | One active credential per tenant/table in v1; backend resolves table from credential; raw credential never appears in QR payload | Owned by Tenant Setup / Table Display Provisioning; revoke/rotate instead of hard-delete |
+| TableDisplayCredential | active -> revoked / rotated | tenant, table, credentialHash, status, provisionedAt, revokedAt, lastSeenAt | One active credential per tenant/table in the current release; backend resolves table from credential; raw credential never appears in QR payload | Owned by Tenant Setup / Table Display Provisioning; revoke/rotate instead of hard-delete |
 | TableAccessToken | issued -> consumed / expired | tenant, table, tokenHash, expiresAt, consumedAt | One-time token; hashed token storage; redemption is atomic; token does not expose trusted table IDs | Owned by Ordering / Table Presence; retain short-term for replay investigation, then purge by retention policy |
 | CustomerOrderingSession presence fields | refreshed while session active -> expired | customerOrderingSession, presenceValidUntil, lastRedeemedToken metadata if needed | Fresh presence gates order submit and table order/balance visibility; expiry does not delete cart | CustomerOrderingSession lifecycle is owned by Customer Ordering; presence refresh is controlled by Ordering / Table Presence |
 

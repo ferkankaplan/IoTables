@@ -103,8 +103,8 @@ Invariants:
 - suspended tenants cannot perform runtime operations.
 - new tenants start as `provisioning`.
 - tenants become `active` only after required setup records commit successfully.
-- manual DNS setup is tracked, not automated, in v1.
-- capacity is informational in v1 and does not enforce package limits.
+- manual DNS setup is tracked, not automated, in the current release.
+- capacity is informational in the current release and does not enforce package limits.
 
 ### TenantOperationalSettings
 
@@ -266,13 +266,13 @@ Owned by: Identity and Access
 | Field | Notes |
 | --- | --- |
 | `userId` | Platform-scoped user |
-| `role` | `platform_owner` in v1 |
+| `role` | `platform_owner` in the current release |
 | `status` | active / disabled |
 
 Invariants:
 
 - only users with `tenantId = null` can hold `platform_owner`.
-- v1 allows exactly one active Platform Owner.
+- current release allows exactly one active Platform Owner.
 - the first Platform Owner is created by explicit bootstrap, not automatic startup seed logic.
 
 ### TotpFactor
@@ -288,7 +288,7 @@ Owned by: Identity and Access
 
 Invariants:
 
-- Platform Owner does not need OTP/TOTP for PlatformApp access in v1.
+- Platform Owner does not need OTP/TOTP for PlatformApp access in the current release.
 - TOTP secrets must never be logged or exposed after enrollment.
 
 ### StaffProfile
@@ -363,7 +363,7 @@ Invariants:
 
 - tables belong to exactly one hall.
 - tables are managed inside Hall Management in TenantApp.
-- v1 tables are ordered within a hall grid; visual floor-plan coordinates are out of scope.
+- current release tables are ordered within a hall grid; visual floor-plan coordinates are out of scope.
 - historical table records should not be hard-deleted when sessions/orders exist.
 
 ## Stations and Menu
@@ -412,8 +412,8 @@ Invariants:
 - disabled products cannot be ordered.
 - every orderable product/service has at least one enabled ProductVariant.
 - availability is rechecked during order submission.
-- v1 routes each product/service to exactly one station.
-- multi-station routing for one product/service is out of v1.
+- current release routes each product/service to exactly one station.
+- multi-station routing for one product/service is out of the current release.
 
 ### ProductVariant
 
@@ -517,7 +517,7 @@ Owned by: Tenant Setup / Table Display Provisioning
 
 Invariants:
 
-- only one active display credential exists per tenant/table in v1.
+- only one active display credential exists per tenant/table in the current release.
 - credential is used only by the ESP32 table display to fetch QR payloads.
 - backend resolves table context from the credential, not from client-provided table IDs.
 - re-provisioning revokes the previous active credential.
@@ -531,7 +531,7 @@ Owned by: Ordering / Table Presence
 | `tenantId` | Tenant |
 | `tableId` | Table |
 | `tokenHash` | Store hash, not raw token |
-| `expiresAt` | 60 seconds in v1 |
+| `expiresAt` | 60 seconds in the current release |
 | `consumedAt` | Set atomically |
 
 Invariants:
@@ -552,7 +552,7 @@ Owned by: Customer Ordering
 | `tableSessionId` | Current joined TableSession, nullable |
 | `cookieTokenHash` | Opaque browser session token hash |
 | `presenceValidUntil` | Fresh table presence window |
-| `expiresAt` | 30 minutes in v1 |
+| `expiresAt` | 30 minutes in the current release |
 | `lastSeenAt` | Activity |
 
 Invariants:
@@ -576,7 +576,7 @@ Owned by: Customer Ordering
 Invariants:
 
 - cart is not billable.
-- one active cart exists per CustomerOrderingSession in v1.
+- one active cart exists per CustomerOrderingSession in the current release.
 - successful order submission clears or closes only the submitted cart.
 - failed order submission preserves the cart for correction or retry.
 
@@ -626,12 +626,12 @@ Owned by: Customer Ordering
 | `tableSessionId` | Table bill/session ownership |
 | `submittedAt` | Order time |
 | `status` | Submitted/operational aggregate status if needed |
-| `orderChannel` | `dine_in_qr` in v1 |
+| `orderChannel` | `dine_in_qr` in the current release |
 
 Invariants:
 
-- v1 creates only `dine_in_qr` orders.
-- waiter-entered, pickup, delivery, package, marketplace, phone, and counter-sale channels are out of v1.
+- current release creates only `dine_in_qr` orders.
+- waiter-entered, pickup, delivery, package, marketplace, phone, and counter-sale channels are out of the current release.
 
 ### OrderSubmitIdempotency
 
@@ -680,7 +680,7 @@ Invariants:
 - price snapshots are created server-side at submission time.
 - direct snapshot edits are not allowed.
 - existing order item snapshots do not change when variants are renamed, disabled, or repriced.
-- v1 cashier item void is allowed only while preparation status is `pending` or `cannot_prepare` and before any payment is recorded for the Check.
+- current release cashier item void is allowed only while preparation status is `pending` or `cannot_prepare` and before any payment is recorded for the Check.
 
 ### PreparationItem
 
@@ -695,7 +695,7 @@ Owned by: Preparation
 | `cannotPrepareReason` | Required when status is `cannot_prepare` |
 | `updatedBy`, `updatedAt` | Last transition |
 
-Valid v1 transitions:
+Valid current release transitions:
 
 ```text
 pending -> preparing -> ready
@@ -809,8 +809,8 @@ Owned by: Table Session and Billing
 
 Invariants:
 
-- v1 has exactly one Check per TableSession.
-- split checks, merged checks, item/person-based split payment, and moving items between checks are out of v1.
+- current release has exactly one Check per TableSession.
+- split checks, merged checks, item/person-based split payment, and moving items between checks are out of the current release.
 - Check total is calculated server-side from OrderItem snapshots, void/correction records, and PriceAdjustment records.
 - CustomerApp can read Check summary with fresh table presence but cannot mutate it.
 - CashierApp closes a TableSession through the Check settlement workflow.
@@ -831,10 +831,10 @@ Owned by: Table Session and Billing
 | `createdByUserId` | Actor or system |
 | `createdAt` | Timestamp |
 
-V1 rules:
+current release rules:
 
 - menu prices are VAT/tax-inclusive operational prices.
-- separate tax calculation, manual discounts, service fees, campaigns, and customer price confirmation are out of v1.
+- separate tax calculation, manual discounts, service fees, campaigns, and customer price confirmation are out of the current release.
 - `PriceAdjustment` exists to keep future pricing structure explicit, not to expose broad cashier discount power.
 - V1 item void is represented by `OrderItem` void fields plus `CashierCorrection`, not by a separate negative price adjustment.
 
@@ -853,7 +853,7 @@ Owned by: Table Session and Billing
 
 Invariants:
 
-- closure requires zero remaining balance in v1.
+- closure requires zero remaining balance in the current release.
 - closing a session validates current balance and active session state in the same transaction.
 
 ### Payment
@@ -877,9 +877,9 @@ Invariants:
 - payment creation is idempotent.
 - CustomerApp is read-only for bill/payment data.
 - remaining balance is calculated server-side.
-- v1 payment void is allowed only on an open Check when no external payment provider is involved.
-- external payment providers and customer payment flows are out of v1.
-- overpayment is out of v1; payment amount cannot exceed the current remaining balance.
+- current release payment void is allowed only on an open Check when no external payment provider is involved.
+- external payment providers and customer payment flows are out of the current release.
+- overpayment is out of the current release; payment amount cannot exceed the current remaining balance.
 
 ### PaymentIdempotency
 
@@ -899,7 +899,7 @@ Owned by: Payments
 
 Owned by: Payments
 
-Logical v1 record. The v1 physical schema represents it as immutable void fields on `Payment` plus the required `CashierCorrection`; no separate `payment_voids` table exists in v1.
+Logical current release record. The current release physical schema represents it as immutable void fields on `Payment` plus the required `CashierCorrection`; no separate `payment_voids` table exists in the current release.
 
 | Field | Notes |
 | --- | --- |
@@ -911,8 +911,8 @@ Logical v1 record. The v1 physical schema represents it as immutable void fields
 
 Invariants:
 
-- void is allowed only on an open Check in v1.
-- provider/external payments are out of v1, so provider reversal is not part of this model.
+- void is allowed only on an open Check in the current release.
+- provider/external payments are out of the current release, so provider reversal is not part of this model.
 - the original payment amount and received timestamp are never erased.
 
 ### PaymentVoidIdempotency
@@ -950,12 +950,12 @@ Owned by: Table Session and Billing
 | `createdByUserId` | Cashier actor |
 | `createdAt` | Timestamp |
 
-V1 rules:
+current release rules:
 
 - note-only correction is allowed.
 - item void is allowed only while preparation state is `pending` or `cannot_prepare` and before any payment is recorded.
 - payment void is allowed only on an open Check and only for non-provider payments.
-- manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, and moving items between checks/sessions are out of v1.
+- manual items, manual discounts, service fees, refunds after closure, direct price snapshot edits, and moving items between checks/sessions are out of the current release.
 
 ### CashierCorrectionIdempotency
 
@@ -990,7 +990,7 @@ Owned by: OTP / Messaging
 | `id` | Challenge ID |
 | `userId` | User being verified |
 | `purpose` | tenant_admin_first_password / cashier_first_password |
-| `targetGsm` | Tenant GSM in v1 for tenant admin/cashier bootstrap |
+| `targetGsm` | Tenant GSM in the current release for tenant admin/cashier bootstrap |
 | `codeHash` | Never plaintext |
 | `expiresAt` | Short lifetime |
 | `verifiedAt` | Completion |
@@ -998,9 +998,9 @@ Owned by: OTP / Messaging
 Invariants:
 
 - OTP values are stored hashed or otherwise non-recoverable.
-- V1 OTP lifetime is 5 minutes.
-- V1 allows at most 5 verification attempts per tenant/challenge.
-- V1 allows at most 3 send attempts per tenant/challenge with cooldown between sends.
+- Current release OTP lifetime is 5 minutes.
+- The current release allows at most 5 verification attempts per tenant/challenge.
+- The current release allows at most 3 send attempts per tenant/challenge with cooldown between sends.
 - OTP verification is idempotent after success.
 
 ### OtpAttempt
@@ -1094,7 +1094,7 @@ These records do not own independent business state. They are either rebuildable
 | `AuditMetadata` | embedded value | AuditEvent.metadata | Safe structured details only; no secrets or raw provider payloads. |
 | `AuditReason` | embedded value | AuditEvent.reason and correction/lifecycle records | Required for sensitive actions where specified. |
 
-Minimum v1 action names:
+Minimum current release action names:
 
 | Action | Scope |
 | --- | --- |
@@ -1132,19 +1132,19 @@ Minimum v1 action names:
 | --- | --- |
 | unique `Tenant.subdomain` | Prevent duplicate tenant domain |
 | immutable tenant name/subdomain by service rule | Preserve tenant identity |
-| unique active Platform Owner | Preserve single-user PlatformApp scope in v1 |
-| Tenant status enum check | Preserve exact v1 lifecycle |
+| unique active Platform Owner | Preserve single-user PlatformApp scope in the current release |
+| Tenant status enum check | Preserve exact current release lifecycle |
 | unique TenantHealth per tenant when materialized | Prevent conflicting platform health summaries |
 | unique LoginSession token hash | Prevent ambiguous session authentication |
 | unique TableDisplayClaim hash | Prevent provisioning claim collision/replay ambiguity |
 | unique active TableDisplayCredential per tenant/table | Prevent multiple active display credentials |
 | unique TableAccessToken hash | Prevent QR token collision/replay ambiguity |
 | unique active TableSession per tenant/table | Prevent double active table sessions |
-| unique Check per TableSession in v1 | Preserve single-adisyon v1 model |
+| unique Check per TableSession in the current release | Preserve single-adisyon current release model |
 | unique SessionClosure per TableSession | Prevent duplicate close records |
 | unique starter template application per tenant/template version | Prevent seed reruns |
 | unique tenant provisioning idempotency key per platform actor/key | Prevent duplicate tenant creation commands |
-| unique active CustomerCart per customer ordering session | Prevent parallel carts in v1 |
+| unique active CustomerCart per customer ordering session | Prevent parallel carts in the current release |
 | unique order submit idempotency key per tenant/customer session/key | Prevent duplicate orders |
 | unique PreparationItem per tenant/order item | Prevent duplicate station queue records. |
 | unique DeliveryState per tenant/order item | Prevent duplicate delivery state records. |
@@ -1156,7 +1156,7 @@ Minimum v1 action names:
 | unique outbox idempotency reference per effect type | Prevent duplicate external side effects |
 | unique default ProductVariant per tenant/product | Prevent multiple default orderable variants |
 | orderable ProductService requires at least one enabled ProductVariant | Prevent products without an orderable unit from entering customer ordering |
-| ProductService.stationId foreign key to Station | Preserve v1 single-station routing integrity |
+| ProductService.stationId foreign key to Station | Preserve current release single-station routing integrity |
 | foreign key CustomerCartItem.productVariantId to ProductVariant | Preserve cart variant integrity |
 | foreign key OrderItem.productVariantId to ProductVariant | Preserve order variant history source |
 | check positive ProductVariant price | Prevent invalid current menu prices |

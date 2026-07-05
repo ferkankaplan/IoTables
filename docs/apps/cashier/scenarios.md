@@ -71,7 +71,7 @@ Branches:
 | Branch | Expected Result |
 | --- | --- |
 | Amount is zero/negative | Reject |
-| Amount exceeds remaining balance | Reject in v1 |
+| Amount exceeds remaining balance | Reject in the current release |
 | Duplicate submit same key | Return original payment |
 | Same key different request | Fail closed |
 | Check closed | Reject |
@@ -152,8 +152,8 @@ Branches:
 
 | Branch | Expected Result |
 | --- | --- |
-| Item is `preparing`, `ready`, `picked_up`, or `delivered` | Reject in v1 |
-| Any payment exists on Check | Reject item void in v1 |
+| Item is `preparing`, `ready`, `picked_up`, or `delivered` | Reject in the current release |
+| Any payment exists on Check | Reject item void in the current release |
 | Reason missing | Reject |
 | Item already voided | Return current state idempotently or reject stale request |
 | Station attempts to void | Not allowed; only CashierApp correction can void |
@@ -179,9 +179,9 @@ Branches:
 
 | Branch | Expected Result |
 | --- | --- |
-| Payment belongs to closed Check | Reject in v1 |
+| Payment belongs to closed Check | Reject in the current release |
 | Payment already voided | Return current state idempotently or reject stale request |
-| External provider payment | Out of v1; reject if somehow present |
+| External provider payment | Out of the current release; reject if somehow present |
 | Reason missing | Reject |
 
 Result:
@@ -206,7 +206,7 @@ Branches:
 | --- | --- |
 | No payments today | Show empty state |
 | Payment was voided | Show void state and reason |
-| Cashier requests arbitrary historical report | Out of v1 unless reporting workspace is introduced |
+| Cashier requests arbitrary historical report | Out of the current release unless reporting workspace is introduced |
 | Tenant has multiple cashiers | Show actor per payment; do not assume single cashier |
 
 Result:

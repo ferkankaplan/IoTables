@@ -1,6 +1,6 @@
 # ServiceStaffApp Test Plan
 
-This document defines ServiceStaffApp-visible test coverage for v1. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
+This document defines ServiceStaffApp-visible test coverage for the current release. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
 
 Source context:
 
@@ -125,19 +125,19 @@ ServiceStaffApp executable tests must cover the app-visible behavior of these en
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/v1/auth/login-requirements` | First-password requirement discovery. |
-| `POST /api/v1/auth/login` | ServiceStaff scope, missing role, invalid credentials. |
-| `POST /api/v1/auth/first-password/begin` | Bootstrap password setup. |
-| `POST /api/v1/auth/first-password/complete` | No OTP required for service staff. |
-| `GET /api/v1/auth/session` | Protected route access. |
-| `POST /api/v1/auth/logout` | Session revocation. |
-| `GET /api/v1/service-staff/authorized-halls` | Hall scope and no-hall state. |
-| `GET /api/v1/service-staff/ready-items` | Ready/picked-up queue, tracking disabled, hall scope. |
-| `GET /api/v1/service-staff/recent-deliveries` | Same-day recent delivery visibility. |
-| `GET /api/v1/service-staff/workload` | Counts and oldest age. |
-| `POST /api/v1/service-staff/items/{orderItemId}/pick-up` | Valid, stale, unauthorized, tracking disabled. |
-| `POST /api/v1/service-staff/items/{orderItemId}/deliver` | Direct ready delivery, picked-up delivery, duplicate-safe terminal behavior. |
-| `POST /api/v1/service-staff/items/bulk-deliver` | Same-table, all-or-nothing, idempotency replay/conflict. |
+| `GET /api/auth/login-requirements` | First-password requirement discovery. |
+| `POST /api/auth/login` | ServiceStaff scope, missing role, invalid credentials. |
+| `POST /api/auth/first-password/begin` | Bootstrap password setup. |
+| `POST /api/auth/first-password/complete` | No OTP required for service staff. |
+| `GET /api/auth/session` | Protected route access. |
+| `POST /api/auth/logout` | Session revocation. |
+| `GET /api/service-staff/authorized-halls` | Hall scope and no-hall state. |
+| `GET /api/service-staff/ready-items` | Ready/picked-up queue, tracking disabled, hall scope. |
+| `GET /api/service-staff/recent-deliveries` | Same-day recent delivery visibility. |
+| `GET /api/service-staff/workload` | Counts and oldest age. |
+| `POST /api/service-staff/items/{orderItemId}/pick-up` | Valid, stale, unauthorized, tracking disabled. |
+| `POST /api/service-staff/items/{orderItemId}/deliver` | Direct ready delivery, picked-up delivery, duplicate-safe terminal behavior. |
+| `POST /api/service-staff/items/bulk-deliver` | Same-table, all-or-nothing, idempotency replay/conflict. |
 
 ## Security and Abuse Coverage
 

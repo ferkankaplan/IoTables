@@ -1,6 +1,6 @@
 # Permission Policy Matrix
 
-This document is the v1 authorization source for module command/query contracts.
+This document is the current release authorization source for module command/query contracts.
 
 It answers two questions:
 
@@ -29,7 +29,7 @@ Frontend visibility is never authorization proof.
 
 | Actor | Identity Source | Scope |
 | --- | --- | --- |
-| Platform Owner | Identity user with platform role and `tenant_id = null` | Global platform scope in v1 |
+| Platform Owner | Identity user with platform role and `tenant_id = null` | Global platform scope in the current release |
 | Tenant Admin | Tenant user with `tenant_admin` role | Own tenant |
 | Cashier | Tenant user with `cashier` role | Own tenant |
 | Station Staff | Tenant user with `station_staff` role | Own tenant plus assigned stations |
@@ -93,7 +93,7 @@ Frontend visibility is never authorization proof.
 | `identity_access.begin_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Tenant admin and cashier require OTP; station/service do not |
 | `identity_access.complete_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | OTP proof required for tenant admin/cashier |
 | `identity_access.change_password` | Authenticated user | Own active user session | Current password valid |
-| `identity_access.enroll_totp` | PlatformApp | Platform Owner | Reserved for future PlatformApp hardening; not required by v1 login |
+| `identity_access.enroll_totp` | PlatformApp | Platform Owner | Reserved for future PlatformApp hardening; not required by current release login |
 | `identity_access.logout_or_revoke_session` | Authenticated user, TenantApp admin recovery, Platform recovery | Own session, Tenant Admin own tenant, or Platform recovery | Revoked/expired sessions fail closed |
 | `identity_access.disable_user` | TenantApp, Platform recovery | Tenant Admin own tenant or Platform recovery | Cannot silently disable only active Platform Owner |
 | `staff_access.upsert_staff_profile` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | User belongs to tenant |
@@ -226,10 +226,10 @@ Frontend visibility is never authorization proof.
 | Contract | Allowed Caller | Required Scope Checks | Domain Guards |
 | --- | --- | --- | --- |
 | `table_session_billing.open_session_check_if_needed` | Customer Ordering | Internal order transaction | Tenant/table active; unique open TableSession |
-| `table_session_billing.record_cashier_correction` | CashierApp | Cashier role own tenant; idempotency key | Reason required; target eligible under v1 rules |
+| `table_session_billing.record_cashier_correction` | CashierApp | Cashier role own tenant; idempotency key | Reason required; target eligible under current release rules |
 | `table_session_billing.close_session` | CashierApp | Cashier role own tenant | Check open; remaining balance zero |
 | `payments.record_payment` | CashierApp | Cashier role own tenant | Check open; amount positive and not over remaining balance; idempotency key |
-| `payments.void_payment` | CashierApp | Cashier role own tenant; idempotency key | Check open; non-provider v1 payment; reason required |
+| `payments.void_payment` | CashierApp | Cashier role own tenant; idempotency key | Check open; non-provider current release payment; reason required |
 
 ## Settlement Queries
 
@@ -279,7 +279,7 @@ CustomerApp does not use Identity and Access.
 | Submit order | Own CustomerOrderingSession, fresh table presence, idempotency key, active cart |
 | Read my orders | Own CustomerOrderingSession cookie |
 | Read table orders/bill/balance | Fresh table presence for the table |
-| Mutate payments, corrections, session closure, preparation, delivery, tenant setup | Never allowed in v1 |
+| Mutate payments, corrections, session closure, preparation, delivery, tenant setup | Never allowed in the current release |
 
 ## ESP32 Display Special Rules
 
@@ -296,7 +296,7 @@ The ESP32 table display is not a user.
 
 | Actor | Explicit Non-Authority |
 | --- | --- |
-| Platform Owner | Does not mutate tenant runtime orders, payments, preparation, delivery, or table sessions in normal v1 flow. |
+| Platform Owner | Does not mutate tenant runtime orders, payments, preparation, delivery, or table sessions in normal current release flow. |
 | Tenant Admin | Does not receive payments, close sessions, prepare station items, deliver items, or create customer orders. |
 | Cashier | Does not configure tenant setup, create tenants, prepare items, or deliver items. |
 | Station Staff | Does not change menu/setup, payments, delivery state, or session closure. |

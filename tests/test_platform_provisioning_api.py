@@ -319,7 +319,7 @@ def test_create_tenant_requires_platform_session() -> None:
     client = make_client(actor=None, service=FakeProvisioningService())
 
     response = client.post(
-        "/api/v1/platform/tenants",
+        "/api/platform/tenants",
         headers={
             "X-Request-Id": "req_platform_auth",
             "X-CSRF-Token": "csrf",
@@ -343,7 +343,7 @@ def test_create_tenant_rejects_wrong_app_scope() -> None:
     )
 
     response = client.post(
-        "/api/v1/platform/tenants",
+        "/api/platform/tenants",
         headers={
             "X-Request-Id": "req_wrong_scope",
             "X-CSRF-Token": "csrf",
@@ -367,7 +367,7 @@ def test_create_tenant_requires_csrf_token() -> None:
     )
 
     response = client.post(
-        "/api/v1/platform/tenants",
+        "/api/platform/tenants",
         headers={"X-Request-Id": "req_csrf", "Idempotency-Key": "tenant-create-1"},
         json={
             "name": "Cafe Demo",
@@ -387,7 +387,7 @@ def test_create_tenant_requires_idempotency_key() -> None:
     )
 
     response = client.post(
-        "/api/v1/platform/tenants",
+        "/api/platform/tenants",
         headers={"X-Request-Id": "req_idempotency", "X-CSRF-Token": "csrf"},
         json={
             "name": "Cafe Demo",
@@ -405,7 +405,7 @@ def test_create_tenant_passes_normalized_command_to_provisioning_service() -> No
     client = make_client(actor=make_platform_actor(), service=service)
 
     response = client.post(
-        "/api/v1/platform/tenants",
+        "/api/platform/tenants",
         headers={
             "X-Request-Id": "req_create_tenant",
             "X-CSRF-Token": "csrf",
@@ -446,7 +446,7 @@ def test_get_tenant_provisioning_state_returns_safe_state() -> None:
     service = FakeProvisioningService()
     client = make_client(actor=make_platform_actor(), service=service)
 
-    response = client.get(f"/api/v1/platform/tenants/{TENANT_ID}/provisioning")
+    response = client.get(f"/api/platform/tenants/{TENANT_ID}/provisioning")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -467,7 +467,7 @@ def test_get_tenant_provisioning_recovery_summary_returns_safe_summary() -> None
     service = FakeProvisioningService()
     client = make_client(actor=make_platform_actor(), service=service)
 
-    response = client.get(f"/api/v1/platform/tenants/{TENANT_ID}/provisioning/recovery-summary")
+    response = client.get(f"/api/platform/tenants/{TENANT_ID}/provisioning/recovery-summary")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -486,7 +486,7 @@ def test_retry_tenant_provisioning_requires_csrf_and_calls_service() -> None:
     client = make_client(actor=make_platform_actor(), service=service)
 
     response = client.post(
-        f"/api/v1/platform/tenants/{TENANT_ID}/provisioning/retry",
+        f"/api/platform/tenants/{TENANT_ID}/provisioning/retry",
         headers={"X-CSRF-Token": "csrf"},
         json={"recoveryNote": "reviewed safe failure"},
     )
@@ -505,7 +505,7 @@ def test_mark_tenant_provisioning_recovery_needed_requires_reason() -> None:
     client = make_client(actor=make_platform_actor(), service=service)
 
     response = client.post(
-        f"/api/v1/platform/tenants/{TENANT_ID}/provisioning/recovery-needed",
+        f"/api/platform/tenants/{TENANT_ID}/provisioning/recovery-needed",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "manual data inspection required"},
     )
@@ -524,7 +524,7 @@ def test_list_tenants_returns_platform_safe_health_response() -> None:
     client = make_client(actor=make_platform_actor(), query_service=query_service)
 
     response = client.get(
-        "/api/v1/platform/tenants?status=active&sector=CAFE&q= demo &cursor=0&limit=200",
+        "/api/platform/tenants?status=active&sector=CAFE&q= demo &cursor=0&limit=200",
         headers={"X-Request-Id": "req_list_tenants"},
     )
 
@@ -561,7 +561,7 @@ def test_get_tenant_returns_platform_profile_response() -> None:
     client = make_client(actor=make_platform_actor(), query_service=query_service)
 
     response = client.get(
-        f"/api/v1/platform/tenants/{TENANT_ID}",
+        f"/api/platform/tenants/{TENANT_ID}",
         headers={"X-Request-Id": "req_get_tenant"},
     )
 
@@ -591,7 +591,7 @@ def test_list_tenant_lifecycle_events_returns_platform_timeline() -> None:
     client = make_client(actor=make_platform_actor(), query_service=query_service)
 
     response = client.get(
-        f"/api/v1/platform/tenants/{TENANT_ID}/lifecycle-events?cursor=25&limit=200",
+        f"/api/platform/tenants/{TENANT_ID}/lifecycle-events?cursor=25&limit=200",
         headers={"X-Request-Id": "req_get_tenant_lifecycle"},
     )
 
@@ -622,7 +622,7 @@ def test_update_tenant_profile_passes_editable_fields_to_mutation_service() -> N
     client = make_client(actor=make_platform_actor(), mutation_service=mutation_service)
 
     response = client.patch(
-        f"/api/v1/platform/tenants/{TENANT_ID}/profile",
+        f"/api/platform/tenants/{TENANT_ID}/profile",
         headers={"X-CSRF-Token": "csrf"},
         json={
             "gsmNumber": "+905559998877",
@@ -653,7 +653,7 @@ def test_update_tenant_profile_only_passes_provided_patch_fields() -> None:
     client = make_client(actor=make_platform_actor(), mutation_service=mutation_service)
 
     response = client.patch(
-        f"/api/v1/platform/tenants/{TENANT_ID}/profile",
+        f"/api/platform/tenants/{TENANT_ID}/profile",
         headers={"X-CSRF-Token": "csrf"},
         json={"gsmNumber": "+905559998877"},
     )
@@ -673,7 +673,7 @@ def test_update_tenant_profile_requires_csrf() -> None:
     )
 
     response = client.patch(
-        f"/api/v1/platform/tenants/{TENANT_ID}/profile",
+        f"/api/platform/tenants/{TENANT_ID}/profile",
         json={"gsmNumber": "+905559998877"},
     )
 
@@ -686,7 +686,7 @@ def test_set_dns_ready_calls_mutation_service() -> None:
     client = make_client(actor=make_platform_actor(), mutation_service=mutation_service)
 
     response = client.post(
-        f"/api/v1/platform/tenants/{TENANT_ID}/dns-ready",
+        f"/api/platform/tenants/{TENANT_ID}/dns-ready",
         headers={"X-CSRF-Token": "csrf"},
         json={"dnsReady": True},
     )
@@ -705,7 +705,7 @@ def test_change_tenant_status_requires_reason_and_calls_mutation_service() -> No
     client = make_client(actor=make_platform_actor(), mutation_service=mutation_service)
 
     response = client.post(
-        f"/api/v1/platform/tenants/{TENANT_ID}/status",
+        f"/api/platform/tenants/{TENANT_ID}/status",
         headers={"X-CSRF-Token": "csrf"},
         json={"nextStatus": "suspended", "reason": "manual maintenance"},
     )

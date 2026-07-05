@@ -1,6 +1,6 @@
 # Security Threat Model
 
-This document defines the v1 security threat model for IoTables.
+This document defines the current release security threat model for IoTables.
 
 It is downstream of:
 
@@ -90,7 +90,7 @@ Verification:
 | Threat | Impact | Required Controls |
 | --- | --- | --- |
 | Bootstrap credentials remain usable | Default password compromise | First password change is mandatory before normal app workflow. |
-| Tenant admin or cashier setup bypasses OTP | Account takeover during bootstrap | Tenant admin and cashier require OTP proof; station/service staff do not require OTP in v1. |
+| Tenant admin or cashier setup bypasses OTP | Account takeover during bootstrap | Tenant admin and cashier require OTP proof; station/service staff do not require OTP in the current release. |
 | OTP brute force | Account takeover | OTP lifetime 5 minutes, max 5 verification attempts per challenge, lock after limit. |
 | OTP resend abuse | SMS cost and harassment | Max 3 sends per challenge, cooldown between sends, provider errors redacted. |
 | Tenant GSM changes during challenge | OTP retargeting confusion | Target GSM is snapshotted when challenge is created; existing challenge target is not silently changed. |
@@ -126,7 +126,7 @@ Verification:
 | Customer changes price or total in request | Underpayment or incorrect bill | Client price and frontend totals are ignored; server revalidates and snapshots price at submit. |
 | Customer orders unavailable item | Invalid station or kitchen workload | Menu product, variant, modifier, availability, and station are revalidated during submit. |
 | Catalog changes after cart creation | Stale cart becomes invalid order | Submit can fail item-level validation and preserve cart for review. |
-| Submitted order is edited by customer | Hidden bill manipulation | CustomerApp cannot mutate submitted orders in v1. |
+| Submitted order is edited by customer | Hidden bill manipulation | CustomerApp cannot mutate submitted orders in the current release. |
 
 Verification:
 
@@ -154,10 +154,10 @@ Verification:
 | Threat | Impact | Required Controls |
 | --- | --- | --- |
 | Non-cashier records payment | Unauthorized settlement | Cashier role and own tenant required. |
-| Payment exceeds remaining balance | Overpayment or corrupted balance | Server recomputes remaining under Check lock; v1 rejects overpayment. |
+| Payment exceeds remaining balance | Overpayment or corrupted balance | Server recomputes remaining under Check lock; current release rejects overpayment. |
 | Payment is recorded against closed Check | Closed session mutation | Check must be open. |
 | Payment void hides original payment | Audit loss | Void uses immutable fields and required CashierCorrection; original payment is preserved. |
-| Correction is reasonless or invalid target | Untraceable bill mutation | Corrections require reason and v1 target eligibility. |
+| Correction is reasonless or invalid target | Untraceable bill mutation | Corrections require reason and current release target eligibility. |
 | Customer triggers payment or close | Unauthorized settlement | CustomerApp has read-only bill/payment visibility and cannot mutate settlement. |
 
 Verification:
@@ -211,7 +211,7 @@ Verification:
 - error responses never expose raw secrets or implementation paths;
 - audit/outbox/log redaction tests include OTP, QR, session, credential, and provider fields.
 
-## V1 Security Test Matrix
+## Current Release Security Test Matrix
 
 | Area | Required Test Coverage |
 | --- | --- |
@@ -226,7 +226,7 @@ Verification:
 | Side effects | Duplicate enqueue, parallel worker claim, stale claim recovery, redacted provider failure. |
 | Disclosure | Error envelope safety, audit metadata sanitizer, response `no-store` for sensitive endpoints. |
 
-## Out of Scope for V1
+## Out of Scope for Current Release
 
 - Customer payment provider checkout.
 - Pay-at-table.

@@ -1,6 +1,6 @@
 # PlatformApp Out of Scope
 
-This document lists behaviors this app must not implement in v1.
+This document lists behaviors this app must not implement in the current release.
 
 ## Not Authorized
 PlatformApp must not silently bypass tenant boundaries.
@@ -10,13 +10,13 @@ PlatformApp must not silently bypass tenant boundaries.
 - It does not close table sessions as a normal cashier flow.
 - It does not take payments on behalf of tenant cashiers.
 - It does not mutate tenant runtime data unless an explicit support or recovery workflow exists.
-- It does not configure fiscal/e-Adisyon/ÖKC integrations in v1.
-- It does not configure external payment providers, printer integrations, hardware terminals, or offline POS mode in v1.
+- It does not configure fiscal/e-Adisyon/ÖKC integrations in the current release.
+- It does not configure external payment providers, printer integrations, hardware terminals, or offline POS mode in the current release.
 
 ### V1 Tenant Scope
-PlatformApp creates single-location restaurant tenants in v1.
+PlatformApp creates single-location restaurant tenants in the current release.
 
-V1 tenant creation implies these product boundaries:
+Current release tenant creation implies these product boundaries:
 
 - one tenant represents one restaurant/location;
 - ordering channel is dine-in table QR only;
@@ -31,4 +31,4 @@ V1 tenant creation implies these product boundaries:
 
 These limits must be visible to the Platform Owner during tenant creation or tenant review so the created tenant is not misrepresented as a full POS/fiscal system.
 
-See also: [../_shared/v1-out-of-scope.md](../_shared/v1-out-of-scope.md).
+See also: [../_shared/current-release-out-of-scope.md](../_shared/current-release-out-of-scope.md).

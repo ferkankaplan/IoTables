@@ -13,7 +13,7 @@ Source module: [menu-catalog.md](menu-catalog.md)
 | `menu_catalog.update_product_service` | TenantApp | productId, editable fields, stationId | Tenant Admin; station same tenant; current orders keep snapshots | Update product config; no historical price rewrite | Updated product/service |
 | `menu_catalog.disable_product_service` | TenantApp | productId, reason | Tenant Admin | Set enabled false; preserve order history | Disabled product/service |
 | `menu_catalog.manage_variant` | TenantApp, Provisioning | productId, name, priceMinor, default/enabled/order | Tenant Admin/Provisioning; price non-negative; one default variant | Upsert variant; current orders unaffected | Product variant |
-| `menu_catalog.manage_modifiers` | TenantApp, Provisioning | productId, groups/options | Tenant Admin/Provisioning; selection bounds valid; deltas non-negative in v1 | Upsert modifier config | Modifier groups/options |
+| `menu_catalog.manage_modifiers` | TenantApp, Provisioning | productId, groups/options | Tenant Admin/Provisioning; selection bounds valid; deltas non-negative in the current release | Upsert modifier config | Modifier groups/options |
 | `menu_catalog.set_availability` | TenantApp | productId, optional variantId, state, reason, window | Tenant Admin; target belongs to tenant/product; window valid | Insert availability override | Availability override |
 
 ## Queries

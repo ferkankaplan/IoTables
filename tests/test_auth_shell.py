@@ -38,13 +38,13 @@ def make_actor(
 def make_client(actors_by_token: dict[str, ActorContext] | None = None) -> TestClient:
     app = create_app()
 
-    @app.get("/api/v1/test/cashier")
+    @app.get("/api/test/cashier")
     async def cashier_probe(
         actor: ActorContext = CASHIER_SCOPE_DEP,
     ) -> dict[str, str]:
         return {"appScope": actor.app_scope}
 
-    @app.get("/api/v1/test/cashier-payment")
+    @app.get("/api/test/cashier-payment")
     async def cashier_payment_probe(
         actor: ActorContext = CASHIER_ROLE_DEP,
     ) -> dict[str, list[str]]:
@@ -60,7 +60,7 @@ def test_protected_route_without_cookie_returns_unauthenticated() -> None:
     client = make_client({})
 
     response = client.get(
-        "/api/v1/test/cashier",
+        "/api/test/cashier",
         headers={"X-Request-Id": "req_auth_missing"},
     )
 
@@ -79,7 +79,7 @@ def test_unknown_session_cookie_returns_unauthenticated() -> None:
     client.cookies.set("iotables_session", "missing")
 
     response = client.get(
-        "/api/v1/test/cashier",
+        "/api/test/cashier",
         headers={"X-Request-Id": "req_auth_unknown"},
     )
 
@@ -93,7 +93,7 @@ def test_wrong_app_scope_returns_safe_failure() -> None:
     client.cookies.set("iotables_session", "tenant-token")
 
     response = client.get(
-        "/api/v1/test/cashier",
+        "/api/test/cashier",
         headers={"X-Request-Id": "req_wrong_scope"},
     )
 
@@ -111,7 +111,7 @@ def test_matching_app_scope_returns_actor_context() -> None:
     client = make_client({"cashier-token": make_actor(app_scope=AppScope.CASHIER)})
     client.cookies.set("iotables_session", "cashier-token")
 
-    response = client.get("/api/v1/test/cashier")
+    response = client.get("/api/test/cashier")
 
     assert response.status_code == 200
     assert response.json() == {"appScope": "cashier"}
@@ -122,7 +122,7 @@ def test_missing_staff_role_returns_not_authorized() -> None:
     client.cookies.set("iotables_session", "station-token")
 
     response = client.get(
-        "/api/v1/test/cashier-payment",
+        "/api/test/cashier-payment",
         headers={"X-Request-Id": "req_no_role"},
     )
 
@@ -147,7 +147,7 @@ def test_matching_staff_role_returns_actor_roles() -> None:
     )
     client.cookies.set("iotables_session", "cashier-token")
 
-    response = client.get("/api/v1/test/cashier-payment")
+    response = client.get("/api/test/cashier-payment")
 
     assert response.status_code == 200
     assert response.json() == {"roles": ["cashier"]}

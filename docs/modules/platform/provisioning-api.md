@@ -9,11 +9,11 @@ Provisioning owns tenant creation orchestration. It is the only public PlatformA
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `POST` | `/api/v1/platform/tenants` | PlatformApp | `provisioning.start_tenant` | Platform Owner session + CSRF + `Idempotency-Key` | Body: `CreateTenantRequest` | `ProvisioningResult` | `duplicate_subdomain`, `unsupported_sector`, `provisioning_incomplete`, `recovery_required` |
-| `GET` | `/api/v1/platform/tenants/{tenantId}/provisioning` | PlatformApp | `provisioning.get_state` | Platform Owner session | Path: `tenantId` | `ProvisioningState` | `not_authorized`, `not_found_or_hidden` |
-| `GET` | `/api/v1/platform/tenants/{tenantId}/provisioning/recovery-summary` | PlatformApp | `provisioning.get_recovery_summary` | Platform Owner session | Path: `tenantId` | `ProvisioningRecoverySummary` | `not_authorized`, `not_found_or_hidden` |
-| `POST` | `/api/v1/platform/tenants/{tenantId}/provisioning/retry` | PlatformApp | `provisioning.retry_failed` | Platform Owner session + CSRF | Body: `recoveryNote?` | `ProvisioningState` | `starter_already_applied`, `recovery_required`, `invalid_lifecycle_transition` |
-| `POST` | `/api/v1/platform/tenants/{tenantId}/provisioning/recovery-needed` | Platform recovery tooling | `provisioning.mark_recovery_needed` | Platform Owner/recovery session + CSRF | Body: `reason` | `ProvisioningState` | `not_authorized`, `reason_required` |
+| `POST` | `/api/platform/tenants` | PlatformApp | `provisioning.start_tenant` | Platform Owner session + CSRF + `Idempotency-Key` | Body: `CreateTenantRequest` | `ProvisioningResult` | `duplicate_subdomain`, `unsupported_sector`, `provisioning_incomplete`, `recovery_required` |
+| `GET` | `/api/platform/tenants/{tenantId}/provisioning` | PlatformApp | `provisioning.get_state` | Platform Owner session | Path: `tenantId` | `ProvisioningState` | `not_authorized`, `not_found_or_hidden` |
+| `GET` | `/api/platform/tenants/{tenantId}/provisioning/recovery-summary` | PlatformApp | `provisioning.get_recovery_summary` | Platform Owner session | Path: `tenantId` | `ProvisioningRecoverySummary` | `not_authorized`, `not_found_or_hidden` |
+| `POST` | `/api/platform/tenants/{tenantId}/provisioning/retry` | PlatformApp | `provisioning.retry_failed` | Platform Owner session + CSRF | Body: `recoveryNote?` | `ProvisioningState` | `starter_already_applied`, `recovery_required`, `invalid_lifecycle_transition` |
+| `POST` | `/api/platform/tenants/{tenantId}/provisioning/recovery-needed` | Platform recovery tooling | `provisioning.mark_recovery_needed` | Platform Owner/recovery session + CSRF | Body: `reason` | `ProvisioningState` | `not_authorized`, `reason_required` |
 
 ## Request Schemas
 
@@ -53,7 +53,7 @@ Provisioning owns tenant creation orchestration. It is the only public PlatformA
 
 ## Idempotency
 
-`POST /api/v1/platform/tenants` requires `Idempotency-Key`.
+`POST /api/platform/tenants` requires `Idempotency-Key`.
 
 Same key and same normalized request returns the original `ProvisioningResult`. Same key with a different normalized request returns `409 idempotency_conflict`.
 

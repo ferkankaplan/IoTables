@@ -26,7 +26,7 @@ Source context:
 
 TenantApp analytics may surface setup warnings, but the owning setup module must still validate every write.
 
-## V1 Metrics
+## Current Release Metrics
 
 | Metric | Source | Notes |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ TenantApp analytics may surface setup warnings, but the owning setup module must
 | Staff Management | Role and assignment coverage counts. |
 | Settings/Audit | Audit count summaries beside audit records. |
 
-Analytics should appear inside existing TenantApp workspaces and contextual panels, not as a separate broad reporting product in v1.
+Analytics should appear inside existing TenantApp workspaces and contextual panels, not as a separate broad reporting product in the current release.
 
 ## Data Boundaries
 
@@ -82,7 +82,7 @@ TenantApp analytics must not show:
 - If analytics and module state disagree, the setup module state wins.
 - Analytics must never unlock unsafe disable/delete actions.
 
-## V1 Out of Scope
+## Current Release Out of Scope
 
 - Revenue/sales analytics.
 - Staff performance ranking.

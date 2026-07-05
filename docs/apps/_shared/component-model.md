@@ -1,6 +1,6 @@
 # Shared Component Model
 
-This document defines the v1 product-level component model for all IoTables apps.
+This document defines the current release product-level component model for all IoTables apps.
 
 It is not a React component API and not a visual design system. It defines reusable UI responsibilities so each app package can describe its screens without inventing parallel patterns.
 
@@ -108,7 +108,7 @@ Source context:
 | CashierTableBoard | Halls, tables, active sessions, latest fulfillment, and balance summary. |
 | SessionDetailPanel | Orders, items, Check/Adisyon, payments, corrections, and close eligibility. |
 | PaymentDrawer | Partial/full payment recording with amount validation and pending state. |
-| CorrectionDrawer | Allowed v1 correction flows with reason and target validation. |
+| CorrectionDrawer | Allowed current release correction flows with reason and target validation. |
 | CloseSessionDialog | Explicit close action when remaining balance is zero. |
 | PaymentHistoryWorkspace | Current business-day payment records and void states. |
 
@@ -128,7 +128,7 @@ Source context:
 ## Anti-Patterns
 
 - Do not create a primary page for every entity.
-- Do not create standalone table management in v1; tables live inside HallWorkspace and TableDetailPanel.
+- Do not create standalone table management in the current release; tables live inside HallWorkspace and TableDetailPanel.
 - Do not use cards inside cards.
 - Do not hide backend state uncertainty behind optimistic success copy.
 - Do not create component variants that bypass app visibility rules.

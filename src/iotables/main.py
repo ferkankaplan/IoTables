@@ -64,7 +64,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_exception_handler(ApiError, api_error_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.include_router(api_router, prefix="/api/v1")
+    app.include_router(api_router, prefix="/api")
     return app
 
 

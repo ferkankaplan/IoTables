@@ -49,9 +49,9 @@ It provides traceability for sensitive changes and runtime corrections.
 - Bootstrap, password setup, OTP verification result, tenant status changes, payments, session closure, delivery/preparation transitions, starter template application, and cashier corrections must be auditable.
 - Audit logs should avoid storing secrets or OTP codes.
 - Audit records are evidence, not analytics telemetry. Analytics may aggregate from audited events only when the owning app/module source also allows that metric.
-- V1 audit retention is indefinite. Automated deletion/archival requires an explicit retention policy later.
+- Current release audit retention is indefinite. Automated deletion/archival requires an explicit retention policy later.
 
-Minimum v1 action names:
+Minimum current release action names:
 
 | Action | Required For |
 | --- | --- |
@@ -83,7 +83,7 @@ Minimum v1 action names:
 | `payment.recorded` | Cashier payment record |
 | `payment.voided` | Cashier payment void |
 | `session.closed` | Cashier table session closure |
-| `cashier.correction_applied` | Any v1 cashier correction |
+| `cashier.correction_applied` | Any current release cashier correction |
 
 ## Operational Safety
 

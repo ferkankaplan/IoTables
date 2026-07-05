@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for v1.
+Accepted for the current release.
 
 ## Context
 
@@ -20,7 +20,7 @@ Sources:
 
 ## Decision
 
-V1 uses durable outbox records and external effect attempt records for non-transactional side effects.
+The current release uses durable outbox records and external effect attempt records for non-transactional side effects.
 
 Rules:
 

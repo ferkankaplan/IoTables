@@ -54,7 +54,7 @@ Source context:
 - invalid credential state;
 - no-role state.
 
-Station staff first-password flow must not show OTP controls in v1.
+Station staff first-password flow must not show OTP controls in the current release.
 
 ## Station Selector
 
@@ -186,4 +186,4 @@ The component model is acceptable when:
 - unauthorized station/item handling is represented;
 - `cannot_prepare` requires reason;
 - recent items are read-only;
-- forbidden v1 controls cannot be reached from any component.
+- forbidden current release controls cannot be reached from any component.

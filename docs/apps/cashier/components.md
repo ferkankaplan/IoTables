@@ -19,7 +19,7 @@ Source context:
 - Components preserve table board context while opening session, payment, correction, and close surfaces.
 - Components must represent stale totals, duplicate-submit, pending, invalid amount, blocked correction, and closed-session states.
 - Components must not trust frontend-calculated totals or frontend-selected tenant/table IDs as authority.
-- Components must not expose forbidden v1 controls.
+- Components must not expose forbidden current release controls.
 
 ## Component Map
 
@@ -124,7 +124,7 @@ Payment drawer must reject empty, zero/negative, and over-remaining amount befor
 
 ## Correction Components
 
-`CorrectionDrawer` owns allowed v1 correction choices:
+`CorrectionDrawer` owns allowed current release correction choices:
 
 | Correction | Component Behavior |
 | --- | --- |
@@ -152,7 +152,7 @@ The component must not expose unrestricted order editing, price editing, discoun
 - already-closed state;
 - stale balance refresh.
 
-Close-session does not require `Idempotency-Key` in v1. The component still disables duplicate clicks and accepts already-closed/current-state responses without creating a new closure.
+Close-session does not require `Idempotency-Key` in the current release. The component still disables duplicate clicks and accepts already-closed/current-state responses without creating a new closure.
 
 ## Payment History Components
 
@@ -167,7 +167,7 @@ It may show:
 - recorded time;
 - void state and reason.
 
-It must not become an arbitrary reporting workspace in v1.
+It must not become an arbitrary reporting workspace in the current release.
 
 ## State Components
 
@@ -197,9 +197,9 @@ State messages must use [copy.md](copy.md).
 | Table board | Venue Layout composes derived state; runtime state remains owned by Settlement/Ordering/Fulfillment/Payments. |
 | Totals | Server-calculated only. |
 | Payment | Idempotent command with backend overpayment guard. |
-| Correction | Narrow v1 types only, reason-required, idempotent, audited. |
+| Correction | Narrow current release types only, reason-required, idempotent, audited. |
 | Close session | Explicit, zero-balance, backend-recomputed state. |
-| Customer/payment provider/fiscal | No v1 controls. |
+| Customer/payment provider/fiscal | No current release controls. |
 
 ## Component Acceptance
 
@@ -210,4 +210,4 @@ The component model is acceptable when:
 - payment/correction/close flows preserve table board context;
 - duplicate-submit and stale-state handling are represented;
 - server-calculated totals are visually and behaviorally authoritative;
-- forbidden v1 controls cannot be reached from any component.
+- forbidden current release controls cannot be reached from any component.

@@ -18,7 +18,7 @@ Source context:
 - Keep health and failure text high-level.
 - Say when a step is manual.
 - Say when an action is audited.
-- Never imply DNS, fiscal, payment-provider, or tenant-runtime operations are automated in v1.
+- Never imply DNS, fiscal, payment-provider, or tenant-runtime operations are automated in the current release.
 - Never expose secrets, raw failure payloads, stack traces, or tenant runtime data.
 
 ## Navigation and Surface Labels
@@ -198,9 +198,9 @@ Do not claim:
 
 - DNS record is created automatically;
 - starter data can be re-run by changing sector;
-- CustomerApp takes payments in v1;
+- CustomerApp takes payments in the current release;
 - PlatformApp is a cashier, station, service, or tenant runtime console;
-- IoTables v1 is a fiscal/POS-complete system.
+- IoTables current release is a fiscal/POS-complete system.
 
 ## Copy Acceptance
 

@@ -4,7 +4,7 @@ This document defines shared rules for list endpoints.
 
 ## Pagination Style
 
-Use cursor pagination for v1 list endpoints that can grow or change while users are viewing them.
+Use cursor pagination for the current release list endpoints that can grow or change while users are viewing them.
 
 Query parameters:
 

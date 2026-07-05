@@ -75,6 +75,6 @@ The reference direction is one-way: code and tests can point to semantic documen
 
 ## Embeddings
 
-V1 stores embedding-ready JSONL only. It does not store vector values in the repository.
+The current release stores embedding-ready JSONL only. It does not store vector values in the repository.
 
 If a vector store is added later, it must be built from `index.jsonl` and remain disposable. The vector store must never become the source of truth.

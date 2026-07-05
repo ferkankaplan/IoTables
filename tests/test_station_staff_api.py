@@ -128,7 +128,7 @@ def test_station_staff_queue_uses_actor_scope_and_station_filter() -> None:
     client = TestClient(app)
     client.cookies.set("iotables_session", "station-token")
 
-    response = client.get(f"/api/v1/station-staff/queue?station_id={STATION_ID}&status=pending")
+    response = client.get(f"/api/station-staff/queue?station_id={STATION_ID}&status=pending")
 
     assert response.status_code == 200
     assert response.json()["items"][0]["itemLabel"] == "Americano"
@@ -146,18 +146,18 @@ def test_station_staff_preparation_transitions_require_csrf_and_bind_actor() -> 
     client.cookies.set("iotables_session", "station-token")
 
     missing_csrf = client.post(
-        f"/api/v1/station-staff/preparation-items/{PREPARATION_ITEM_ID}/start"
+        f"/api/station-staff/preparation-items/{PREPARATION_ITEM_ID}/start"
     )
     start = client.post(
-        f"/api/v1/station-staff/preparation-items/{PREPARATION_ITEM_ID}/start",
+        f"/api/station-staff/preparation-items/{PREPARATION_ITEM_ID}/start",
         headers={"X-CSRF-Token": "csrf"},
     )
     ready = client.post(
-        f"/api/v1/station-staff/preparation-items/{PREPARATION_ITEM_ID}/mark-ready",
+        f"/api/station-staff/preparation-items/{PREPARATION_ITEM_ID}/mark-ready",
         headers={"X-CSRF-Token": "csrf"},
     )
     cannot = client.post(
-        f"/api/v1/station-staff/preparation-items/{PREPARATION_ITEM_ID}/cannot-prepare",
+        f"/api/station-staff/preparation-items/{PREPARATION_ITEM_ID}/cannot-prepare",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "stok yok"},
     )

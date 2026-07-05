@@ -1,6 +1,6 @@
 # PlatformApp Test Plan
 
-This document defines PlatformApp-visible test coverage for v1. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
+This document defines PlatformApp-visible test coverage for the current release. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
 
 Source context:
 
@@ -108,7 +108,7 @@ Out of scope for this test plan:
 | --- | --- |
 | Platform Owner must log in before seeing tenants | Browser and API auth tests. |
 | First Platform Owner bootstrap is explicit and one-time | Bootstrap/ops test plus login unavailable state. |
-| Platform Owner login does not require OTP/TOTP in v1 | Browser login gate tests. |
+| Platform Owner login does not require OTP/TOTP in the current release | Browser login gate tests. |
 | Tenant creation requires name, subdomain, and GSM | Form validation and API contract tests. |
 | Tenant starts as `provisioning` | Provisioning API/domain tests. |
 | Tenant becomes `active` only after required setup records commit | Transaction/integration tests. |
@@ -135,26 +135,26 @@ PlatformApp executable tests must cover the app-visible behavior of these endpoi
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/v1/auth/login-requirements` | Bootstrap/setup requirements are safe and do not expose tenant data. |
-| `POST /api/v1/auth/login` | Platform Owner login, wrong app scope, invalid credentials. |
-| `GET /api/v1/auth/session` | Protected route access and auth-expired behavior. |
-| `POST /api/v1/auth/logout` | Session revoked and dashboard hidden. |
-| `POST /api/v1/auth/totp/enroll` | Reserved for future PlatformApp hardening; not required by v1 login. |
-| `GET /api/v1/platform/tenants` | List/health filters, partial health, no runtime leakage. |
-| `GET /api/v1/platform/tenants/{tenantId}` | Detail visibility and not-found/hidden behavior. |
-| `PATCH /api/v1/platform/tenants/{tenantId}/profile` | GSM/sector/capacity/address update, immutable identity rejection. |
-| `POST /api/v1/platform/tenants` | Create tenant idempotency, required fields, duplicate subdomain, provisioning result. |
-| `GET /api/v1/platform/tenants/{tenantId}/provisioning` | Safe provisioning state and failure summary. |
-| `GET /api/v1/platform/tenants/{tenantId}/provisioning/recovery-summary` | Safe recovery summary only. |
-| `POST /api/v1/platform/tenants/{tenantId}/provisioning/retry` | Retry allowed state, no starter rerun, stale/failure cases. |
-| `GET /api/v1/platform/sectors` | Supported sector options. |
-| `GET /api/v1/platform/sectors/{sector}/starter-template` | Starter preview only; no template mutation. |
-| `GET /api/v1/platform/tenants/{tenantId}/starter-template-application` | Starter application state. |
-| `POST /api/v1/platform/tenants/{tenantId}/dns-ready` | Manual DNS flag update and audit expectation. |
-| `POST /api/v1/platform/tenants/{tenantId}/status` | Suspend/reactivate with reason and lifecycle validation. |
-| `GET /api/v1/platform/tenants/{tenantId}/lifecycle-events` | Selected tenant lifecycle timeline without runtime detail leakage. |
-| `GET /api/v1/platform/audit-events` | Redacted platform audit events only. |
-| `GET /api/v1/platform/side-effects/failed` | Recovery visibility only; no raw provider payloads. |
+| `GET /api/auth/login-requirements` | Bootstrap/setup requirements are safe and do not expose tenant data. |
+| `POST /api/auth/login` | Platform Owner login, wrong app scope, invalid credentials. |
+| `GET /api/auth/session` | Protected route access and auth-expired behavior. |
+| `POST /api/auth/logout` | Session revoked and dashboard hidden. |
+| `POST /api/auth/totp/enroll` | Reserved for future PlatformApp hardening; not required by current release login. |
+| `GET /api/platform/tenants` | List/health filters, partial health, no runtime leakage. |
+| `GET /api/platform/tenants/{tenantId}` | Detail visibility and not-found/hidden behavior. |
+| `PATCH /api/platform/tenants/{tenantId}/profile` | GSM/sector/capacity/address update, immutable identity rejection. |
+| `POST /api/platform/tenants` | Create tenant idempotency, required fields, duplicate subdomain, provisioning result. |
+| `GET /api/platform/tenants/{tenantId}/provisioning` | Safe provisioning state and failure summary. |
+| `GET /api/platform/tenants/{tenantId}/provisioning/recovery-summary` | Safe recovery summary only. |
+| `POST /api/platform/tenants/{tenantId}/provisioning/retry` | Retry allowed state, no starter rerun, stale/failure cases. |
+| `GET /api/platform/sectors` | Supported sector options. |
+| `GET /api/platform/sectors/{sector}/starter-template` | Starter preview only; no template mutation. |
+| `GET /api/platform/tenants/{tenantId}/starter-template-application` | Starter application state. |
+| `POST /api/platform/tenants/{tenantId}/dns-ready` | Manual DNS flag update and audit expectation. |
+| `POST /api/platform/tenants/{tenantId}/status` | Suspend/reactivate with reason and lifecycle validation. |
+| `GET /api/platform/tenants/{tenantId}/lifecycle-events` | Selected tenant lifecycle timeline without runtime detail leakage. |
+| `GET /api/platform/audit-events` | Redacted platform audit events only. |
+| `GET /api/platform/side-effects/failed` | Recovery visibility only; no raw provider payloads. |
 
 ## Security and Abuse Coverage
 

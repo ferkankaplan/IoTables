@@ -9,13 +9,13 @@ Preparation owns station queues and preparation status transitions.
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/station-staff/queue` | StationStaffApp | `preparation.list_station_queue` | StationStaff session | Query: `stationId`, `status?`, `cursor`, `limit` | `PreparationQueue` | `outside_station_scope`, `missing_role` |
-| `GET` | `/api/v1/station-staff/recent-items` | StationStaffApp | `preparation.list_station_recent_items` | StationStaff session | Query: `stationId`, `cursor`, `limit` | `StationRecentItemList` | `outside_station_scope`, `missing_role` |
-| `GET` | `/api/v1/station-staff/workload` | StationStaffApp | `preparation.get_station_workload` | StationStaff session | Query: `stationId` | `StationWorkload` | `outside_station_scope` |
-| `POST` | `/api/v1/station-staff/preparation-items/{preparationItemId}/start` | StationStaffApp | `preparation.start_preparing` | StationStaff session + CSRF | Path: `preparationItemId` | `PreparationItem` | `invalid_preparation_transition`, `outside_station_scope` |
-| `POST` | `/api/v1/station-staff/preparation-items/{preparationItemId}/mark-ready` | StationStaffApp | `preparation.mark_ready` | StationStaff session + CSRF | Path: `preparationItemId` | `PreparationItem` | `invalid_preparation_transition`, `outside_station_scope` |
-| `POST` | `/api/v1/station-staff/preparation-items/{preparationItemId}/cannot-prepare` | StationStaffApp | `preparation.report_cannot_prepare` | StationStaff session + CSRF | Body: `reason` | `PreparationItem` | `reason_required`, `invalid_preparation_transition`, `outside_station_scope` |
-| `GET` | `/api/v1/cashier/order-items/{orderItemId}/preparation` | CashierApp | `preparation.read_preparation_state` | Cashier session | Path: `orderItemId` | `PreparationState` | `missing_role`, `not_found_or_hidden` |
+| `GET` | `/api/station-staff/queue` | StationStaffApp | `preparation.list_station_queue` | StationStaff session | Query: `stationId`, `status?`, `cursor`, `limit` | `PreparationQueue` | `outside_station_scope`, `missing_role` |
+| `GET` | `/api/station-staff/recent-items` | StationStaffApp | `preparation.list_station_recent_items` | StationStaff session | Query: `stationId`, `cursor`, `limit` | `StationRecentItemList` | `outside_station_scope`, `missing_role` |
+| `GET` | `/api/station-staff/workload` | StationStaffApp | `preparation.get_station_workload` | StationStaff session | Query: `stationId` | `StationWorkload` | `outside_station_scope` |
+| `POST` | `/api/station-staff/preparation-items/{preparationItemId}/start` | StationStaffApp | `preparation.start_preparing` | StationStaff session + CSRF | Path: `preparationItemId` | `PreparationItem` | `invalid_preparation_transition`, `outside_station_scope` |
+| `POST` | `/api/station-staff/preparation-items/{preparationItemId}/mark-ready` | StationStaffApp | `preparation.mark_ready` | StationStaff session + CSRF | Path: `preparationItemId` | `PreparationItem` | `invalid_preparation_transition`, `outside_station_scope` |
+| `POST` | `/api/station-staff/preparation-items/{preparationItemId}/cannot-prepare` | StationStaffApp | `preparation.report_cannot_prepare` | StationStaff session + CSRF | Body: `reason` | `PreparationItem` | `reason_required`, `invalid_preparation_transition`, `outside_station_scope` |
+| `GET` | `/api/cashier/order-items/{orderItemId}/preparation` | CashierApp | `preparation.read_preparation_state` | Cashier session | Path: `orderItemId` | `PreparationState` | `missing_role`, `not_found_or_hidden` |
 
 ## Internal-Only Contracts
 

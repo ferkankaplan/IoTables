@@ -9,9 +9,9 @@ Table Presence owns short-lived QR token issuance, one-time redemption, and fres
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/table-display/qr-token` | ESP32 display | `table_presence.issue_current_qr_token` | `Authorization: DisplayCredential ...` | none | `QrTokenPayload` | `display_not_authenticated`, `credential_revoked`, `wrong_table_or_tenant` |
-| `POST` | `/api/v1/customer/table-presence/redeem` | CustomerApp | `table_presence.redeem_token` | Raw QR token + optional customer session cookie | Body: `qrToken` | `PresenceRedeemResult` | `token_expired`, `token_consumed`, `tenant_unavailable` |
-| `GET` | `/api/v1/customer/table-presence` | CustomerApp | `table_presence.get_presence_state` | Customer session cookie | none | `PresenceState` | `session_expired`, `fresh_presence_required` |
+| `GET` | `/api/table-display/qr-token` | ESP32 display | `table_presence.issue_current_qr_token` | `Authorization: DisplayCredential ...` | none | `QrTokenPayload` | `display_not_authenticated`, `credential_revoked`, `wrong_table_or_tenant` |
+| `POST` | `/api/customer/table-presence/redeem` | CustomerApp | `table_presence.redeem_token` | Raw QR token + optional customer session cookie | Body: `qrToken` | `PresenceRedeemResult` | `token_expired`, `token_consumed`, `tenant_unavailable` |
+| `GET` | `/api/customer/table-presence` | CustomerApp | `table_presence.get_presence_state` | Customer session cookie | none | `PresenceState` | `session_expired`, `fresh_presence_required` |
 
 ## Internal-Only Contracts
 

@@ -27,7 +27,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 - QR token generation.
 - Menu/product definitions.
 - Tenant creation orchestration, owned by Provisioning.
-- DNS record creation, which is manual in v1.
+- DNS record creation, which is manual in the current release.
 
 ## Users and App Access
 
@@ -58,9 +58,9 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 - Tenants become `active` only after required setup records commit successfully.
 - `provisioning_failed` tenants require explicit recovery or deletion tooling.
 - Suspended tenants must block tenant runtime actions.
-- Manual DNS setup is tracked as readiness metadata; v1 does not automate DNS.
-- V1 tenant health is limited to lifecycle state, setup/provisioning state, starter template state, tenant admin bootstrap state, manual DNS readiness, and platform-visible runtime error summary when available.
-- Platform support actions in v1 are limited to tenant metadata inspection, platform audit inspection, suspend/reactivate, tenant GSM update, DNS readiness update, and failed-provisioning recovery tooling. PlatformApp does not directly rewrite tenant runtime records.
+- Manual DNS setup is tracked as readiness metadata; current release does not automate DNS.
+- Current release tenant health is limited to lifecycle state, setup/provisioning state, starter template state, tenant admin bootstrap state, manual DNS readiness, and platform-visible runtime error summary when available.
+- Platform support actions in the current release are limited to tenant metadata inspection, platform audit inspection, suspend/reactivate, tenant GSM update, DNS readiness update, and failed-provisioning recovery tooling. PlatformApp does not directly rewrite tenant runtime records.
 
 ## Operational Safety
 
@@ -68,7 +68,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 - Tenant subdomain uniqueness must be enforced in the database.
 - Tenant creation orchestration and rollback/recovery behavior are owned by Provisioning.
 - Tenant status changes must be audited.
-- Manual DNS is outside the app; PlatformApp must not claim DNS automation in v1.
+- Manual DNS is outside the app; PlatformApp must not claim DNS automation in the current release.
 
 ## Data Model
 

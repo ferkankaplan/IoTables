@@ -1,6 +1,6 @@
 # CustomerApp End-to-End Role
 
-This document extracts the parts of the shared v1 end-to-end flow where this app participates.
+This document extracts the parts of the shared current release end-to-end flow where this app participates.
 
 See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-end-to-end.md).
 
@@ -39,7 +39,7 @@ Acceptance criteria:
 - Failed order submission preserves the cart.
 - No partial order appears in station, service, cashier, or customer history.
 - Frontend prices and totals are informational only.
-- V1 has no separate customer price-confirmation step.
+- The current release has no separate customer price-confirmation step.
 - CustomerApp cannot modify or cancel submitted orders.
 
 ### 8. Customer Views Orders and Bill

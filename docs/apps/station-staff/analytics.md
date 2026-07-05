@@ -24,7 +24,7 @@ Source context:
 
 Station queue state and transitions remain owned by Preparation.
 
-## V1 Metrics
+## Current Release Metrics
 
 | Metric | Source | Notes |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ StationStaffApp analytics must not show:
 - If metrics and queue state disagree, Preparation queue state wins.
 - Metrics must refresh after start/ready/cannot-prepare actions.
 
-## V1 Out of Scope
+## Current Release Out of Scope
 
 - Staff performance ranking.
 - Payroll/productivity reports.

@@ -24,7 +24,7 @@ Source context:
 
 BillSummary and Payment records remain the financial source of truth. Analytics must not become a ledger.
 
-## V1 Metrics
+## Current Release Metrics
 
 | Metric | Source | Notes |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ BillSummary and Payment records remain the financial source of truth. Analytics 
 | Session Detail | Server-calculated totals and correction/payment indicators. |
 | Payment History | Current business-day payment totals and filters. |
 
-Cashier analytics should stay inside existing settlement surfaces. A broad reporting workspace is out of v1.
+Cashier analytics should stay inside existing settlement surfaces. A broad reporting workspace is out of the current release.
 
 ## Data Boundaries
 
@@ -76,7 +76,7 @@ CashierApp analytics must not show:
 - If analytics and Payment records disagree, Payment records win.
 - Analytics failure must not block payment/correction/close flows when authoritative reads are healthy.
 
-## V1 Out of Scope
+## Current Release Out of Scope
 
 - Full accounting reports.
 - Fiscal/e-Adisyon/ÖKC documents.

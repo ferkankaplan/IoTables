@@ -9,14 +9,14 @@ Customer Ordering owns anonymous customer sessions, carts, order submission, ord
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/customer/cart` | CustomerApp | `customer_ordering.get_cart` | Customer session cookie | none | `Cart` | `session_expired` |
-| `POST` | `/api/v1/customer/cart/items` | CustomerApp | `customer_ordering.add_or_update_cart_item` | Customer session cookie + CSRF | Body: `CartItemWriteRequest` | `Cart` | `item_not_orderable`, `variant_invalid`, `station_unavailable` |
-| `POST` | `/api/v1/customer/cart/items/{clientCartItemId}/remove` | CustomerApp | `customer_ordering.remove_cart_item` | Customer session cookie + CSRF | Path: `clientCartItemId` | `Cart` | `session_expired` |
-| `POST` | `/api/v1/customer/cart/abandon` | CustomerApp | `customer_ordering.abandon_cart` | Customer session cookie + CSRF | none | `CartAbandonedResult` | `session_expired` |
-| `POST` | `/api/v1/customer/orders` | CustomerApp | `customer_ordering.submit_order` | Customer session cookie + CSRF + `Idempotency-Key` | Body: `SubmitOrderRequest` | `SubmittedOrderResult` | `fresh_presence_required`, `empty_cart`, `cart_changed_conflict`, `item_not_orderable`, `closed_table_session` |
-| `GET` | `/api/v1/customer/orders/my` | CustomerApp | `customer_ordering.list_my_orders` | Customer session cookie | none | `CustomerOrderList` | `session_expired` |
-| `GET` | `/api/v1/customer/table-orders` | CustomerApp | `customer_ordering.list_table_orders` | Customer session cookie + fresh presence | Optional query: `tableSessionId` only if it matches the fresh table context | `CustomerOrderList` | `fresh_presence_required` |
-| `GET` | `/api/v1/cashier/table-sessions/{tableSessionId}/orders` | CashierApp | `customer_ordering.list_table_orders` | Cashier session | Path: `tableSessionId` | `CashierOrderList` | `missing_role`, `not_found_or_hidden` |
+| `GET` | `/api/customer/cart` | CustomerApp | `customer_ordering.get_cart` | Customer session cookie | none | `Cart` | `session_expired` |
+| `POST` | `/api/customer/cart/items` | CustomerApp | `customer_ordering.add_or_update_cart_item` | Customer session cookie + CSRF | Body: `CartItemWriteRequest` | `Cart` | `item_not_orderable`, `variant_invalid`, `station_unavailable` |
+| `POST` | `/api/customer/cart/items/{clientCartItemId}/remove` | CustomerApp | `customer_ordering.remove_cart_item` | Customer session cookie + CSRF | Path: `clientCartItemId` | `Cart` | `session_expired` |
+| `POST` | `/api/customer/cart/abandon` | CustomerApp | `customer_ordering.abandon_cart` | Customer session cookie + CSRF | none | `CartAbandonedResult` | `session_expired` |
+| `POST` | `/api/customer/orders` | CustomerApp | `customer_ordering.submit_order` | Customer session cookie + CSRF + `Idempotency-Key` | Body: `SubmitOrderRequest` | `SubmittedOrderResult` | `fresh_presence_required`, `empty_cart`, `cart_changed_conflict`, `item_not_orderable`, `closed_table_session` |
+| `GET` | `/api/customer/orders/my` | CustomerApp | `customer_ordering.list_my_orders` | Customer session cookie | none | `CustomerOrderList` | `session_expired` |
+| `GET` | `/api/customer/table-orders` | CustomerApp | `customer_ordering.list_table_orders` | Customer session cookie + fresh presence | Optional query: `tableSessionId` only if it matches the fresh table context | `CustomerOrderList` | `fresh_presence_required` |
+| `GET` | `/api/cashier/table-sessions/{tableSessionId}/orders` | CashierApp | `customer_ordering.list_table_orders` | Cashier session | Path: `tableSessionId` | `CashierOrderList` | `missing_role`, `not_found_or_hidden` |
 
 ## Internal-Only Contracts
 
@@ -66,6 +66,6 @@ The `Idempotency-Key` header is required for submit. The API layer computes the 
 
 ## Idempotency
 
-`POST /api/v1/customer/orders` requires `Idempotency-Key`.
+`POST /api/customer/orders` requires `Idempotency-Key`.
 
 Scope the key by `tenantId + customerOrderingSessionId + route + idempotencyKey`. Same key and same request returns the original order result. Same key and different request returns `409 idempotency_conflict`.

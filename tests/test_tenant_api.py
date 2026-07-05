@@ -93,7 +93,7 @@ def test_tenant_context_resolves_from_local_tenant_header() -> None:
     service = FakeTenantRegistryQueryService()
     client = make_client(service=service)
 
-    response = client.get("/api/v1/tenant/context", headers={"X-Tenant-Subdomain": "demo-cafe"})
+    response = client.get("/api/tenant/context", headers={"X-Tenant-Subdomain": "demo-cafe"})
 
     assert response.status_code == 200
     assert response.json()["tenantId"] == str(TENANT_ID)
@@ -104,7 +104,7 @@ def test_tenant_context_resolves_from_local_tenant_header() -> None:
 def test_tenant_profile_requires_session() -> None:
     client = make_client(actor=None, service=FakeTenantRegistryQueryService())
 
-    response = client.get("/api/v1/tenant/profile")
+    response = client.get("/api/tenant/profile")
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "unauthenticated"
@@ -116,7 +116,7 @@ def test_tenant_profile_rejects_non_tenant_admin_role() -> None:
         service=FakeTenantRegistryQueryService(),
     )
 
-    response = client.get("/api/v1/tenant/profile")
+    response = client.get("/api/tenant/profile")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "not_authorized"
@@ -126,7 +126,7 @@ def test_tenant_profile_uses_actor_tenant_scope() -> None:
     service = FakeTenantRegistryQueryService()
     client = make_client(actor=make_actor(), service=service)
 
-    response = client.get("/api/v1/tenant/profile")
+    response = client.get("/api/tenant/profile")
 
     assert response.status_code == 200
     assert response.json()["tenantId"] == str(TENANT_ID)

@@ -1,8 +1,8 @@
 # StationStaffApp Acceptance Criteria
-StationStaffApp is accepted for v1 when:
+StationStaffApp is accepted for the current release when:
 
 - station staff must log in and change bootstrap password on first login;
-- OTP is not required for station staff in v1;
+- OTP is not required for station staff in the current release;
 - one authorized station opens directly;
 - multiple authorized stations require station selection;
 - unauthorized stations are not visible or mutable;

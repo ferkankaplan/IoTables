@@ -128,7 +128,7 @@ Not
 | Last payment time | `Son ödeme zamanı` |
 | Payment updated | `Hesap özeti güncellendi.` |
 
-Bill copy must stay read-only. Do not show words such as `öde`, `ödeme yap`, `kapat`, `indirim iste`, `iptal et`, or `iade iste` as CustomerApp actions in v1.
+Bill copy must stay read-only. Do not show words such as `öde`, `ödeme yap`, `kapat`, `indirim iste`, `iptal et`, or `iade iste` as CustomerApp actions in the current release.
 
 ## Error Copy Mapping
 
@@ -170,9 +170,9 @@ Do not show these terms in CustomerApp UI:
 - `station route`
 - `payment mutation`
 
-## Forbidden V1 Action Copy
+## Forbidden Current Release Action Copy
 
-These labels must not appear as CustomerApp actions in v1:
+These labels must not appear as CustomerApp actions in the current release:
 
 - `Ödeme yap`
 - `Kartla öde`
@@ -193,4 +193,4 @@ CustomerApp copy is acceptable when:
 - submit failures state that the cart is preserved when it is preserved;
 - order success appears only after backend acceptance or idempotent replay;
 - bill text is read-only;
-- no v1 out-of-scope action is visible.
+- no current release out-of-scope action is visible.

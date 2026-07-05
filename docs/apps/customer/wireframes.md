@@ -315,9 +315,9 @@ Never show:
 - payment mutation controls;
 - stack traces or API internals.
 
-## V1 Out-of-Scope UI
+## Current Release Out-of-Scope UI
 
-The following UI must not appear in CustomerApp v1:
+The following UI must not appear in CustomerApp the current release:
 
 - pay-at-table;
 - payment provider checkout;
@@ -339,4 +339,4 @@ This wireframe package is valid when:
 - every mutating customer action has pending and failure behavior;
 - duplicate submit shows the original accepted result;
 - cart-preserving fresh QR verification is visible;
-- no forbidden v1 control appears.
+- no forbidden current release control appears.

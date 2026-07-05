@@ -47,17 +47,17 @@ It connects station readiness to the customer-visible `Teslim edildi` state.
 
 - `ready` is produced by Preparation.
 - `picked_up` is optional.
-- Valid v1 flows: `PreparationItem.ready -> delivered` and `PreparationItem.ready -> picked_up -> delivered`.
+- Valid current release flows: `PreparationItem.ready -> delivered` and `PreparationItem.ready -> picked_up -> delivered`.
 - Service Delivery does not store a `ready` DeliveryState row; ready items are derived from PreparationItem.
 - When service delivery tracking is enabled, `delivered` is the only Service Delivery state mapped to `Teslim edildi` in CustomerApp.
 - Service staff can only operate authorized halls.
 - Service Delivery is enabled by default for the initial cafe starter template.
 - Tenant Admin may disable service delivery tracking.
 - When disabled, ServiceStaffApp routes and delivery mutation commands are unavailable, DeliveryState rows are not created, and `PreparationItem.ready` is the final tracked fulfillment state.
-- V1 service queue groups items by table and sorts oldest ready item first inside each table group.
+- Current release service queue groups items by table and sorts oldest ready item first inside each table group.
 - Service staff may bulk-mark selected items delivered only for the same table.
 - Bulk delivery uses one idempotency key, one actor, and server-side validation for every selected item.
-- Minimum v1 service metrics are ready count, picked-up count, oldest ready item age, delivered count for the current business day, and average ready-to-delivered time when enough data exists.
+- Minimum current release service metrics are ready count, picked-up count, oldest ready item age, delivered count for the current business day, and average ready-to-delivered time when enough data exists.
 
 ## Operational Safety
 

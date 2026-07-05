@@ -12,7 +12,7 @@ Source module: [identity-access.md](identity-access.md)
 | `identity_access.begin_first_password_setup` | TenantApp, CashierApp, staff apps | userId/setup token | Bootstrap credential required; tenant admin and cashier require OTP; station/service staff do not | Create/send OTP challenge when required; otherwise return password setup state | Setup state and OTP challenge state when required |
 | `identity_access.complete_first_password_setup` | TenantApp, CashierApp, staff apps | userId/session setup token, new password, OTP proof when required | Bootstrap credential required; OTP required for tenant admin and cashier only; password policy | Lock user credential; replace password hash; clear bootstrap flag; audit | Active credential and app-appropriate login state |
 | `identity_access.change_password` | Authenticated user | current password, new password | Active user; current password valid | Lock credential; update password hash; audit | Password changed |
-| `identity_access.enroll_totp` | PlatformApp | platform owner user, TOTP secret proof | Reserved for future PlatformApp hardening; not required before dashboard access in v1 | Store encrypted TOTP secret; audit | Enabled TOTP factor |
+| `identity_access.enroll_totp` | PlatformApp | platform owner user, TOTP secret proof | Reserved for future PlatformApp hardening; not required before dashboard access in the current release | Store encrypted TOTP secret; audit | Enabled TOTP factor |
 | `identity_access.logout_or_revoke_session` | Any authenticated app, admin recovery | sessionId or userId/session filter | User owns session or admin recovery is authorized | Set `revoked_at`; no deletion of session metadata | Revoked session |
 | `identity_access.disable_user` | TenantApp, Platform recovery | userId, reason | Tenant Admin own tenant or Platform recovery; cannot disable only active Platform Owner without replacement/recovery rule | Lock user; set disabled; revoke sessions; audit | Disabled user |
 
@@ -40,7 +40,7 @@ Source module: [identity-access.md](identity-access.md)
 | `user.created` | User is created | Audit, Staff Access |
 | `user.disabled` | User is disabled | Staff Access, session guards |
 | `password.changed` | Password changes | Audit |
-| `platform_owner.totp_enrolled` | Future TOTP support is enabled | Audit only in v1 |
+| `platform_owner.totp_enrolled` | Future TOTP support is enabled | Audit only in the current release |
 
 ## Failure Outcomes
 
@@ -49,5 +49,5 @@ Source module: [identity-access.md](identity-access.md)
 | `invalid_credentials` | Username/password/factor validation failed. |
 | `first_password_change_required` | User cannot enter normal app until setup completes. |
 | `otp_required` | Sensitive first-password setup needs OTP proof. |
-| `totp_required` | Reserved for future PlatformApp hardening; not emitted by v1 PlatformApp login. |
+| `totp_required` | Reserved for future PlatformApp hardening; not emitted by current release PlatformApp login. |
 | `wrong_app_scope` | User/session is valid but not for this app. |

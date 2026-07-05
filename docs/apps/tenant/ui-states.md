@@ -32,7 +32,7 @@
 | Table has active TableSession | Block normal disable/delete; require explicit recovery workflow if later added |
 | Product has no station | Product cannot be orderable |
 | Product assigned to disabled station | Product cannot remain orderable |
-| Product has more than one station | Reject in v1 |
+| Product has more than one station | Reject in the current release |
 | Service tracking disabled | Hide ServiceStaffApp controls and explain ready-as-final operational mode |
 | Staff user lacks scope | Show no operational scope warning for affected app role |
 

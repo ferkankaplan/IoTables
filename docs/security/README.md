@@ -1,6 +1,6 @@
 # Security Documentation
 
-This directory defines v1 security requirements that cut across apps, modules, API standards, database transactions, and operations.
+This directory defines current release security requirements that cut across apps, modules, API standards, database transactions, and operations.
 
 Security documents do not replace module ownership. They summarize threats, required controls, and verification expectations across the existing semantic sources.
 

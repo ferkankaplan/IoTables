@@ -32,7 +32,7 @@ If an endpoint needs behavior missing from app or module documents, update those
 V1 APIs use:
 
 ```text
-/api/v1
+/api
 ```
 
 Breaking API changes require either:
@@ -49,17 +49,17 @@ Do not create versioned behavior through hidden request flags.
 | `GET` | Queries only. Must not mutate business state. |
 | `POST` | Commands that create records, trigger transitions, submit orders, record payments, verify OTP, or perform action-style workflows. |
 | `PATCH` | Partial update of editable resource fields where the resource remains the same concept. |
-| `DELETE` | Avoid for v1 business records. Use disable, revoke, close, void, abandon, or correction commands instead. |
+| `DELETE` | Avoid for the current release business records. Use disable, revoke, close, void, abandon, or correction commands instead. |
 
 Action-style domain transitions should be explicit commands, not hidden `PATCH` side effects.
 
 Examples:
 
 ```text
-POST /api/v1/station-staff/preparation-items/{preparationItemId}/start
-POST /api/v1/station-staff/preparation-items/{preparationItemId}/mark-ready
-POST /api/v1/cashier/checks/{checkId}/payments
-POST /api/v1/cashier/table-sessions/{tableSessionId}/close
+POST /api/station-staff/preparation-items/{preparationItemId}/start
+POST /api/station-staff/preparation-items/{preparationItemId}/mark-ready
+POST /api/cashier/checks/{checkId}/payments
+POST /api/cashier/table-sessions/{tableSessionId}/close
 ```
 
 Endpoint-specific contracts define the authoritative route, actor, authentication, request, response, and failure-code details.

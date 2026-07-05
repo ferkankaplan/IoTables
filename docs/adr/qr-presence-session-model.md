@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted for v1.
+Accepted for the current release.
 
 ## Context
 
-CustomerApp needs anonymous customers to prove they are physically at a table before submitting orders or reading table-level order and bill state. Each table has an ESP32 display that shows a short-lived, one-time QR token. The ESP32 is a display surface, not a full device-management domain in v1.
+CustomerApp needs anonymous customers to prove they are physically at a table before submitting orders or reading table-level order and bill state. Each table has an ESP32 display that shows a short-lived, one-time QR token. The ESP32 is a display surface, not a full device-management domain in the current release.
 
 The model separates four concepts:
 
@@ -25,7 +25,7 @@ Sources:
 
 ## Decision
 
-V1 keeps table display provisioning, QR presence, customer ordering continuity, and table billing as separate concepts.
+The current release keeps table display provisioning, QR presence, customer ordering continuity, and table billing as separate concepts.
 
 Rules:
 
@@ -68,4 +68,4 @@ Rules:
 
 ## Review Trigger
 
-Review this ADR only if v1 adds real device inventory, firmware lifecycle, health monitoring, or non-table display devices. Exceptional display replacement does not change this model.
+Review this ADR only if current release adds real device inventory, firmware lifecycle, health monitoring, or non-table display devices. Exceptional display replacement does not change this model.

@@ -23,9 +23,9 @@ Source context:
 | Authority | Never authorizes hall scope or delivery transitions. | Evidence only. |
 | Detail | Counts, age, duration, same-day delivery activity. | Actor/action/target/timestamp. |
 
-Service tracking disabled means ServiceStaffApp has no active delivery analytics surface in v1.
+Service tracking disabled means ServiceStaffApp has no active delivery analytics surface in the current release.
 
-## V1 Metrics
+## Current Release Metrics
 
 | Metric | Source | Notes |
 | --- | --- | --- |
@@ -73,7 +73,7 @@ ServiceStaffApp analytics must not show:
 - If analytics and queue state disagree, Service Delivery/Preparation state wins.
 - Metrics must refresh after single-item or bulk delivery actions.
 
-## V1 Out of Scope
+## Current Release Out of Scope
 
 - Staff performance ranking.
 - Payroll/productivity reports.

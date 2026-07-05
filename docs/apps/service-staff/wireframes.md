@@ -46,7 +46,7 @@ Required states:
 | No service role | Block app access. |
 | Tenant unavailable/suspended | Block service access. |
 
-Service staff first-password change does not require OTP in v1.
+Service staff first-password change does not require OTP in the current release.
 
 ## Service Tracking Disabled
 
@@ -214,9 +214,9 @@ Never show:
 - raw internal IDs as authority;
 - stack traces or provider payloads.
 
-## V1 Out-of-Scope UI
+## Current Release Out-of-Scope UI
 
-The following UI must not appear in ServiceStaffApp v1:
+The following UI must not appear in ServiceStaffApp the current release:
 
 - create/edit halls, tables, stations, products, prices, categories, staff, or tenant settings;
 - create customer order;
@@ -237,4 +237,4 @@ This wireframe package is valid when:
 - hall scope is visible but not trusted to frontend state;
 - bulk delivery is same-table, all-or-nothing, and idempotent;
 - single-item transitions are duplicate-safe;
-- no forbidden v1 control appears.
+- no forbidden current release control appears.

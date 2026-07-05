@@ -45,7 +45,7 @@ It groups all accepted orders for a table until CashierApp closes the session. I
 | Get active table session | Attach/read current table session | CustomerApp, CashierApp, Customer Ordering |
 | Open session/check if needed | First accepted order creates session and single Check | Customer Ordering |
 | Get bill summary | Show totals and balance | CustomerApp, CashierApp |
-| Record cashier correction | Apply narrow v1 correction with reason | CashierApp |
+| Record cashier correction | Apply narrow current release correction with reason | CashierApp |
 | Close session | End table session after settlement | CashierApp |
 
 ## Internal Rules
@@ -53,24 +53,24 @@ It groups all accepted orders for a table until CashierApp closes the session. I
 - TableSession is table-based, not customer-based.
 - One active TableSession may exist per tenant/table.
 - First accepted order opens a TableSession and one Check when none exists.
-- V1 has exactly one Check per TableSession.
-- Split checks, merged checks, moving items between checks, and item/person-based payment splitting are out of v1.
+- The current release has exactly one Check per TableSession.
+- Split checks, merged checks, moving items between checks, and item/person-based payment splitting are out of the current release.
 - Closed TableSession cannot accept new orders or payments except explicit recovery.
 - CustomerApp can read bill summary but cannot settle, discount, or close.
 - CashierApp performs settlement and closure.
-- Menu prices are VAT/tax-inclusive operational prices in v1.
-- Separate tax calculation, manual discounts, service fees, campaigns, customer price confirmation, customer payments, and fiscal receipt issuance are out of v1.
+- Menu prices are VAT/tax-inclusive operational prices in the current release.
+- Separate tax calculation, manual discounts, service fees, campaigns, customer price confirmation, customer payments, and fiscal receipt issuance are out of the current release.
 - PriceAdjustment exists for explicit correction/future pricing structure; it must not become broad discount power.
-- V1 cashier corrections are limited to note-only correction, item void while preparation is `pending` or `cannot_prepare` before any Check payment, and non-provider payment void on an open Check.
+- Current release cashier corrections are limited to note-only correction, item void while preparation is `pending` or `cannot_prepare` before any Check payment, and non-provider payment void on an open Check.
 
 ## Operational Safety
 
 - Active TableSession creation must be concurrency-safe.
 - Database must enforce one active session per tenant/table.
-- Database must enforce one Check per TableSession in v1.
+- Database must enforce one Check per TableSession in the current release.
 - Session closure must be idempotent.
 - Bill summary must be calculated server-side from order item price snapshots, corrections, and payment records.
-- Session must not close with remaining balance in v1.
+- Session must not close with remaining balance in the current release.
 - Correction commands must reserve idempotency, validate target state server-side, and write audit events in the same transaction.
 - Check and TableSession closure must be one transaction.
 
@@ -79,12 +79,12 @@ It groups all accepted orders for a table until CashierApp closes the session. I
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
 | TableSession | open -> closed | tenant, table, status, openedAt, closedAt | Only one active TableSession per tenant/table; closed sessions cannot accept normal orders/payments | Preserve permanently as visit history |
-| Check / Adisyon | open -> closed | tenant, tableSession, status, openedAt, closedAt | Exactly one Check per TableSession in v1; total is server-calculated from OrderItem snapshots, corrections/voids, adjustments, and payments | Preserve permanently as bill history |
-| PriceAdjustment | created | tenant, check, optional orderItem, type, amount, reason, createdBy, createdAt | V1 does not expose manual discounts/service fees/tax/campaigns; exists to keep future adjustment structure explicit | Append-only unless an explicit reversal model is introduced |
-| CashierCorrection | created | tenant, check, type, targetType, targetId, reason, cashier, createdAt | Reason required; v1 allows note, eligible item void, and eligible non-provider payment void only | Append-only; never rewrite correction history |
+| Check / Adisyon | open -> closed | tenant, tableSession, status, openedAt, closedAt | Exactly one Check per TableSession in the current release; total is server-calculated from OrderItem snapshots, corrections/voids, adjustments, and payments | Preserve permanently as bill history |
+| PriceAdjustment | created | tenant, check, optional orderItem, type, amount, reason, createdBy, createdAt | The current release does not expose manual discounts/service fees/tax/campaigns; exists to keep future adjustment structure explicit | Append-only unless an explicit reversal model is introduced |
+| CashierCorrection | created | tenant, check, type, targetType, targetId, reason, cashier, createdAt | Reason required; current release allows note, eligible item void, and eligible non-provider payment void only | Append-only; never rewrite correction history |
 | CashierCorrectionIdempotency | processing -> completed / failed | tenant, check, idempotencyKey, requestHash, cashierCorrectionId, status, completedAt | Unique by tenant + check + idempotencyKey; same key/request returns original correction result | Retain with operational audit window for correction replay and investigation |
 | BillSummary | calculated/read model | check, total, paid, remaining | Server-calculated only; CustomerApp can read with fresh presence but cannot mutate | Rebuildable from billable records |
-| SessionClosure | created at close | tableSession, check, cashier, closedAt, reason when needed | Close requires zero remaining balance in v1 and current-state validation | Preserve as part of session/check history |
+| SessionClosure | created at close | tableSession, check, cashier, closedAt, reason when needed | Close requires zero remaining balance in the current release and current-state validation | Preserve as part of session/check history |
 
 ## App Surfaces
 

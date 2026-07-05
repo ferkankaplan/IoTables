@@ -10,7 +10,7 @@ This checklist is a human work queue only. It is not a semantic source and is ex
 | --- | --- |
 | Main tasks remaining | 8 |
 | Current task | Migration and DB integrity audit |
-| Next task | Runtime gap closure for documented v1 endpoints |
+| Next task | Runtime gap closure for documented current release endpoints |
 
 ## Work Queue
 
@@ -20,7 +20,7 @@ This checklist is a human work queue only. It is not a semantic source and is ex
   - [ ] Verify local `pnpm run db:migrate` and `pnpm run db:current`.
   - [ ] Document any migration rollback policy gaps.
 
-- [ ] Runtime gap closure for documented v1 endpoints.
+- [ ] Runtime gap closure for documented current release endpoints.
   - [ ] Review documented endpoints against implemented routers.
   - [ ] Implement or explicitly defer Cashier correction note/item-void endpoints.
   - [ ] Implement or explicitly defer cashier operational audit/history endpoints.

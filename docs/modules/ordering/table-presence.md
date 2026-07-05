@@ -43,14 +43,14 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 
 ## Internal Rules
 
-- QR token lifetime is 60 seconds in v1.
+- QR token lifetime is 60 seconds in the current release.
 - QR token is one-time use.
 - Token redemption is atomic.
 - Token must not expose trusted table IDs directly.
 - Redeeming a token refreshes an existing compatible CustomerOrderingSession when possible.
 - Fresh table presence is required for CustomerApp order submission and table-order/balance visibility.
-- Token rotation in v1 is poll-based: after redemption, the next ESP32 fetch returns a fresh token.
-- Push, SSE, or WebSocket display updates are out of scope for v1.
+- Token rotation in the current release is poll-based: after redemption, the next ESP32 fetch returns a fresh token.
+- Push, SSE, or WebSocket display updates are out of scope for the current release.
 
 ## Operational Safety
 

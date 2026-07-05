@@ -1,6 +1,6 @@
-# V1 End-to-End App Flow
+# Current Release End-to-End App Flow
 
-This document defines the expected v1 behavior across the six IoTables apps.
+This document defines the expected current release behavior across the six IoTables apps.
 
 It is the product behavior bridge between app docs and module/schema/API design. If a module, schema, or API conflicts with this flow, the app behavior wins unless the app docs are explicitly revised.
 
@@ -8,7 +8,7 @@ Detailed app-specific branch behavior lives in each app folder's `scenarios.md`.
 
 ## Scope
 
-V1 supports one restaurant/location per tenant and dine-in QR ordering only.
+The current release supports one restaurant/location per tenant and dine-in QR ordering only.
 
 Included apps:
 
@@ -19,7 +19,7 @@ Included apps:
 - ServiceStaffApp
 - CashierApp
 
-V1 excludes customer payment, waiter-entered orders, pickup/package/courier/phone/marketplace/counter-sale channels, fiscal/e-Adisyon/ÖKC document creation, hardware printer/cash drawer/payment terminal integrations, stock/recipe, multi-location, and offline-first POS.
+The current release excludes customer payment, waiter-entered orders, pickup/package/courier/phone/marketplace/counter-sale channels, fiscal/e-Adisyon/ÖKC document creation, hardware printer/cash drawer/payment terminal integrations, stock/recipe, multi-location, and offline-first POS.
 
 ## Main Happy Path
 
@@ -63,7 +63,7 @@ Acceptance criteria:
 Acceptance criteria:
 
 - Tables are managed inside hall context, not as a primary standalone page.
-- Each product/service routes to exactly one station in v1.
+- Each product/service routes to exactly one station in the current release.
 - Service delivery tracking is enabled by default for the cafe starter.
 - If service delivery tracking is disabled, ServiceStaffApp controls are hidden and `PreparationItem.ready` becomes the final tracked fulfillment state.
 - TenantApp cannot edit tenant name or subdomain.
@@ -81,7 +81,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- ESP32 is a table display surface, not a separate device inventory aggregate in v1.
+- ESP32 is a table display surface, not a separate device inventory aggregate in the current release.
 - Only one active display credential exists per tenant/table.
 - Re-provisioning revokes the previous active credential.
 - Raw display credentials are never embedded in customer QR payloads.
@@ -124,7 +124,7 @@ Acceptance criteria:
 - Failed order submission preserves the cart.
 - No partial order appears in station, service, cashier, or customer history.
 - Frontend prices and totals are informational only.
-- V1 has no separate customer price-confirmation step.
+- The current release has no separate customer price-confirmation step.
 - CustomerApp cannot modify or cancel submitted orders.
 
 ### 6. Station Staff Prepares Items
@@ -191,27 +191,27 @@ Acceptance criteria:
 4. Cashier opens a table session panel.
 5. Cashier receives partial or full payments against the single Check/Adisyon.
 6. Payments are amount-based only.
-7. Cashier may apply only allowed v1 corrections.
+7. Cashier may apply only allowed current release corrections.
 8. When remaining balance is zero, Cashier explicitly closes the TableSession.
 9. The table becomes available for a future session.
 
 Acceptance criteria:
 
-- V1 has exactly one Check/Adisyon per TableSession.
-- Split checks, merge checks, item/person-based split payment, item move, and customer payment are out of v1.
+- The current release has exactly one Check/Adisyon per TableSession.
+- Split checks, merge checks, item/person-based split payment, item move, and customer payment are out of the current release.
 - Payment creation and session closure are idempotent.
 - Session closure is explicit; zero balance alone does not silently close.
 - Closed sessions do not accept new orders, payments, or corrections except explicit recovery workflows.
 
 ## Allowed Cashier Corrections
 
-V1 allows:
+The current release allows:
 
 - internal cashier note on active TableSession/Check;
 - order item void only while preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the Check;
 - non-provider payment void only on an open Check.
 
-V1 does not allow:
+The current release does not allow:
 
 - manual order items;
 - manual discounts;
@@ -239,12 +239,12 @@ All corrections require cashier permission, reason, idempotency, server-side tar
 | Payment submit duplicated | Return original idempotent result |
 | Close session duplicated | Return already-closed result without mutation |
 
-## Done for V1 Behavior Definition
+## Done for Current Release Behavior Definition
 
 This flow is sufficiently defined for module, schema, and API design when:
 
 - every app action maps to exactly one owning context or explicit cross-context command;
 - every critical operation has idempotency and transaction expectations;
 - every customer/staff/cashier-visible state has a defined source;
-- every v1 exclusion is explicit;
+- every current release exclusion is explicit;
 - app docs and this flow do not conflict.

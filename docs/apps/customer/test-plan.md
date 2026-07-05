@@ -1,6 +1,6 @@
 # CustomerApp Test Plan
 
-This document defines CustomerApp-visible test coverage for v1. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
+This document defines CustomerApp-visible test coverage for the current release. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
 
 Source context:
 
@@ -131,19 +131,19 @@ CustomerApp executable tests must cover the app-visible behavior of these endpoi
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/v1/tenant/context` | Tenant active/unavailable display; no sensitive tenant internals. |
-| `GET /api/v1/customer/menu` | Only orderable customer-visible menu data; unavailable handling. |
-| `POST /api/v1/customer/table-presence/redeem` | Expired, consumed, wrong-table, concurrent, and success cases. |
-| `GET /api/v1/customer/table-presence` | Fresh and expired presence states. |
-| `GET /api/v1/customer/cart` | Own session only; empty and populated cart. |
-| `POST /api/v1/customer/cart/items` | Valid item, invalid variant/modifier, unavailable item, CSRF failure. |
-| `POST /api/v1/customer/cart/items/{clientCartItemId}/remove` | Own cart item removal and missing item behavior. |
-| `POST /api/v1/customer/orders` | Fresh presence, idempotency, duplicate replay, conflict, stale cart, rollback. |
-| `GET /api/v1/customer/orders/my` | Same CustomerOrderingSession scope only. |
-| `GET /api/v1/customer/table-orders` | Fresh presence required; active TableSession order visibility. |
-| `GET /api/v1/customer/table-session` | Fresh presence required; read-only active table state. |
-| `GET /api/v1/customer/table-session/bill-summary` | Server-calculated bill; no mutation fields. |
-| `GET /api/v1/customer/table-session/payment-summary` | Paid/remaining only; no payment mutation affordance. |
+| `GET /api/tenant/context` | Tenant active/unavailable display; no sensitive tenant internals. |
+| `GET /api/customer/menu` | Only orderable customer-visible menu data; unavailable handling. |
+| `POST /api/customer/table-presence/redeem` | Expired, consumed, wrong-table, concurrent, and success cases. |
+| `GET /api/customer/table-presence` | Fresh and expired presence states. |
+| `GET /api/customer/cart` | Own session only; empty and populated cart. |
+| `POST /api/customer/cart/items` | Valid item, invalid variant/modifier, unavailable item, CSRF failure. |
+| `POST /api/customer/cart/items/{clientCartItemId}/remove` | Own cart item removal and missing item behavior. |
+| `POST /api/customer/orders` | Fresh presence, idempotency, duplicate replay, conflict, stale cart, rollback. |
+| `GET /api/customer/orders/my` | Same CustomerOrderingSession scope only. |
+| `GET /api/customer/table-orders` | Fresh presence required; active TableSession order visibility. |
+| `GET /api/customer/table-session` | Fresh presence required; read-only active table state. |
+| `GET /api/customer/table-session/bill-summary` | Server-calculated bill; no mutation fields. |
+| `GET /api/customer/table-session/payment-summary` | Paid/remaining only; no payment mutation affordance. |
 
 ## Security and Abuse Coverage
 
@@ -179,7 +179,7 @@ Tests must assert that:
 - order accepted copy appears only after backend acceptance or accepted replay;
 - submit failure copy states cart preservation when applicable;
 - CustomerApp UI does not show forbidden technical terms from [copy.md](copy.md);
-- CustomerApp UI does not show forbidden v1 action labels.
+- CustomerApp UI does not show forbidden current release action labels.
 
 ## Forbidden Control Coverage
 

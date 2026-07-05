@@ -24,7 +24,7 @@ Source context:
 
 Platform analytics may reference audit counts, but it must not use audit records as the only source for current tenant state.
 
-## V1 Metrics
+## Current Release Metrics
 
 | Metric | Source | Notes |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ Platform analytics may reference audit counts, but it must not use audit records
 | Tenant List | Sort/filter by lifecycle, DNS readiness, provisioning state, health summary. |
 | Tenant Detail | Tenant-scoped lifecycle timeline summary and recovery state. |
 
-PlatformApp analytics must stay inside existing dashboard/list/detail surfaces. It must not create tenant runtime dashboards for orders, payments, stations, table sessions, or customer activity in v1.
+PlatformApp analytics must stay inside existing dashboard/list/detail surfaces. It must not create tenant runtime dashboards for orders, payments, stations, table sessions, or customer activity in the current release.
 
 ## Data Boundaries
 
@@ -75,7 +75,7 @@ PlatformApp analytics must not show:
 - Unknown/degraded health is an analytics/display state, not proof that tenant data is invalid.
 - If analytics and tenant registry state disagree, Tenant Registry wins.
 
-## V1 Out of Scope
+## Current Release Out of Scope
 
 - Cross-tenant sales reporting.
 - Tenant ranking or staff performance dashboards.

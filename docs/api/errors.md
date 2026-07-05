@@ -1,6 +1,6 @@
 # API Error Standards
 
-This document defines the v1 error envelope and HTTP status mapping.
+This document defines the current release error envelope and HTTP status mapping.
 
 Module contracts define domain failure names. API endpoints map those failures to HTTP status codes and this envelope.
 

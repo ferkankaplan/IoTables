@@ -1,6 +1,6 @@
 # PostgreSQL Indexes and Constraints
 
-This document defines the v1 PostgreSQL integrity layer for the schema in [schema.md](schema.md).
+This document defines the current release PostgreSQL integrity layer for the schema in [schema.md](schema.md).
 
 The rule is simple: if duplicate submits, stale permissions, wrong-tenant references, replayed QR tokens, or invalid payments can corrupt business state, the database must help prevent it. Frontend and backend guards are required, but they are not enough.
 
@@ -30,10 +30,10 @@ Use explicit names so Alembic migrations and production errors are readable.
 | Relationship Type | Delete Behavior |
 | --- | --- |
 | Historical business records to parent aggregate | `RESTRICT` / no delete |
-| Read models to owning tenant | `CASCADE` only if full tenant purge tooling exists; otherwise `RESTRICT` in v1 |
+| Read models to owning tenant | `CASCADE` only if full tenant purge tooling exists; otherwise `RESTRICT` in the current release |
 | Setup records referenced by history | `RESTRICT`; use `enabled = false` instead |
 | Append-only audit/outbox records | `RESTRICT` |
-| Cart/cart item records | `RESTRICT` in v1, retention purge can be introduced later |
+| Cart/cart item records | `RESTRICT` in the current release, retention purge can be introduced later |
 
 V1 should not implement tenant hard-delete. Tenant deletion is out of scope until retention and legal rules exist.
 
@@ -69,8 +69,8 @@ All tables in [schema.md](schema.md) use `uuid` primary keys except one-to-one t
 | `users` | unique `lower(username)` where `tenant_id is null` | Prevent duplicate platform usernames. |
 | `credentials` | primary key `user_id` | One credential record per user. |
 | `login_sessions` | unique `session_token_hash` | Prevent ambiguous session authentication. |
-| `platform_role_assignments` | unique `role` where `role = 'platform_owner' and status = 'active'` | Enforce single active Platform Owner in v1. |
-| `totp_factors` | primary key `user_id` | One active TOTP factor record per user in v1. |
+| `platform_role_assignments` | unique `role` where `role = 'platform_owner' and status = 'active'` | Enforce single active Platform Owner in the current release. |
+| `totp_factors` | primary key `user_id` | One active TOTP factor record per user in the current release. |
 | `staff_profiles` | primary key `user_id` | One staff profile per user. |
 | `staff_role_assignments` | unique `(tenant_id, user_id, role)` where `status = 'active'` | Prevent duplicate active role grant. |
 | `staff_station_assignments` | unique `(tenant_id, user_id, station_id)` where `status = 'active'` | Prevent duplicate active station assignment. |
@@ -116,7 +116,7 @@ Only one live unconsumed QR token per display should be enforced by the token is
 | `customer_cart_items` | unique `(tenant_id, cart_id, client_cart_item_id)` | Make cart item updates idempotent from the browser. |
 | `order_submit_idempotency` | unique `(tenant_id, customer_ordering_session_id, idempotency_key)` | Prevent duplicate order submit. |
 | `table_sessions` | unique `(tenant_id, table_id)` where `status = 'open'` | One active table session per table. |
-| `checks` | unique `table_session_id` | Exactly one Check/Adisyon per TableSession in v1. |
+| `checks` | unique `table_session_id` | Exactly one Check/Adisyon per TableSession in the current release. |
 | `session_closures` | unique `table_session_id` | Prevent duplicate close records. |
 | `preparation_items` | unique `(tenant_id, order_item_id)` | One station queue item per tenant order item. |
 | `delivery_states` | unique `(tenant_id, order_item_id)` | One delivery state per tenant order item. |
@@ -158,7 +158,7 @@ constraint ck_preparation_items__status
 | --- | --- | --- |
 | `tenants` | `capacity is null or capacity > 0` | Prevent invalid capacity values. |
 | `product_variants` | `price_minor >= 0` | Allow free items if explicitly configured, reject negative prices. |
-| `modifier_options` | `price_delta_minor >= 0` in v1 | Paid add-ons only in v1; negative discounts are out of scope. |
+| `modifier_options` | `price_delta_minor >= 0` in the current release | Paid add-ons only in the current release; negative discounts are out of scope. |
 | `customer_cart_items` | `quantity > 0` | Prevent invalid cart lines. |
 | `order_items` | `quantity > 0` | Prevent invalid billable lines. |
 | `payments` | `amount_minor > 0` | Prevent invalid payments. |
@@ -196,8 +196,8 @@ constraint ck_preparation_items__status
 | `cashier_corrections` | `reason <> ''` | Corrections always need a reason. |
 | `cashier_correction_idempotency` | completed rows require `cashier_correction_id` and `completed_at` | Prevent ambiguous correction replay results. |
 | `otp_challenges` | `verified_at is null or verified_at <= expires_at` | Prevent success after expiry. |
-| `otp_attempts` | `attempt_no between 1 and 5` | Enforce v1 verification attempt limit at the database boundary. |
-| `message_deliveries` | `delivery_no between 1 and 3` | Enforce v1 SMS send attempt limit at the database boundary. |
+| `otp_attempts` | `attempt_no between 1 and 5` | Enforce current release verification attempt limit at the database boundary. |
+| `message_deliveries` | `delivery_no between 1 and 3` | Enforce current release SMS send attempt limit at the database boundary. |
 | `message_deliveries` | queued rows have no completion/error; sent/failed rows require completion; failed rows require redacted error summary | Preserve provider delivery lifecycle without storing sensitive payloads. |
 | `outbox_messages` | claimed rows require `claimed_by`, `claimed_at`, and `claim_expires_at`; non-claimed rows clear claim lease fields | Preserve recoverable worker claim lifecycle. |
 | `outbox_messages` | `claim_expires_at is null or claim_expires_at > claimed_at` | Prevent immediately expired or invalid worker leases. |
@@ -385,8 +385,8 @@ These are database behavior requirements, not API suggestions.
 | Delivery transition | Lock `delivery_states` or create first state with unique `order_item_id`; validate hall scope before mutation. |
 | Bulk delivery | Reserve idempotency row, lock all target order/preparation/delivery rows in deterministic order, validate same table and hall scope, then transition all items atomically. |
 | Payment record | Reserve payment idempotency row, lock Check, compute remaining balance in transaction, reject overpayment. |
-| Payment void | Reserve payment-void idempotency row, lock Check then Payment, require open Check and non-provider v1 payment, write correction and void fields atomically. |
-| Cashier correction | Reserve correction idempotency row, lock Check and target record, validate v1 correction rules, write correction and target mutation atomically. |
+| Payment void | Reserve payment-void idempotency row, lock Check then Payment, require open Check and non-provider current release payment, write correction and void fields atomically. |
+| Cashier correction | Reserve correction idempotency row, lock Check and target record, validate current release correction rules, write correction and target mutation atomically. |
 | Session close | Lock TableSession and Check; recompute remaining balance in transaction; require zero balance. |
 | Outbox worker claim | Use row-level claim update or `select for update skip locked`; set a bounded claim lease; each attempt writes `external_effect_attempts`. |
 

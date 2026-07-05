@@ -19,7 +19,7 @@ Source context:
 - Components may show high-level health summaries, but they must not expose or mutate tenant runtime orders, payments, sessions, carts, preparation, or delivery state.
 - Components preserve tenant list context while opening creation, detail, settings, audit, and recovery surfaces.
 - Components must show pending, stale, blocked, and failure states for mutating actions.
-- Components must not provide DNS automation or starter-data rerun controls in v1.
+- Components must not provide DNS automation or starter-data rerun controls in the current release.
 
 ## Component Map
 
@@ -89,7 +89,7 @@ It does not own tenant runtime drill-downs.
 - optional sector, capacity, and address fields;
 - sector options loading;
 - starter template preview;
-- v1 scope notice;
+- current release scope notice;
 - create submit state;
 - idempotent replay result;
 - provisioning result summary;
@@ -159,7 +159,7 @@ Retry behavior:
 - pending state;
 - audited update expectation.
 
-It must not provide DNS provider credentials, DNS record creation, DNS verification automation, or automatic subdomain management in v1.
+It must not provide DNS provider credentials, DNS record creation, DNS verification automation, or automatic subdomain management in the current release.
 
 `TenantLifecycleDialog` owns:
 
@@ -214,4 +214,4 @@ The component model is acceptable when:
 - provisioning recovery does not duplicate create-tenant behavior;
 - DNS readiness is manual-only;
 - lifecycle actions require reason and backend acceptance;
-- forbidden v1 runtime controls cannot be reached from any component.
+- forbidden current release runtime controls cannot be reached from any component.

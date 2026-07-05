@@ -1,6 +1,6 @@
 # Transaction and Concurrency Catalog
 
-This document defines the v1 transaction, locking, idempotency, rollback, and concurrency behavior for critical IoTables flows.
+This document defines the current release transaction, locking, idempotency, rollback, and concurrency behavior for critical IoTables flows.
 
 It is downstream of:
 
@@ -53,7 +53,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | PlatformApp |
 | Owner modules | Provisioning, Tenant Registry, Identity and Access, Staff Access, Sector Starter Templates, Tenant Setup, Audit |
-| Public command/API | `provisioning.start_tenant`, `POST /api/v1/platform/tenants` |
+| Public command/API | `provisioning.start_tenant`, `POST /api/platform/tenants` |
 | Idempotency | Required. Store reservation/result in `tenant_provisioning_idempotency`; scope by platform actor + route + normalized tenant identity + idempotency key. |
 | Lock order | Phase 1 reserves tenant identity. Phase 2 locks `tenants`, then `starter_template_applications`, then creates owned records. |
 | Transaction boundary | Phase 1 short reservation transaction. Phase 2 one locked transaction for required records and starter data. Phase 3 separate failure-marking transaction when Phase 2 fails. |
@@ -67,8 +67,8 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | PlatformApp recovery tooling |
 | Owner modules | Provisioning, Sector Starter Templates, Tenant Registry |
-| Public command/API | `provisioning.retry_failed`, `POST /api/v1/platform/tenants/{tenantId}/provisioning/retry` |
-| Idempotency | State-guarded; no required `Idempotency-Key` in v1. |
+| Public command/API | `provisioning.retry_failed`, `POST /api/platform/tenants/{tenantId}/provisioning/retry` |
+| Idempotency | State-guarded; no required `Idempotency-Key` in the current release. |
 | Lock order | Lock `tenants`, then `starter_template_applications`. |
 | Transaction boundary | Retry only the incomplete phase while holding provisioning locks. |
 | Rollback | Failed retry leaves previous safe failure history and updates recovery state only in a separate failure transaction. |
@@ -81,7 +81,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | TenantApp setup surface, ESP32 setup flow |
 | Owner modules | Table Display Provisioning |
-| Public command/API | `table_display.consume_claim`, `POST /api/v1/table-displays/claims/consume` |
+| Public command/API | `table_display.consume_claim`, `POST /api/table-displays/claims/consume` |
 | Idempotency | One-time claim secret is the idempotency guard; no `Idempotency-Key`. |
 | Lock order | Atomic consume claim row; lock table credential rows; revoke previous active credential; insert new credential. |
 | Transaction boundary | Claim consume, previous credential revocation, new credential creation, and audit commit together. |
@@ -96,7 +96,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | Apps | TenantApp |
 | Owner modules | Table Display Provisioning |
 | Public command/API | `table_display.rotate_credential`, `table_display.revoke_credential` |
-| Idempotency | State-guarded and audited; no required `Idempotency-Key` in v1. |
+| Idempotency | State-guarded and audited; no required `Idempotency-Key` in the current release. |
 | Lock order | Lock tenant/table credential rows for the target table. |
 | Transaction boundary | Rotation revokes old active credential and inserts replacement in one transaction. Revocation marks credential revoked and writes audit in one transaction. |
 | Rollback | Failed rotation leaves the old credential active. Failed revocation leaves credential unchanged. |
@@ -109,7 +109,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | ESP32 table display |
 | Owner modules | Table Presence, Table Display Provisioning |
-| Public command/API | `table_presence.issue_current_qr_token`, `GET /api/v1/table-display/qr-token` |
+| Public command/API | `table_presence.issue_current_qr_token`, `GET /api/table-display/qr-token` |
 | Idempotency | State-guarded by display credential and active token lifecycle; no `Idempotency-Key`. |
 | Lock order | Authenticate credential, then lock display/table token issuance path. |
 | Transaction boundary | Create or return the current live unconsumed token under lock. |
@@ -123,7 +123,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | CustomerApp |
 | Owner modules | Table Presence, Customer Ordering |
-| Public command/API | `table_presence.redeem_token`, `POST /api/v1/customer/table-presence/redeem` |
+| Public command/API | `table_presence.redeem_token`, `POST /api/customer/table-presence/redeem` |
 | Idempotency | One-time QR token is the guard; no `Idempotency-Key`. |
 | Lock order | Atomic update/consume `table_access_tokens`; lock compatible `customer_ordering_sessions` row when cookie exists; create/refresh session. |
 | Transaction boundary | Token consume and CustomerOrderingSession presence refresh commit together. |
@@ -138,7 +138,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | Apps | CustomerApp |
 | Owner modules | Customer Ordering, Menu Catalog |
 | Public command/API | `customer_ordering.add_or_update_cart_item`, `customer_ordering.remove_cart_item` |
-| Idempotency | `clientCartItemId` upsert/removal semantics; no HTTP `Idempotency-Key` in v1. |
+| Idempotency | `clientCartItemId` upsert/removal semantics; no HTTP `Idempotency-Key` in the current release. |
 | Lock order | Lock CustomerOrderingSession/current active cart; lock target cart item by stable `clientCartItemId` when present. |
 | Transaction boundary | Validate product/variant/modifiers server-side and upsert/remove cart item in one transaction. |
 | Rollback | Failed validation does not change cart. |
@@ -151,7 +151,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | CustomerApp |
 | Owner modules | Customer Ordering, Table Presence, Menu Catalog, Table Session and Billing, Preparation, Audit |
-| Public command/API | `customer_ordering.submit_order`, `POST /api/v1/customer/orders` |
+| Public command/API | `customer_ordering.submit_order`, `POST /api/customer/orders` |
 | Idempotency | Required. Scope by tenant + CustomerOrderingSession + route + idempotency key. |
 | Lock order | Reserve `order_submit_idempotency`; lock CustomerOrderingSession/cart; validate fresh presence; lock or create active TableSession; lock/create Check; lock selected cart items in deterministic order. |
 | Transaction boundary | Idempotency reservation, cart validation, active session/check open, Order, OrderItems, snapshots, PreparationItems, audit, and submitted-cart close commit together. |
@@ -180,7 +180,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | Apps | StationStaffApp |
 | Owner modules | Preparation, Staff Access, Audit |
 | Public command/API | `preparation.start_preparing`, `preparation.mark_ready`, `preparation.report_cannot_prepare` |
-| Idempotency | State-guarded by current status; no required `Idempotency-Key` in v1. |
+| Idempotency | State-guarded by current status; no required `Idempotency-Key` in the current release. |
 | Lock order | Validate station assignment, then lock `preparation_items` row. |
 | Transaction boundary | Status update and PreparationTransition append commit together. Cannot-prepare reason and audit/event commit with the transition. |
 | Rollback | Failed transition leaves previous status and no transition row. |
@@ -207,7 +207,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | ServiceStaffApp |
 | Owner modules | Service Delivery, Preparation, Venue Layout, Staff Access, Audit |
-| Public command/API | `service_delivery.bulk_mark_delivered`, `POST /api/v1/service-staff/items/bulk-deliver` |
+| Public command/API | `service_delivery.bulk_mark_delivered`, `POST /api/service-staff/items/bulk-deliver` |
 | Idempotency | Required. Scope by tenant + actor + route + idempotency key. |
 | Lock order | Reserve `delivery_bulk_idempotency`; validate same table; lock target PreparationItems/DeliveryStates in sorted OrderItem ID order. |
 | Transaction boundary | All target state checks, DeliveryState creates/updates, DeliveryTransition rows, audit, and idempotency completion commit together. |
@@ -221,7 +221,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | CashierApp |
 | Owner modules | Payments, Table Session and Billing, Staff Access, Audit |
-| Public command/API | `payments.record_payment`, `POST /api/v1/cashier/checks/{checkId}/payments` |
+| Public command/API | `payments.record_payment`, `POST /api/cashier/checks/{checkId}/payments` |
 | Idempotency | Required. Scope by tenant + Check + route + idempotency key. |
 | Lock order | Reserve `payment_idempotency`; lock Check; recompute remaining balance from source records and non-voided payments. |
 | Transaction boundary | Payment insert, idempotency completion, audit, and optional bill read model update commit together. |
@@ -235,7 +235,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | CashierApp |
 | Owner modules | Payments, Table Session and Billing, Staff Access, Audit |
-| Public command/API | `payments.void_payment`, `POST /api/v1/cashier/payments/{paymentId}/void` |
+| Public command/API | `payments.void_payment`, `POST /api/cashier/payments/{paymentId}/void` |
 | Idempotency | Required. Scope by tenant + Payment + route + idempotency key. |
 | Lock order | Reserve `payment_void_idempotency`; lock Check; lock Payment; append required CashierCorrection; set immutable void fields. |
 | Transaction boundary | Payment void fields, required correction, audit, idempotency completion, and optional bill read model update commit together. |
@@ -249,7 +249,7 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | CashierApp |
 | Owner modules | Table Session and Billing, Payments, Preparation, Staff Access, Audit |
-| Public command/API | `table_session_billing.record_cashier_correction`, `POST /api/v1/cashier/checks/{checkId}/corrections` |
+| Public command/API | `table_session_billing.record_cashier_correction`, `POST /api/cashier/checks/{checkId}/corrections` |
 | Idempotency | Required. Scope by tenant + Check + route + idempotency key. |
 | Lock order | Reserve `cashier_correction_idempotency`; lock Check; lock target record in deterministic order. For item void, lock OrderItem then PreparationItem; Check lock prevents concurrent payment recording while eligibility is checked. |
 | Transaction boundary | Correction record, target mutation when allowed, audit, idempotency completion, and optional bill read model update commit together. |
@@ -263,8 +263,8 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | CashierApp |
 | Owner modules | Table Session and Billing, Payments, Customer Ordering, Audit |
-| Public command/API | `table_session_billing.close_session`, `POST /api/v1/cashier/table-sessions/{tableSessionId}/close` |
-| Idempotency | State-guarded by TableSession/Check status and unique SessionClosure; no required `Idempotency-Key` in v1. |
+| Public command/API | `table_session_billing.close_session`, `POST /api/cashier/table-sessions/{tableSessionId}/close` |
+| Idempotency | State-guarded by TableSession/Check status and unique SessionClosure; no required `Idempotency-Key` in the current release. |
 | Lock order | Lock TableSession, then Check. Check lock blocks concurrent payment/correction while balance is recomputed. |
 | Transaction boundary | Recompute balance, insert SessionClosure, close Check, close TableSession, audit, and optional read model update commit together. |
 | Rollback | Failed close leaves TableSession and Check open. |
@@ -291,12 +291,12 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | --- | --- |
 | Apps | TenantApp, CashierApp setup surfaces |
 | Owner modules | OTP Messaging, Reliable Side Effects |
-| Public command/API | `otp_messaging.send_otp`, `POST /api/v1/auth/otp-challenges/{challengeId}/send` |
-| Idempotency | Send count and challenge state guarded; no required `Idempotency-Key` in v1. |
+| Public command/API | `otp_messaging.send_otp`, `POST /api/auth/otp-challenges/{challengeId}/send` |
+| Idempotency | Send count and challenge state guarded; no required `Idempotency-Key` in the current release. |
 | Lock order | Lock OTP challenge; insert `message_deliveries`; enqueue side effect with stable idempotency reference. |
 | Transaction boundary | Delivery attempt record and outbox enqueue commit before provider send. |
 | Rollback | If enqueue fails, no send attempt is committed. Provider failure after commit is recorded as delivery failure/retry state. |
-| Concurrency response | Concurrent sends serialize on challenge and respect v1 max sends. Expired/locked challenge returns `otp_expired` or `otp_locked`. |
+| Concurrency response | Concurrent sends serialize on challenge and respect current release max sends. Expired/locked challenge returns `otp_expired` or `otp_locked`. |
 | Test requirement | Max send limit, concurrent send limit, provider failure records redacted failure without exposing OTP code. |
 
 ### Outbox Worker Claim and Attempt
@@ -321,8 +321,8 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | Order submit vs session close | TableSession lock decides. Order must not attach to a closed session. |
 | Concurrent first orders at one table | Unique active TableSession ensures one open session; loser loads existing open session. |
 | Payment vs close | Check lock serializes; close recomputes balance after committed payments. |
-| Payment vs item void | Check lock serializes; item void after any payment is rejected in v1. |
-| Payment void vs close | Check lock serializes; closed Check cannot be voided in v1. |
+| Payment vs item void | Check lock serializes; item void after any payment is rejected in the current release. |
+| Payment void vs close | Check lock serializes; closed Check cannot be voided in the current release. |
 | Bulk delivery vs single delivery | DeliveryState locks and deterministic item order prevent partial or conflicting transitions. |
 | Staff scope change vs staff action | Authorization must be checked at mutation time, not only at login. |
 | Tenant suspension vs runtime action | Runtime commands must check tenant availability before mutation; already locked business transactions fail closed if tenant is not active. |

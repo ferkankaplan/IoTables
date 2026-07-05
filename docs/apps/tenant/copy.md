@@ -221,8 +221,8 @@ Do not show labels or copy that imply:
 - TenantApp can create customer orders;
 - TenantApp can receive payments or close table sessions;
 - TenantApp can prepare or deliver items;
-- tables have a standalone primary management page in v1;
-- v1 supports floor-plan coordinates;
+- tables have a standalone primary management page in the current release;
+- current release supports floor-plan coordinates;
 - starter data is recreated after edit/delete;
 - sector change reruns starter data;
 - raw display credentials can be viewed later;
@@ -238,4 +238,4 @@ TenantApp copy is acceptable when:
 - menu copy distinguishes disabled from unavailable;
 - service tracking copy states customer/staff impact;
 - destructive or audit-affecting actions explain reason/audit consequence;
-- forbidden runtime controls and unsupported v1 claims are absent.
+- forbidden runtime controls and unsupported current release claims are absent.

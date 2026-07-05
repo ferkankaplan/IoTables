@@ -54,9 +54,9 @@ TenantApp must always be tenant-scoped. Every action belongs to the current tena
 - It does not directly operate customer table sessions as a cashier.
 - It does not prepare station tickets as station staff.
 - It does not create customer QR ordering sessions.
-- It does not configure fiscal/e-Adisyon/ÖKC integrations in v1.
-- It does not configure kitchen printers, receipt printers, cash drawers, payment terminals, or other hardware integrations in v1.
-- It does not configure waiter-entered orders, package service, courier delivery, pickup, phone orders, marketplace orders, counter sales, stock/recipe, cost accounting, or multi-location operations in v1.
+- It does not configure fiscal/e-Adisyon/ÖKC integrations in the current release.
+- It does not configure kitchen printers, receipt printers, cash drawers, payment terminals, or other hardware integrations in the current release.
+- It does not configure waiter-entered orders, package service, courier delivery, pickup, phone orders, marketplace orders, counter sales, stock/recipe, cost accounting, or multi-location operations in the current release.
 
 ## UX Principle
 
@@ -99,7 +99,7 @@ This should open the selected table in a contextual panel inside Hall Management
 3. TenantApp displays basic tenant information.
 4. Admin actions are not shown unless the user goes to `/login` and authenticates.
 
-Public Tenant Page visible fields in v1:
+Public Tenant Page visible fields in the current release:
 
 - public display name, falling back to immutable tenant name when no display name exists;
 - restaurant sector label when present;
@@ -127,7 +127,7 @@ The public page must not expose tenant GSM number, platform status internals, st
 
 Tables are part of the hall management context. A table detail should open as a right-side panel, not as a separate primary page.
 
-V1 table layout is an ordered grid inside each hall. It does not include visual floor-plan coordinates. A later floor-plan editor must be introduced as a separate explicit layout capability, not by overloading the v1 table order field.
+Current release table layout is an ordered grid inside each hall. It does not include visual floor-plan coordinates. A later floor-plan editor must be introduced as a separate explicit layout capability, not by overloading the current release table order field.
 
 ### Configure Service Delivery Tracking
 
@@ -144,7 +144,7 @@ When service delivery tracking is disabled:
 
 ### Configure Tenant Settings
 
-TenantApp may edit these tenant settings in v1:
+TenantApp may edit these tenant settings in the current release:
 
 - public display name;
 - tenant GSM number;
@@ -172,7 +172,7 @@ TenantApp cannot edit immutable tenant name or tenant subdomain. Editing restaur
 5. Tenant Admin assigns each product/service to the station responsible for fulfillment.
 6. Disabled products/services remain historical but cannot be ordered.
 
-In v1, each product/service belongs to exactly one fulfillment station. Multi-station routing for the same product is out of v1 unless a later workflow explicitly introduces routing rules.
+In v1, each product/service belongs to exactly one fulfillment station. Multi-station routing for the same product is out of the current release unless a later workflow explicitly introduces routing rules.
 
 ### Configure Staff and Service Access
 
@@ -205,7 +205,7 @@ Starter data must not be recreated automatically after the tenant edits or delet
 | Product variant/portion | Full | Orderable unit and current price |
 | Availability override | Full | Temporary sold-out/orderability state without disabling catalog history |
 | Station assignment | Full | Determines where order items are routed |
-| Staff user | Full | Starter users such as cashier, cook, barista, waiter, and busser may be created during provisioning with first-login password change required; waiter and busser are service staff assignments in v1 |
+| Staff user | Full | Starter users such as cashier, cook, barista, waiter, and busser may be created during provisioning with first-login password change required; waiter and busser are service staff assignments in the current release |
 | Service hall assignment | Full | Defines which halls service staff can operate |
 | Service delivery tracking setting | Full | Controls whether ServiceStaffApp is active for the tenant |
 
@@ -227,7 +227,7 @@ Starter data must not be recreated automatically after the tenant edits or delet
 
 TenantApp must audit tenant-admin configuration changes that affect access, ordering, fulfillment, or customer-visible identity.
 
-Minimum v1 TenantApp audit actions:
+Minimum current release TenantApp audit actions:
 
 - tenant GSM changed;
 - public display name changed;
@@ -257,7 +257,7 @@ Minimum v1 TenantApp audit actions:
 - Starter station and service staff first password setup does not require OTP.
 - Service staff must be authorized per hall.
 - Service delivery tracking can be disabled only as an explicit tenant setting.
-- Fiscal/e-Adisyon/ÖKC, printer, hardware, stock/recipe, package service, courier, pickup, counter sale, and multi-location features are out of v1 scope.
+- Fiscal/e-Adisyon/ÖKC, printer, hardware, stock/recipe, package service, courier, pickup, counter sale, and multi-location features are out of the current release scope.
 
 ## Open Questions
 

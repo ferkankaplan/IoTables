@@ -276,9 +276,9 @@ Never show:
 - raw secrets, credentials, tokens, hashes, stack traces, or internal paths;
 - tenant runtime mutation controls for orders, preparation, delivery, payments, or sessions.
 
-## V1 Out-of-Scope UI
+## Current Release Out-of-Scope UI
 
-The following UI must not appear in PlatformApp v1:
+The following UI must not appear in PlatformApp the current release:
 
 - create customer order;
 - prepare station item;
@@ -301,4 +301,4 @@ This wireframe package is valid when:
 - tenant creation shows required fields, idempotent pending/replay behavior, provisioning result, and DNS checklist;
 - lifecycle and sensitive profile actions require backend acceptance before success;
 - platform health stays high-level and does not become tenant runtime control;
-- no forbidden v1 control appears.
+- no forbidden current release control appears.

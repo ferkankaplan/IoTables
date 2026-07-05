@@ -1,5 +1,5 @@
 # Branch Coverage Checklist
-Before API contracts are finalized, each v1 endpoint or command should map to at least one scenario above and explicitly declare:
+Before API contracts are finalized, each current release endpoint or command should map to at least one scenario above and explicitly declare:
 
 - happy path;
 - invalid input branch;

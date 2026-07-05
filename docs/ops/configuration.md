@@ -1,6 +1,6 @@
 # Runtime Configuration
 
-This document defines v1 configuration rules for IoTables runtime services. It is a policy source for implementation, not a committed secret file.
+This document defines production configuration rules for IoTables runtime services. It is a policy source for implementation, not a committed secret file.
 
 Source context:
 
@@ -102,9 +102,9 @@ V1 provider-sensitive areas:
 | Area | Rule |
 | --- | --- |
 | OTP/SMS | Production requires real provider config; local/test may use fake provider. |
-| DNS | Manual in v1; no provider credentials required unless automation is explicitly introduced. |
-| Payment provider | Out of v1; provider config must not appear until the product contract exists. |
-| Fiscal/e-Adisyon/ÖKC | Out of v1; provider config must not appear until explicitly introduced. |
+| DNS | Manual in the current release; no provider credentials required unless automation is explicitly introduced. |
+| Payment provider | Out of the current release; provider config must not appear until the product contract exists. |
+| Fiscal/e-Adisyon/ÖKC | Out of the current release; provider config must not appear until explicitly introduced. |
 
 Provider calls that create side effects must use durable outbox/attempt records and must not pretend to roll back automatically.
 

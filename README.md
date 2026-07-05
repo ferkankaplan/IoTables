@@ -16,7 +16,7 @@ docker compose logs -f backend frontend
 Open:
 
 - Frontend: `http://localhost:5173`
-- API health: `http://localhost:8000/api/v1/health/live`
+- API health: `http://localhost:8000/api/health/live`
 - API docs: `http://localhost:8000/api/docs`
 
 Stop the full stack:

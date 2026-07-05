@@ -1,6 +1,6 @@
 # CustomerApp Analytics
 
-CustomerApp analytics defines anonymous product/UX measurement for the customer ordering flow. CustomerApp does not show analytics UI to customers in v1.
+CustomerApp analytics defines anonymous product/UX measurement for the customer ordering flow. CustomerApp does not show analytics UI to customers in the current release.
 
 Source context:
 
@@ -25,7 +25,7 @@ Source context:
 
 Fresh QR presence and order submission authority come from Table Presence and Customer Ordering, not analytics.
 
-## V1 Metrics
+## Current Release Metrics
 
 | Metric | Source | Notes |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ Fresh QR presence and order submission authority come from Table Presence and Cu
 
 ## Allowed Surfaces
 
-CustomerApp v1 has no customer-visible analytics screen.
+CustomerApp current release has no customer-visible analytics screen.
 
 Analytics may be emitted internally from existing surfaces:
 
@@ -80,14 +80,14 @@ CustomerApp analytics must not store or expose:
 - Order idempotency and presence freshness must be enforced without analytics.
 - If analytics and source records disagree, source records win.
 
-## V1 Out of Scope
+## Current Release Out of Scope
 
 - Customer-visible analytics dashboards.
 - Personalized recommendations.
 - Cross-tenant customer tracking.
 - Marketing attribution.
 - External advertising pixels.
-- Customer payment conversion analytics, because customer payment is out of v1.
+- Customer payment conversion analytics, because customer payment is out of the current release.
 
 ## Acceptance
 

@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted for v1.
+Accepted for the current release.
 
 ## Context
 
-IoTables serves multiple restaurant tenants. The current v1 database design uses PostgreSQL `public` schema with shared tables and `tenant_id` on tenant-owned records. Module boundaries are enforced through code ownership, migrations, constraints, and tests rather than separate PostgreSQL schemas.
+IoTables serves multiple restaurant tenants. The current production database design uses PostgreSQL `public` schema with shared tables and `tenant_id` on tenant-owned records. Module boundaries are enforced through code ownership, migrations, constraints, and tests rather than separate PostgreSQL schemas.
 
 Sources:
 
@@ -17,15 +17,15 @@ Sources:
 
 ## Decision
 
-V1 uses shared PostgreSQL tables with row-level tenant ownership.
+The current release uses shared PostgreSQL tables with row-level tenant ownership.
 
 Rules:
 
 - Tenant-owned records carry `tenant_id`.
 - Platform-global records may use `tenant_id = null` only where explicitly documented, such as Platform Owner identity.
 - Tenant isolation is enforced by service guards, composite foreign keys, unique constraints, query filters, and tests.
-- PostgreSQL schemas per tenant or per module are out of v1.
-- Tenant hard-delete is out of v1 until retention and legal rules exist.
+- PostgreSQL schemas per tenant or per module are out of the current release.
+- Tenant hard-delete is out of the current release until retention and legal rules exist.
 - Migrations must be tenant-safe and must not create business seed data.
 
 ## Consequences
@@ -34,7 +34,7 @@ Rules:
 - Cross-tenant references must be prevented with composite foreign keys where single-column UUID FKs are insufficient.
 - Indexes must include leading `tenant_id` where tenant-scoped access is expected.
 - Tests must cover tenant isolation at service and database boundaries.
-- Module ownership remains semantic and code-level; it is not represented by PostgreSQL schemas in v1.
+- Module ownership remains semantic and code-level; it is not represented by PostgreSQL schemas in the current release.
 
 ## Synchronization Points
 
@@ -48,7 +48,7 @@ Rules:
 
 | Alternative | Reason Rejected |
 | --- | --- |
-| Separate database per tenant | Operationally heavier than v1 needs and complicates provisioning/recovery. |
+| Separate database per tenant | Operationally heavier than current release needs and complicates provisioning/recovery. |
 | Separate PostgreSQL schema per tenant | Adds migration and runtime routing complexity before tenant scale proves it necessary. |
 | Separate PostgreSQL schema per module | Gives a false sense of boundary while increasing migration complexity. |
 | Tenant isolation only in frontend/backend code | Database constraints must help prevent wrong-tenant references. |

@@ -1,6 +1,6 @@
 # Test Strategy
 
-This document defines the shared v1 test strategy for IoTables.
+This document defines the shared current release test strategy for IoTables.
 
 It does not replace app `test-plan.md` files or module-specific transaction tests. It defines how tests are derived, where they belong, and which risks must be covered before implementation is considered complete.
 
@@ -96,8 +96,8 @@ Required tests:
 - Tenant staff session cannot cross tenant host or tenant-owned IDs.
 - Wrong app scope returns safe failure.
 - Disabled user/role/station/hall assignment fails at mutation time.
-- Tenant admin and cashier first password setup require OTP; station and service staff do not in v1.
-- Platform Owner does not require OTP/TOTP before PlatformApp dashboard access in v1.
+- Tenant admin and cashier first password setup require OTP; station and service staff do not in the current release.
+- Platform Owner does not require OTP/TOTP before PlatformApp dashboard access in the current release.
 
 ### QR Presence and Customer Ordering
 
@@ -148,7 +148,7 @@ Required tests:
 - Closed sessions reject new orders, payments, corrections, and fulfillment mutation except explicit recovery.
 - Corrections require reason, idempotency, target eligibility, and audit.
 - Item void is allowed only while preparation is `pending` or `cannot_prepare` and before any payment on the Check.
-- Non-provider payment void is allowed only on open Check in v1.
+- Non-provider payment void is allowed only on open Check in the current release.
 
 ### Reliable Side Effects
 

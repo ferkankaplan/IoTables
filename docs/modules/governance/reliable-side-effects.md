@@ -50,7 +50,7 @@ It protects the system from losing, duplicating, or silently misreporting side e
 - Retrying an effect must not create duplicate business records.
 - Provider responses must be stored without secrets or sensitive payloads.
 - A module may keep an equivalent durable attempt log only when that log provides the same replay, retry, and auditability guarantees. OTP Messaging is allowed to own OTP-specific delivery attempts, but new external integrations should use this module by default.
-- In-process domain events are allowed only for pure in-database v1 flows that do not call external systems.
+- In-process domain events are allowed only for pure in-database current release flows that do not call external systems.
 
 ## Operational Safety
 

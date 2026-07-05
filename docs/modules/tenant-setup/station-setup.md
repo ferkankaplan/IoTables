@@ -44,7 +44,7 @@ It defines where products/services may route, but it does not own station queue 
 
 - A station belongs to exactly one tenant.
 - Disabled stations cannot receive newly submitted order items.
-- Products/services route to exactly one station in v1.
+- Products/services route to exactly one station in the current release.
 - Station disable must consider active menu routing and active preparation items.
 - Station names are display labels, not trusted identifiers.
 

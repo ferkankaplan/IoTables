@@ -1,5 +1,5 @@
 # CustomerApp Acceptance Criteria
-CustomerApp is accepted for v1 when:
+CustomerApp is accepted for the current release when:
 
 - a customer can scan a fresh QR and reach the menu;
 - expired, reused, or wrong-table QR tokens fail without exposing internals;

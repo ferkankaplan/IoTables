@@ -1,6 +1,6 @@
 # CashierApp Test Plan
 
-This document defines CashierApp-visible test coverage for v1. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
+This document defines CashierApp-visible test coverage for the current release. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
 
 Source context:
 
@@ -124,7 +124,7 @@ Out of scope for this test plan:
 | Zero balance enables explicit closure only | Browser/API tests. |
 | Duplicate payment submit does not duplicate records | Idempotency/concurrency tests. |
 | Duplicate close does not duplicate closure | Transaction/unique constraint tests. |
-| Only v1 allowed corrections available | UI absence and API rejection tests. |
+| Only current release allowed corrections available | UI absence and API rejection tests. |
 | Payments, voids, corrections, and closures audited | Integration/audit tests. |
 | Out-of-scope payment/split/fiscal/provider flows absent | UI absence tests. |
 
@@ -148,30 +148,30 @@ CashierApp executable tests must cover the app-visible behavior of these endpoin
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/v1/auth/login-requirements` | First-password/OTP requirement discovery. |
-| `POST /api/v1/auth/login` | Cashier scope, missing role, invalid credentials. |
-| `POST /api/v1/auth/first-password/begin` | Setup token and OTP requirement. |
-| `POST /api/v1/auth/first-password/complete` | OTP proof required for cashier. |
-| `GET /api/v1/auth/otp-challenges/{challengeId}` | Challenge state, expiry, lock. |
-| `POST /api/v1/auth/otp-challenges/{challengeId}/send` | Send limits and masked target. |
-| `POST /api/v1/auth/otp-challenges/{challengeId}/verify` | Valid/invalid/expired code. |
-| `GET /api/v1/auth/session` | Protected route access. |
-| `POST /api/v1/auth/logout` | Session revocation. |
-| `GET /api/v1/cashier/venue/board` | Hall/table board and `CashierTableState`. |
-| `GET /api/v1/cashier/tables/{tableId}/active-session` | Empty vs active table session. |
-| `GET /api/v1/cashier/table-sessions/{tableSessionId}/orders` | Session order inspection. |
-| `GET /api/v1/cashier/table-sessions/{tableSessionId}/bill-summary` | Server-calculated totals. |
-| `GET /api/v1/cashier/checks/{checkId}` | Check detail and state. |
-| `GET /api/v1/cashier/checks/{checkId}/payments` | Check payment list. |
-| `POST /api/v1/cashier/checks/{checkId}/payments` | Payment idempotency, overpayment, closed Check. |
-| `GET /api/v1/cashier/payments` | Current business-day payment history. |
-| `POST /api/v1/cashier/payments/{paymentId}/void` | Payment void reason, idempotency, closed Check. |
-| `GET /api/v1/cashier/checks/{checkId}/corrections` | Correction history. |
-| `POST /api/v1/cashier/checks/{checkId}/corrections` | Note, item void, reason, idempotency, blocked target. |
-| `POST /api/v1/cashier/table-sessions/{tableSessionId}/close` | Zero-balance close and duplicate close behavior. |
-| `GET /api/v1/cashier/order-items/{orderItemId}/preparation` | Cashier-visible preparation state. |
-| `GET /api/v1/cashier/order-items/{orderItemId}/delivery` | Cashier-visible delivery state. |
-| `GET /api/v1/cashier/audit-events` | Payment/correction/closure evidence. |
+| `GET /api/auth/login-requirements` | First-password/OTP requirement discovery. |
+| `POST /api/auth/login` | Cashier scope, missing role, invalid credentials. |
+| `POST /api/auth/first-password/begin` | Setup token and OTP requirement. |
+| `POST /api/auth/first-password/complete` | OTP proof required for cashier. |
+| `GET /api/auth/otp-challenges/{challengeId}` | Challenge state, expiry, lock. |
+| `POST /api/auth/otp-challenges/{challengeId}/send` | Send limits and masked target. |
+| `POST /api/auth/otp-challenges/{challengeId}/verify` | Valid/invalid/expired code. |
+| `GET /api/auth/session` | Protected route access. |
+| `POST /api/auth/logout` | Session revocation. |
+| `GET /api/cashier/venue/board` | Hall/table board and `CashierTableState`. |
+| `GET /api/cashier/tables/{tableId}/active-session` | Empty vs active table session. |
+| `GET /api/cashier/table-sessions/{tableSessionId}/orders` | Session order inspection. |
+| `GET /api/cashier/table-sessions/{tableSessionId}/bill-summary` | Server-calculated totals. |
+| `GET /api/cashier/checks/{checkId}` | Check detail and state. |
+| `GET /api/cashier/checks/{checkId}/payments` | Check payment list. |
+| `POST /api/cashier/checks/{checkId}/payments` | Payment idempotency, overpayment, closed Check. |
+| `GET /api/cashier/payments` | Current business-day payment history. |
+| `POST /api/cashier/payments/{paymentId}/void` | Payment void reason, idempotency, closed Check. |
+| `GET /api/cashier/checks/{checkId}/corrections` | Correction history. |
+| `POST /api/cashier/checks/{checkId}/corrections` | Note, item void, reason, idempotency, blocked target. |
+| `POST /api/cashier/table-sessions/{tableSessionId}/close` | Zero-balance close and duplicate close behavior. |
+| `GET /api/cashier/order-items/{orderItemId}/preparation` | Cashier-visible preparation state. |
+| `GET /api/cashier/order-items/{orderItemId}/delivery` | Cashier-visible delivery state. |
+| `GET /api/cashier/audit-events` | Payment/correction/closure evidence. |
 
 ## Security and Abuse Coverage
 

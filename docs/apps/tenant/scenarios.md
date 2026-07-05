@@ -73,7 +73,7 @@ Branches:
 | Reorder request has duplicate order positions | Server normalizes or rejects according to implementation contract |
 | Table has historical sessions/orders | Hard delete is unavailable; disable instead |
 | Table has active TableSession | Disable must be blocked or require explicit recovery workflow; normal disable cannot strand an active session |
-| Tenant Admin tries standalone table management page | Not a primary v1 page; use hall workspace/panel |
+| Tenant Admin tries standalone table management page | Not a primary current release page; use hall workspace/panel |
 
 Result:
 
@@ -153,7 +153,7 @@ Branches:
 | Branch | Expected Result |
 | --- | --- |
 | Product has no station | Product cannot be orderable |
-| Product has more than one station | Reject in v1 |
+| Product has more than one station | Reject in the current release |
 | Product disabled | Historical orders remain; product cannot be ordered |
 | Product unavailable | Product may be visible but not orderable |
 | Price changes | Existing OrderItem snapshots do not change |
@@ -217,13 +217,13 @@ Branches:
 | Tenant Admin edits tenant name | Reject |
 | Tenant Admin edits subdomain | Reject |
 | Sector changes after creation | Update classification only; do not rerun starter data |
-| Capacity changes | Update informational field; no entitlement enforcement in v1 |
+| Capacity changes | Update informational field; no entitlement enforcement in the current release |
 | Public display name omitted | Public page falls back to immutable tenant name |
 | GSM changes | Audit and use new GSM for future OTP challenges |
 
 Result:
 
-- Tenant settings remain mutable only where v1 allows.
+- Tenant settings remain mutable only where current release allows.
 
 Ownership:
 

@@ -282,7 +282,7 @@ def test_customer_menu_resolves_tenant_from_subdomain_and_returns_public_menu() 
     menu_service = FakeMenuCatalogQueryService()
     client = make_client(tenant_service=tenant_service, menu_service=menu_service)
 
-    response = client.get("/api/v1/customer/menu", headers={"X-Tenant-Subdomain": "demo-cafe"})
+    response = client.get("/api/customer/menu", headers={"X-Tenant-Subdomain": "demo-cafe"})
 
     assert response.status_code == 200
     assert tenant_service.subdomain == "demo-cafe"
@@ -298,7 +298,7 @@ def test_customer_menu_resolves_tenant_from_subdomain_and_returns_public_menu() 
 def test_customer_menu_requires_tenant_host_context() -> None:
     client = make_client()
 
-    response = client.get("/api/v1/customer/menu")
+    response = client.get("/api/customer/menu")
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "not_found_or_hidden"
@@ -307,7 +307,7 @@ def test_customer_menu_requires_tenant_host_context() -> None:
 def test_customer_menu_blocks_unavailable_tenant() -> None:
     client = make_client(tenant_service=FakeTenantRegistryQueryService(unavailable=True))
 
-    response = client.get("/api/v1/customer/menu", headers={"X-Tenant-Subdomain": "demo-cafe"})
+    response = client.get("/api/customer/menu", headers={"X-Tenant-Subdomain": "demo-cafe"})
 
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "tenant_unavailable"
@@ -319,7 +319,7 @@ def test_redeem_table_presence_sets_customer_session_cookie() -> None:
     client = make_client(tenant_service=tenant_service, presence_service=presence_service)
 
     response = client.post(
-        "/api/v1/customer/table-presence/redeem",
+        "/api/customer/table-presence/redeem",
         headers={"X-Tenant-Subdomain": "demo-cafe"},
         json={"qrToken": "raw-qr-token"},
     )
@@ -342,7 +342,7 @@ def test_redeem_table_presence_preserves_compatible_existing_cookie() -> None:
     client.cookies.set(CUSTOMER_SESSION_COOKIE_NAME, "existing-customer-session")
 
     response = client.post(
-        "/api/v1/customer/table-presence/redeem",
+        "/api/customer/table-presence/redeem",
         headers={"X-Tenant-Subdomain": "demo-cafe"},
         json={"qrToken": "raw-qr-token"},
     )
@@ -361,7 +361,7 @@ def test_get_table_presence_uses_customer_session_cookie() -> None:
     client = make_client(presence_service=presence_service)
     client.cookies.set(CUSTOMER_SESSION_COOKIE_NAME, "customer-session")
 
-    response = client.get("/api/v1/customer/table-presence")
+    response = client.get("/api/customer/table-presence")
 
     assert response.status_code == 200
     assert response.json()["fresh"] is True
@@ -373,7 +373,7 @@ def test_get_cart_uses_customer_session_cookie() -> None:
     client = make_client(ordering_service=ordering_service)
     client.cookies.set(CUSTOMER_SESSION_COOKIE_NAME, "customer-session")
 
-    response = client.get("/api/v1/customer/cart")
+    response = client.get("/api/customer/cart")
 
     assert response.status_code == 200
     assert response.json()["cartId"] == "11111111-1111-1111-1111-111111111111"
@@ -394,9 +394,9 @@ def test_add_cart_item_requires_csrf_and_ignores_client_price() -> None:
         "estimatedPriceMinor": 1,
     }
 
-    missing_csrf = client.post("/api/v1/customer/cart/items", json=payload)
+    missing_csrf = client.post("/api/customer/cart/items", json=payload)
     response = client.post(
-        "/api/v1/customer/cart/items",
+        "/api/customer/cart/items",
         headers={"X-CSRF-Token": "csrf"},
         json=payload,
     )
@@ -417,7 +417,7 @@ def test_remove_cart_item_is_idempotent_command() -> None:
     client.cookies.set(CUSTOMER_SESSION_COOKIE_NAME, "customer-session")
 
     response = client.post(
-        "/api/v1/customer/cart/items/item-1/remove",
+        "/api/customer/cart/items/item-1/remove",
         headers={"X-CSRF-Token": "csrf"},
     )
 
@@ -436,17 +436,17 @@ def test_submit_order_requires_csrf_and_idempotency_key() -> None:
     payload = {"cartVersion": "v1", "cartItemIds": ["item-1"]}
 
     missing_csrf = client.post(
-        "/api/v1/customer/orders",
+        "/api/customer/orders",
         headers={"Idempotency-Key": "submit-1"},
         json=payload,
     )
     missing_key = client.post(
-        "/api/v1/customer/orders",
+        "/api/customer/orders",
         headers={"X-CSRF-Token": "csrf"},
         json=payload,
     )
     response = client.post(
-        "/api/v1/customer/orders",
+        "/api/customer/orders",
         headers={"X-CSRF-Token": "csrf", "Idempotency-Key": "submit-1"},
         json=payload,
     )

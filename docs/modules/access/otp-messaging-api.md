@@ -9,9 +9,9 @@ OTP Messaging owns challenge state, SMS delivery attempts, verification, send li
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/auth/otp-challenges/{challengeId}` | TenantApp, CashierApp | `otp_messaging.get_challenge_state` | Matching setup flow/session | Path: `challengeId` | `OtpChallengeState` | `not_authorized`, `otp_expired`, `otp_locked` |
-| `POST` | `/api/v1/auth/otp-challenges/{challengeId}/send` | TenantApp, CashierApp | `otp_messaging.send_otp` | Matching setup flow/session + CSRF | none | `OtpDeliveryState` | `otp_expired`, `otp_locked`, `delivery_failed` |
-| `POST` | `/api/v1/auth/otp-challenges/{challengeId}/verify` | TenantApp, CashierApp | `otp_messaging.verify_otp` | Matching setup flow/session + CSRF | Body: `code` | `OtpVerificationResult` | `otp_invalid`, `otp_expired`, `otp_locked` |
+| `GET` | `/api/auth/otp-challenges/{challengeId}` | TenantApp, CashierApp | `otp_messaging.get_challenge_state` | Matching setup flow/session | Path: `challengeId` | `OtpChallengeState` | `not_authorized`, `otp_expired`, `otp_locked` |
+| `POST` | `/api/auth/otp-challenges/{challengeId}/send` | TenantApp, CashierApp | `otp_messaging.send_otp` | Matching setup flow/session + CSRF | none | `OtpDeliveryState` | `otp_expired`, `otp_locked`, `delivery_failed` |
+| `POST` | `/api/auth/otp-challenges/{challengeId}/verify` | TenantApp, CashierApp | `otp_messaging.verify_otp` | Matching setup flow/session + CSRF | Body: `code` | `OtpVerificationResult` | `otp_invalid`, `otp_expired`, `otp_locked` |
 
 ## Internal-Only Contracts
 
@@ -19,7 +19,7 @@ OTP Messaging owns challenge state, SMS delivery attempts, verification, send li
 | --- | --- |
 | `otp_messaging.create_challenge` | Called by Identity and Access when first-password setup requires OTP. |
 | `otp_messaging.expire_or_lock_challenge` | Internal policy action/job only. |
-| `otp_messaging.get_delivery_state` | Recovery/support tooling only; no normal app endpoint in v1. |
+| `otp_messaging.get_delivery_state` | Recovery/support tooling only; no normal app endpoint in the current release. |
 
 ## Request Schemas
 
@@ -40,7 +40,7 @@ OTP Messaging owns challenge state, SMS delivery attempts, verification, send li
 | `targetHint` | string | Masked GSM display only. |
 | `expiresAt` | timestamp | UTC. |
 | `remainingAttempts` | integer | Does not reveal code. |
-| `remainingSends` | integer | V1 max sends enforced. |
+| `remainingSends` | integer | Current release max sends enforced. |
 | `verified` | boolean | True after successful verification. |
 
 `OtpDeliveryState` includes `challengeId`, `sendCount`, `lastDeliveryStatus`, and `nextSendAllowedAt`.

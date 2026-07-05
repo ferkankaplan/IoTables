@@ -13,7 +13,7 @@ def test_request_id_header_is_echoed_when_safe() -> None:
     client = TestClient(create_app())
 
     response = client.get(
-        "/api/v1/health/live",
+        "/api/health/live",
         headers={"X-Request-Id": "client_req-123"},
     )
 
@@ -25,7 +25,7 @@ def test_invalid_request_id_header_is_replaced() -> None:
     client = TestClient(create_app())
 
     response = client.get(
-        "/api/v1/health/live",
+        "/api/health/live",
         headers={"X-Request-Id": "bad request id with spaces"},
     )
 
@@ -37,14 +37,14 @@ def test_invalid_request_id_header_is_replaced() -> None:
 def test_validation_errors_use_standard_error_envelope() -> None:
     app = create_app()
 
-    @app.get("/api/v1/test/validation")
+    @app.get("/api/test/validation")
     async def validation_probe(limit: int) -> dict[str, int]:
         return {"limit": limit}
 
     client = TestClient(app)
 
     response = client.get(
-        "/api/v1/test/validation?limit=not-an-int",
+        "/api/test/validation?limit=not-an-int",
         headers={"X-Request-Id": "req_validation"},
     )
 
@@ -69,14 +69,14 @@ def test_validation_errors_use_standard_error_envelope() -> None:
 def test_http_exception_uses_standard_error_envelope() -> None:
     app = create_app()
 
-    @app.get("/api/v1/test/not-found")
+    @app.get("/api/test/not-found")
     async def not_found_probe() -> None:
         raise HTTPException(status_code=404)
 
     client = TestClient(app)
 
     response = client.get(
-        "/api/v1/test/not-found",
+        "/api/test/not-found",
         headers={"X-Request-Id": "req_not_found"},
     )
 
@@ -95,7 +95,7 @@ def test_http_exception_uses_standard_error_envelope() -> None:
 def test_domain_api_error_uses_standard_error_envelope() -> None:
     app = create_app()
 
-    @app.get("/api/v1/test/domain-error")
+    @app.get("/api/test/domain-error")
     async def domain_error_probe() -> None:
         raise ApiError(
             status_code=409,
@@ -106,7 +106,7 @@ def test_domain_api_error_uses_standard_error_envelope() -> None:
     client = TestClient(app)
 
     response = client.get(
-        "/api/v1/test/domain-error",
+        "/api/test/domain-error",
         headers={"X-Request-Id": "req_domain"},
     )
 
@@ -123,14 +123,14 @@ def test_domain_api_error_uses_standard_error_envelope() -> None:
 def test_unhandled_exception_returns_safe_internal_error() -> None:
     app = create_app()
 
-    @app.get("/api/v1/test/unhandled")
+    @app.get("/api/test/unhandled")
     async def unhandled_probe() -> None:
         raise RuntimeError("raw secret diagnostic")
 
     client = TestClient(app, raise_server_exceptions=False)
 
     response = client.get(
-        "/api/v1/test/unhandled",
+        "/api/test/unhandled",
         headers={"X-Request-Id": "req_internal"},
     )
 

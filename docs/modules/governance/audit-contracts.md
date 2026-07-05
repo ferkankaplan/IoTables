@@ -18,7 +18,7 @@ Source module: [audit.md](audit.md)
 
 ## Minimum Actions
 
-The action names listed in [../../data-model.md](../../data-model.md#otp-audit-and-side-effects) are v1 required. Adding a new sensitive command requires adding its audit action before implementation.
+The action names listed in [../../data-model.md](../../data-model.md#otp-audit-and-side-effects) are current release required. Adding a new sensitive command requires adding its audit action before implementation.
 
 ## Failure Outcomes
 

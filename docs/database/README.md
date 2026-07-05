@@ -1,6 +1,6 @@
 # Database Documentation
 
-This folder turns the semantic app and module model into a PostgreSQL v1 database design.
+This folder turns the semantic app and module model into a PostgreSQL production database design.
 
 | Document | Purpose |
 | --- | --- |

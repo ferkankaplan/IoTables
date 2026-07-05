@@ -100,7 +100,7 @@ StationStaffApp works on order items, not whole orders. One customer order may c
 
 One staff user may operate multiple authorized stations. If the staff user has more than one station, StationStaffApp opens Station Selector before the queue.
 
-V1 queue grouping:
+Current release queue grouping:
 
 - primary grouping: preparation status;
 - secondary ordering: oldest item first;
@@ -110,7 +110,7 @@ Station staff can see customer item notes that are relevant to preparation. Stat
 
 Ready items remain visible in the station queue until they are picked up by ServiceStaffApp, delivered, or moved out by the tenant's disabled-service-tracking mode. After that, they leave the active queue and may appear only in same-day recent history.
 
-Minimum v1 station metrics:
+Minimum current release station metrics:
 
 - pending item count;
 - preparing item count;

@@ -12,13 +12,13 @@ Tenant starter data is created only by the PlatformApp create-tenant flow throug
 
 ## Seed Types
 
-| Type | Trigger | Allowed in V1 | Durable Guard |
+| Type | Trigger | Allowed in Current Release | Durable Guard |
 | --- | --- | --- | --- |
 | Schema/reference values | Alembic schema migration | Yes | Check constraints and code constants |
 | Platform owner bootstrap | Explicit setup command/tool | Yes | Unique active Platform Owner |
 | Tenant starter template | PlatformApp create tenant | Yes | `starter_template_applications` |
 | Runtime demo/sample data | Startup or deployment | No | Not allowed |
-| Existing-tenant product rollout | Explicit future rollout tool | Not v1 | Per-tenant rollout record |
+| Existing-tenant product rollout | Explicit future rollout tool | Not current release | Per-tenant rollout record |
 
 ## Not Seeded
 
@@ -33,14 +33,14 @@ Tenant starter data is created only by the PlatformApp create-tenant flow throug
 
 ## Platform Owner Bootstrap
 
-The Platform Owner is the single user of PlatformApp in v1.
+The Platform Owner is the single user of PlatformApp in the current release.
 
 Rules:
 
 - It is created by an explicit bootstrap command/tool, not by app startup.
 - The command must be idempotent and protected by the active Platform Owner uniqueness rule.
 - The Platform Owner has `tenant_id = null`.
-- PlatformApp access requires username/password only in v1; OTP/TOTP is not part of PlatformApp login.
+- PlatformApp access requires username/password only in the current release; OTP/TOTP is not part of PlatformApp login.
 - Bootstrap must never embed a production password in migration files or committed config.
 - Bootstrap writes audit event `platform_owner.created`.
 
@@ -98,9 +98,9 @@ Run in one transaction under a tenant/provisioning lock:
 
 If this transaction fails, none of the starter business records should be committed.
 
-V1 does not pre-send tenant admin or cashier OTP messages during tenant creation. OTP challenges are created when the bootstrap user starts first password setup.
+The current release does not pre-send tenant admin or cashier OTP messages during tenant creation. OTP challenges are created when the bootstrap user starts first password setup.
 
-When no starter template is selected, steps for starter staff and starter setup records are skipped. Tenant activation still requires tenant admin creation and tenant operational settings. The safe v1 default for `service_delivery_tracking_enabled` is `false` without a starter template; TenantApp can enable it later after halls and service staff exist.
+When no starter template is selected, steps for starter staff and starter setup records are skipped. Tenant activation still requires tenant admin creation and tenant operational settings. The safe current release default for `service_delivery_tracking_enabled` is `false` without a starter template; TenantApp can enable it later after halls and service staff exist.
 
 ### Phase 3: Failure Marking
 
@@ -128,7 +128,7 @@ Rules:
 - First-login SMS failure must not rollback the committed tenant setup.
 - First-login SMS failure must be visible as delivery failure/retry state.
 - Provider responses must be redacted.
-- DNS is manual in v1 and must not be represented as an automated side effect.
+- DNS is manual in the current release and must not be represented as an automated side effect.
 
 ## Retry and Recovery
 
@@ -155,7 +155,7 @@ The initial cafe starter uses:
 | `template_version` | `1` |
 | Sector | `cafe` |
 
-Template definitions are code/config artifacts in v1. The database stores durable application proof in `starter_template_applications`.
+Template definitions are code/config artifacts in the current release. The database stores durable application proof in `starter_template_applications`.
 
 Template versions are immutable after release. A later `cafe.v2` must not apply automatically to existing tenants.
 

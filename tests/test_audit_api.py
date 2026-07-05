@@ -88,7 +88,7 @@ def test_query_platform_audit_events_returns_redacted_timeline() -> None:
     client = make_client(actor=make_platform_actor(), service=service)
 
     response = client.get(
-        "/api/v1/platform/audit-events"
+        "/api/platform/audit-events"
         f"?tenantId={TENANT_ID}"
         "&action=tenant.profile_updated"
         "&from=2026-07-03T08:00:00%2B00:00"
@@ -126,7 +126,7 @@ def test_query_platform_audit_events_returns_redacted_timeline() -> None:
 def test_query_platform_audit_events_requires_platform_session() -> None:
     client = make_client(actor=None, service=FakeAuditQueryService())
 
-    response = client.get("/api/v1/platform/audit-events")
+    response = client.get("/api/platform/audit-events")
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "unauthenticated"

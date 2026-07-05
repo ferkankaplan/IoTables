@@ -129,7 +129,7 @@ def test_login_requirements_use_app_scope_query_alias() -> None:
     service = FakeIdentityAccessService()
     client = make_client(service)
 
-    response = client.get("/api/v1/auth/login-requirements?appScope=platform&username=owner")
+    response = client.get("/api/auth/login-requirements?appScope=platform&username=owner")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -144,7 +144,7 @@ def test_platform_login_sets_http_only_session_cookie() -> None:
     client = make_client(service)
 
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/auth/login",
         json={
             "appScope": "platform",
             "username": "Owner",
@@ -168,7 +168,7 @@ def test_tenant_login_passes_header_tenant_context_to_identity_service() -> None
     client = make_client(service)
 
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/auth/login",
         headers={"X-Tenant-Subdomain": "demo-cafe"},
         json={
             "appScope": "tenant",
@@ -193,7 +193,7 @@ def test_first_password_begin_returns_redacted_otp_setup_state() -> None:
     client = make_client(service)
 
     response = client.post(
-        "/api/v1/auth/first-password/begin",
+        "/api/auth/first-password/begin",
         json={"setupToken": "setup-token"},
     )
 
@@ -215,7 +215,7 @@ def test_first_password_complete_sets_session_cookie() -> None:
     client = make_client(service)
 
     response = client.post(
-        "/api/v1/auth/first-password/complete",
+        "/api/auth/first-password/complete",
         json={
             "setupToken": "setup-token",
             "newPassword": "new-secret",
@@ -235,7 +235,7 @@ def test_session_returns_current_actor_from_cookie() -> None:
     client = make_client(FakeIdentityAccessService())
     client.cookies.set("iotables_session", "raw-session-token")
 
-    response = client.get("/api/v1/auth/session")
+    response = client.get("/api/auth/session")
 
     assert response.status_code == 200
     assert response.json()["actor"]["userId"] == str(USER_ID)
@@ -245,7 +245,7 @@ def test_session_returns_current_actor_from_cookie() -> None:
 def test_session_without_cookie_returns_anonymous_state() -> None:
     client = make_client(FakeIdentityAccessService())
 
-    response = client.get("/api/v1/auth/session")
+    response = client.get("/api/auth/session")
 
     assert response.status_code == 200
     assert response.json() == {"actor": None}
@@ -255,7 +255,7 @@ def test_logout_requires_csrf_token() -> None:
     client = make_client(FakeIdentityAccessService())
     client.cookies.set("iotables_session", "raw-session-token")
 
-    response = client.post("/api/v1/auth/logout")
+    response = client.post("/api/auth/logout")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "csrf_required"
@@ -266,7 +266,7 @@ def test_logout_revokes_current_session_and_clears_cookie() -> None:
     client = make_client(service)
     client.cookies.set("iotables_session", "raw-session-token")
 
-    response = client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": "csrf"})
+    response = client.post("/api/auth/logout", headers={"X-CSRF-Token": "csrf"})
 
     assert response.status_code == 200
     assert response.json() == {"status": "logged_out"}

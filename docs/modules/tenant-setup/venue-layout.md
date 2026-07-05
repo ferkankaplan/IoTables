@@ -42,8 +42,8 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 ## Internal Rules
 
 - Tables belong to halls.
-- Tables are managed in Hall Management, not a separate primary page in v1.
-- V1 uses an ordered table grid inside each hall, not a visual coordinate-based floor plan.
+- Tables are managed in Hall Management, not a separate primary page in the current release.
+- The current release uses an ordered table grid inside each hall, not a visual coordinate-based floor plan.
 - Disabled tables cannot accept new customer ordering.
 - Table identifiers should be tenant-scoped and human readable.
 - Table layout changes must not corrupt active TableSessions.
@@ -60,7 +60,7 @@ Venue Layout owns tenant physical layout: halls, tables, table state, and table 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
 | Hall | active -> disabled | tenant, id, name, displayOrder, enabled | Hall belongs to one tenant; display order is tenant-local; disabled halls cannot accept normal active use | Disable instead of hard-delete when tables, sessions, orders, or staff hall assignments reference it |
-| Table | active -> disabled | tenant, id, hall, name, displayOrder, enabled | Table belongs to exactly one hall; only one active TableSession per tenant/table is allowed by Settlement; v1 uses ordered grid, not visual coordinates | Disable instead of hard-delete when sessions/orders/display credentials exist |
+| Table | active -> disabled | tenant, id, hall, name, displayOrder, enabled | Table belongs to exactly one hall; only one active TableSession per tenant/table is allowed by Settlement; current release uses ordered grid, not visual coordinates | Disable instead of hard-delete when sessions/orders/display credentials exist |
 | TableState | derived/read-only | table, active session state, latest order/fulfillment/balance summary | Derived from runtime contexts; Venue Layout must not own session/order/payment state | Rebuildable read model; no independent deletion semantics |
 
 ## App Surfaces

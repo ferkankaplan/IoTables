@@ -1,6 +1,6 @@
 # Runtime Observability
 
-This document defines v1 runtime observability expectations for IoTables. It does not define product analytics, audit evidence, or a vendor-specific monitoring stack.
+This document defines current release runtime observability expectations for IoTables. It does not define product analytics, audit evidence, or a vendor-specific monitoring stack.
 
 Source context:
 
@@ -34,7 +34,7 @@ Observability must not become:
 
 ## Signals
 
-| Signal | V1 Expectation |
+| Signal | Current Release Expectation |
 | --- | --- |
 | Logs | Structured application logs with request/tenant/app/module context where safe. |
 | Metrics | Counters, gauges, and timings for runtime health and safety paths. |
@@ -43,7 +43,7 @@ Observability must not become:
 | Audit | Separate append-only business/security evidence in Governance/Audit. |
 | Analytics | Separate app-owned product/operational summaries in app analytics docs. |
 
-V1 does not lock a vendor. Implementation may use local logs and later add OpenTelemetry-compatible instrumentation without changing product semantics.
+The current release does not lock a vendor. Implementation may use local logs and later add OpenTelemetry-compatible instrumentation without changing product semantics.
 
 ## Structured Logging
 
@@ -131,7 +131,7 @@ Exact thresholds are environment-specific and must be configured outside source 
 
 | Data | Retention Rule |
 | --- | --- |
-| Audit events | Indefinite in v1 unless explicit retention policy is introduced. |
+| Audit events | Indefinite in the current release unless explicit retention policy is introduced. |
 | Application logs | Environment policy; never source of business truth. |
 | Metrics | Environment policy; aggregate only. |
 | Traces | Short operational retention. |

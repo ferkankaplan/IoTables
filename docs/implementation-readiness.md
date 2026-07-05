@@ -1,6 +1,6 @@
 # Implementation Roadmap Review
 
-This document records the current implementation review for IoTables v1.
+This document records the current implementation review for IoTables the current release.
 
 It is not a product source of truth by itself. Product behavior remains owned by app documents, module contracts, the data model, database documents, API contracts, and tests. This file summarizes implementation status and the next execution order after the first vertical slices were built.
 
@@ -23,7 +23,7 @@ Source context:
 
 ## Current Status
 
-IoTables has moved past documentation readiness and initial scaffolding. The project now has a working v1 vertical implementation across the six app surfaces:
+IoTables has moved past documentation readiness and initial scaffolding. The project now has a working current release vertical implementation across the six app surfaces:
 
 - PlatformApp can authenticate a platform owner and create/manage tenants through tenant registry and provisioning flows.
 - TenantApp can authenticate tenant staff and manage tenant profile, halls, tables, stations, menu catalog, availability, and table display provisioning.
@@ -77,7 +77,7 @@ The implementation is not production-complete. The next roadmap is about hardeni
 The next work should proceed in this order:
 
 1. Migration and DB integrity audit.
-2. Runtime gap closure for documented v1 endpoints.
+2. Runtime gap closure for documented current release endpoints.
 3. DB-backed transaction and concurrency tests.
 4. Frontend decomposition and stale UI copy cleanup.
 5. Operational audit/history surfaces.
@@ -95,14 +95,14 @@ Implementation must continue preserving these invariants:
 - tenant context is resolved from trusted host/session state;
 - tenant name and subdomain are immutable after creation;
 - tenant GSM is required for tenant creation and tenant-admin/cashier first-password OTP flows;
-- station/service staff first-password setup does not require OTP in v1;
+- station/service staff first-password setup does not require OTP in the current release;
 - QR tokens are short-lived, one-time, and backend/database enforced;
 - CustomerOrderingSession and TableSession remain separate;
 - order submit, payments, payment voids, cashier corrections, starter templates, and bulk delivery are idempotency-safe;
 - starter templates run only during tenant creation and exactly once per tenant/template version;
 - `cafe.v1` starter product prices come from Sector Starter Templates;
 - DeliveryState stores picked-up/delivered only; ready comes from Preparation;
-- every TableSession has one Check/Adisyon in v1;
+- every TableSession has one Check/Adisyon in the current release;
 - payment totals and balances are server-calculated;
 - closed sessions reject normal orders/payments/corrections;
 - audit is immutable evidence, not analytics or rollback state;
@@ -110,25 +110,25 @@ Implementation must continue preserving these invariants:
 
 ## Deferred Decisions
 
-These remain intentionally deferred unless the user changes v1 scope:
+These remain intentionally deferred unless the user changes current release scope:
 
 | Decision | Reason |
 | --- | --- |
 | Final hosting provider | Deployment policy is provider-neutral. |
 | Observability vendor | Docs require safe signals, not a vendor. |
-| External payment provider | Out of v1. |
-| Fiscal/e-Adisyon/ÖKC provider | Out of v1. |
-| Visual floor-plan editor | Out of v1; ordered table grid is locked. |
-| Historical BI/reporting | Out of v1; app analytics are derived summaries. |
+| External payment provider | Out of the current release. |
+| Fiscal/e-Adisyon/ÖKC provider | Out of the current release. |
+| Visual floor-plan editor | Out of the current release; ordered table grid is locked. |
+| Historical BI/reporting | Out of the current release; app analytics are derived summaries. |
 
 ## Verification Gate
 
-Before declaring v1 implementation complete:
+Before declaring current release implementation complete:
 
 - `pnpm -w run check` must pass;
 - `git diff --check` must pass;
 - migrations must upgrade a clean database to head;
 - downgrade/rollback behavior must be explicitly accepted or tested for each migration class;
 - semantic index must be regenerated after indexed documentation changes;
-- documented v1 endpoints must be implemented or explicitly deferred in the checklist;
+- documented current release endpoints must be implemented or explicitly deferred in the checklist;
 - at least one end-to-end restaurant scenario must run through PlatformApp -> TenantApp -> CustomerApp -> StationStaffApp -> ServiceStaffApp -> CashierApp.

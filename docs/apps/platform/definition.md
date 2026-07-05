@@ -48,8 +48,8 @@ PlatformApp must not silently bypass tenant boundaries.
 - It does not close table sessions as a normal cashier flow.
 - It does not take payments on behalf of tenant cashiers.
 - It does not mutate tenant runtime data unless an explicit support or recovery workflow exists.
-- It does not configure fiscal/e-Adisyon/ÖKC integrations in v1.
-- It does not configure external payment providers, printer integrations, hardware terminals, or offline POS mode in v1.
+- It does not configure fiscal/e-Adisyon/ÖKC integrations in the current release.
+- It does not configure external payment providers, printer integrations, hardware terminals, or offline POS mode in the current release.
 
 ## Screens and URLs
 
@@ -116,9 +116,9 @@ Changing restaurant sector after tenant creation does not re-run starter data. S
 
 ### V1 Tenant Scope
 
-PlatformApp creates single-location restaurant tenants in v1.
+PlatformApp creates single-location restaurant tenants in the current release.
 
-V1 tenant creation implies these product boundaries:
+Current release tenant creation implies these product boundaries:
 
 - one tenant represents one restaurant/location;
 - ordering channel is dine-in table QR only;
@@ -135,7 +135,7 @@ These limits must be visible to the Platform Owner during tenant creation or ten
 
 ### Tenant Lifecycle and Health
 
-V1 tenant lifecycle states:
+Current release tenant lifecycle states:
 
 | State | Meaning |
 | --- | --- |
@@ -146,11 +146,11 @@ V1 tenant lifecycle states:
 
 New tenants start as `provisioning`. PlatformApp moves the tenant to `active` only after the tenant registry record, first tenant admin, starter data record, and required setup metadata are committed successfully.
 
-Manual DNS setup is tracked as an explicit setup checklist field such as `dnsReady`, because DNS records are managed outside the application. PlatformApp does not automate DNS in v1.
+Manual DNS setup is tracked as an explicit setup checklist field such as `dnsReady`, because DNS records are managed outside the application. PlatformApp does not automate DNS in the current release.
 
-V1 does not enforce tenant packages, trials, feature limits, or billing entitlements. Restaurant capacity is informational in v1 unless a later entitlement model explicitly gives it enforcement meaning.
+The current release does not enforce tenant packages, trials, feature limits, or billing entitlements. Restaurant capacity is informational in the current release unless a later entitlement model explicitly gives it enforcement meaning.
 
-V1 tenant health summary is limited to high-level signals:
+Current release tenant health summary is limited to high-level signals:
 
 - lifecycle state;
 - setup/provisioning state;
@@ -279,7 +279,7 @@ SMS provider selection is not a PlatformApp product decision. PlatformApp depend
 - PlatformApp is private and must require platform-owner authentication.
 - PlatformApp is single-user in the first version.
 - Platform Owner is a platform-scoped user, not a tenant user.
-- Platform Owner login requires username/password only in v1.
+- Platform Owner login requires username/password only in the current release.
 - Platform Owner bootstrap must be explicit and one-time; it must not run on application restart or deployment.
 - Tenant users must never access PlatformApp.
 - Platform actions must be audited.

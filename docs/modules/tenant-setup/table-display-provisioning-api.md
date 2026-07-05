@@ -9,11 +9,11 @@ Table Display Provisioning owns ESP32 claim exchange, display credentials, crede
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `POST` | `/api/v1/tenant-setup/tables/{tableId}/display-claims` | TenantApp | `table_display.create_claim` | Tenant Admin session + CSRF | Path: `tableId` | `DisplayClaimCreated` | `not_authorized`, `not_found_or_hidden` |
-| `POST` | `/api/v1/table-displays/claims/consume` | ESP32 setup flow | `table_display.consume_claim` | Raw claim secret | Body: `claimSecret` | `DisplayCredentialIssued` | `claim_expired`, `claim_consumed` |
-| `GET` | `/api/v1/tenant-setup/tables/{tableId}/display-state` | TenantApp | `table_display.get_display_state` | Tenant Admin session | Path: `tableId` | `DisplayState` | `not_authorized`, `not_found_or_hidden` |
-| `POST` | `/api/v1/tenant-setup/tables/{tableId}/display-credential/revoke` | TenantApp | `table_display.revoke_credential` | Tenant Admin session + CSRF | Body: `reason` | `DisplayState` | `reason_required`, `not_found_or_hidden` |
-| `POST` | `/api/v1/tenant-setup/tables/{tableId}/display-credential/rotate` | TenantApp | `table_display.rotate_credential` | Tenant Admin session + CSRF | Body: `reason` | `DisplayCredentialIssued` | `reason_required`, `not_found_or_hidden` |
+| `POST` | `/api/tenant-setup/tables/{tableId}/display-claims` | TenantApp | `table_display.create_claim` | Tenant Admin session + CSRF | Path: `tableId` | `DisplayClaimCreated` | `not_authorized`, `not_found_or_hidden` |
+| `POST` | `/api/table-displays/claims/consume` | ESP32 setup flow | `table_display.consume_claim` | Raw claim secret | Body: `claimSecret` | `DisplayCredentialIssued` | `claim_expired`, `claim_consumed` |
+| `GET` | `/api/tenant-setup/tables/{tableId}/display-state` | TenantApp | `table_display.get_display_state` | Tenant Admin session | Path: `tableId` | `DisplayState` | `not_authorized`, `not_found_or_hidden` |
+| `POST` | `/api/tenant-setup/tables/{tableId}/display-credential/revoke` | TenantApp | `table_display.revoke_credential` | Tenant Admin session + CSRF | Body: `reason` | `DisplayState` | `reason_required`, `not_found_or_hidden` |
+| `POST` | `/api/tenant-setup/tables/{tableId}/display-credential/rotate` | TenantApp | `table_display.rotate_credential` | Tenant Admin session + CSRF | Body: `reason` | `DisplayCredentialIssued` | `reason_required`, `not_found_or_hidden` |
 
 ## Internal-Only Contracts
 
@@ -52,4 +52,4 @@ Table Display Provisioning owns ESP32 claim exchange, display credentials, crede
 
 ## Idempotency
 
-Claim consumption is guarded by atomic one-time consume. Credential revocation and rotation are state-guarded and audited; no `Idempotency-Key` is required in v1.
+Claim consumption is guarded by atomic one-time consume. Credential revocation and rotation are state-guarded and audited; no `Idempotency-Key` is required in the current release.

@@ -1,6 +1,6 @@
 # StationStaffApp Test Plan
 
-This document defines StationStaffApp-visible test coverage for v1. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
+This document defines StationStaffApp-visible test coverage for the current release. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
 
 Source context:
 
@@ -115,20 +115,20 @@ StationStaffApp executable tests must cover the app-visible behavior of these en
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/v1/auth/login-requirements` | First-password requirement discovery. |
-| `POST /api/v1/auth/login` | StationStaff scope, missing role, invalid credentials. |
-| `POST /api/v1/auth/first-password/begin` | Bootstrap password setup. |
-| `POST /api/v1/auth/first-password/complete` | No OTP required for station staff. |
-| `GET /api/v1/auth/session` | Protected route access. |
-| `POST /api/v1/auth/logout` | Session revocation. |
-| `GET /api/v1/station-staff/authorized-stations` | Station selector/direct queue behavior. |
-| `GET /api/v1/station-staff/stations/{stationId}/context` | Disabled/out-of-scope station handling. |
-| `GET /api/v1/station-staff/queue` | Assigned station queue, grouping/filtering inputs. |
-| `GET /api/v1/station-staff/recent-items` | Same-day recent items. |
-| `GET /api/v1/station-staff/workload` | Counts and oldest age. |
-| `POST /api/v1/station-staff/preparation-items/{preparationItemId}/start` | Valid, stale, unauthorized, duplicate-safe start. |
-| `POST /api/v1/station-staff/preparation-items/{preparationItemId}/mark-ready` | Valid, stale, unauthorized, duplicate-safe ready. |
-| `POST /api/v1/station-staff/preparation-items/{preparationItemId}/cannot-prepare` | Reason required, stale, unauthorized, invalid states. |
+| `GET /api/auth/login-requirements` | First-password requirement discovery. |
+| `POST /api/auth/login` | StationStaff scope, missing role, invalid credentials. |
+| `POST /api/auth/first-password/begin` | Bootstrap password setup. |
+| `POST /api/auth/first-password/complete` | No OTP required for station staff. |
+| `GET /api/auth/session` | Protected route access. |
+| `POST /api/auth/logout` | Session revocation. |
+| `GET /api/station-staff/authorized-stations` | Station selector/direct queue behavior. |
+| `GET /api/station-staff/stations/{stationId}/context` | Disabled/out-of-scope station handling. |
+| `GET /api/station-staff/queue` | Assigned station queue, grouping/filtering inputs. |
+| `GET /api/station-staff/recent-items` | Same-day recent items. |
+| `GET /api/station-staff/workload` | Counts and oldest age. |
+| `POST /api/station-staff/preparation-items/{preparationItemId}/start` | Valid, stale, unauthorized, duplicate-safe start. |
+| `POST /api/station-staff/preparation-items/{preparationItemId}/mark-ready` | Valid, stale, unauthorized, duplicate-safe ready. |
+| `POST /api/station-staff/preparation-items/{preparationItemId}/cannot-prepare` | Reason required, stale, unauthorized, invalid states. |
 
 ## Security and Abuse Coverage
 

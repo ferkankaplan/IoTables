@@ -1,6 +1,6 @@
 # UI Copy Style
 
-This document defines shared v1 UI copy rules for IoTables apps.
+This document defines shared current release UI copy rules for IoTables apps.
 
 Source context:
 

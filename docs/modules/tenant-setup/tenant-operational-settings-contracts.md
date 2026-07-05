@@ -29,4 +29,4 @@ Source module: [tenant-operational-settings.md](tenant-operational-settings.md)
 | --- | --- |
 | `tenant_settings_missing` | Required settings row does not exist for tenant. |
 | `validation_failed` | Public display name or setting payload is invalid. |
-| `service_tracking_transition_blocked` | A future rule blocks a tracking-mode change; none currently locked for v1. |
+| `service_tracking_transition_blocked` | A future rule blocks a tracking-mode change; none currently locked for the current release. |

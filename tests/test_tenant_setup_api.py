@@ -530,7 +530,7 @@ def make_client(
 def test_venue_board_requires_tenant_session() -> None:
     client = make_client(actor=None, service=FakeVenueLayoutQueryService())
 
-    response = client.get("/api/v1/tenant-setup/venue/board")
+    response = client.get("/api/tenant-setup/venue/board")
 
     assert response.status_code == 401
     assert response.json()["error"]["code"] == "unauthenticated"
@@ -542,7 +542,7 @@ def test_venue_board_rejects_non_tenant_admin_role() -> None:
         service=FakeVenueLayoutQueryService(),
     )
 
-    response = client.get("/api/v1/tenant-setup/venue/board")
+    response = client.get("/api/tenant-setup/venue/board")
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "not_authorized"
@@ -552,7 +552,7 @@ def test_venue_board_uses_actor_tenant_scope() -> None:
     service = FakeVenueLayoutQueryService()
     client = make_client(actor=make_actor(), service=service)
 
-    response = client.get("/api/v1/tenant-setup/venue/board")
+    response = client.get("/api/tenant-setup/venue/board")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -582,7 +582,7 @@ def test_create_hall_requires_csrf_token() -> None:
     client = make_client(actor=make_actor(), mutation_service=FakeVenueLayoutMutationService())
 
     response = client.post(
-        "/api/v1/tenant-setup/halls",
+        "/api/tenant-setup/halls",
         json={"name": "Bahce", "displayOrder": 3},
     )
 
@@ -595,7 +595,7 @@ def test_create_hall_uses_actor_tenant_admin_scope() -> None:
     client = make_client(actor=make_actor(), mutation_service=service)
 
     response = client.post(
-        "/api/v1/tenant-setup/halls",
+        "/api/tenant-setup/halls",
         headers={"X-CSRF-Token": "csrf"},
         json={"name": "Bahce", "displayOrder": 3},
     )
@@ -612,7 +612,7 @@ def test_create_table_belongs_to_hall_context() -> None:
     client = make_client(actor=make_actor(), mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/halls/{HALL_ID}/tables",
+        f"/api/tenant-setup/halls/{HALL_ID}/tables",
         headers={"X-CSRF-Token": "csrf"},
         json={"name": "Masa 777", "displayOrder": 7},
     )
@@ -629,7 +629,7 @@ def test_disable_table_requires_reason_and_returns_disabled_table() -> None:
     client = make_client(actor=make_actor(), mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/tables/{TABLE_ID}/disable",
+        f"/api/tenant-setup/tables/{TABLE_ID}/disable",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "closed area"},
     )
@@ -647,7 +647,7 @@ def test_list_stations_uses_actor_tenant_scope() -> None:
     service = FakeStationSetupQueryService()
     client = make_client(actor=make_actor(), station_query_service=service)
 
-    response = client.get("/api/v1/tenant-setup/stations?include_disabled=true")
+    response = client.get("/api/tenant-setup/stations?include_disabled=true")
 
     assert response.status_code == 200
     assert response.json()["items"][0]["stationId"] == str(STATION_ID)
@@ -659,11 +659,11 @@ def test_create_station_requires_csrf_and_returns_station() -> None:
     client = make_client(actor=make_actor(), station_mutation_service=service)
 
     missing_csrf = client.post(
-        "/api/v1/tenant-setup/stations",
+        "/api/tenant-setup/stations",
         json={"name": "Bar", "displayOrder": 2},
     )
     response = client.post(
-        "/api/v1/tenant-setup/stations",
+        "/api/tenant-setup/stations",
         headers={"X-CSRF-Token": "csrf"},
         json={"name": "Bar", "displayOrder": 2},
     )
@@ -680,7 +680,7 @@ def test_disable_station_requires_reason_and_returns_disabled_station() -> None:
     client = make_client(actor=make_actor(), station_mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/stations/{STATION_ID}/disable",
+        f"/api/tenant-setup/stations/{STATION_ID}/disable",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "renovation"},
     )
@@ -698,7 +698,7 @@ def test_list_menu_setup_uses_actor_tenant_scope() -> None:
     service = FakeMenuCatalogQueryService()
     client = make_client(actor=make_actor(), menu_query_service=service)
 
-    response = client.get("/api/v1/tenant-setup/menu?include_disabled=true")
+    response = client.get("/api/tenant-setup/menu?include_disabled=true")
 
     assert response.status_code == 200
     assert response.json()["categories"][0]["categoryId"] == str(CATEGORY_ID)
@@ -711,11 +711,11 @@ def test_create_menu_category_requires_csrf_and_returns_category() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     missing_csrf = client.post(
-        "/api/v1/tenant-setup/menu/categories",
+        "/api/tenant-setup/menu/categories",
         json={"name": "Tatlılar", "displayOrder": 4},
     )
     response = client.post(
-        "/api/v1/tenant-setup/menu/categories",
+        "/api/tenant-setup/menu/categories",
         headers={"X-CSRF-Token": "csrf"},
         json={"name": "Tatlılar", "displayOrder": 4},
     )
@@ -732,7 +732,7 @@ def test_create_product_service_binds_category_station_and_initial_variant() -> 
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.post(
-        "/api/v1/tenant-setup/menu/products",
+        "/api/tenant-setup/menu/products",
         headers={"X-CSRF-Token": "csrf"},
         json={
             "categoryId": str(CATEGORY_ID),
@@ -757,7 +757,7 @@ def test_update_menu_category_binds_category_id_and_command() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.patch(
-        f"/api/v1/tenant-setup/menu/categories/{CATEGORY_ID}",
+        f"/api/tenant-setup/menu/categories/{CATEGORY_ID}",
         headers={"X-CSRF-Token": "csrf"},
         json={"name": "Sıcak İçecekler", "displayOrder": 2},
     )
@@ -777,7 +777,7 @@ def test_disable_menu_category_requires_reason() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/menu/categories/{CATEGORY_ID}/disable",
+        f"/api/tenant-setup/menu/categories/{CATEGORY_ID}/disable",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "seasonal"},
     )
@@ -795,7 +795,7 @@ def test_get_product_service_uses_tenant_scope() -> None:
     service = FakeMenuCatalogQueryService()
     client = make_client(actor=make_actor(), menu_query_service=service)
 
-    response = client.get(f"/api/v1/tenant-setup/menu/products/{PRODUCT_ID}")
+    response = client.get(f"/api/tenant-setup/menu/products/{PRODUCT_ID}")
 
     assert response.status_code == 200
     assert response.json()["productId"] == str(PRODUCT_ID)
@@ -811,7 +811,7 @@ def test_update_product_service_binds_editable_fields() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.patch(
-        f"/api/v1/tenant-setup/menu/products/{PRODUCT_ID}",
+        f"/api/tenant-setup/menu/products/{PRODUCT_ID}",
         headers={"X-CSRF-Token": "csrf"},
         json={"name": "Filtre Kahve", "stationId": str(STATION_ID), "enabled": True},
     )
@@ -830,7 +830,7 @@ def test_disable_product_service_binds_reason() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/menu/products/{PRODUCT_ID}/disable",
+        f"/api/tenant-setup/menu/products/{PRODUCT_ID}/disable",
         headers={"X-CSRF-Token": "csrf"},
         json={"reason": "not sold"},
     )
@@ -849,7 +849,7 @@ def test_manage_variant_binds_variant_command() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/menu/products/{PRODUCT_ID}/variants",
+        f"/api/tenant-setup/menu/products/{PRODUCT_ID}/variants",
         headers={"X-CSRF-Token": "csrf"},
         json={
             "variantId": str(VARIANT_ID),
@@ -875,7 +875,7 @@ def test_manage_modifiers_replaces_product_modifier_config() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/menu/products/{PRODUCT_ID}/modifiers",
+        f"/api/tenant-setup/menu/products/{PRODUCT_ID}/modifiers",
         headers={"X-CSRF-Token": "csrf"},
         json={
             "groups": [
@@ -904,7 +904,7 @@ def test_set_availability_binds_override_command() -> None:
     client = make_client(actor=make_actor(), menu_mutation_service=service)
 
     response = client.post(
-        f"/api/v1/tenant-setup/menu/products/{PRODUCT_ID}/availability",
+        f"/api/tenant-setup/menu/products/{PRODUCT_ID}/availability",
         headers={"X-CSRF-Token": "csrf"},
         json={"state": "unavailable", "reason": "stok yok"},
     )

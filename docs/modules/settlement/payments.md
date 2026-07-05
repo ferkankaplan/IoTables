@@ -10,7 +10,7 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 | Owned Concept | Type | Authority |
 | --- | --- | --- |
-| Payment | Entity | create, read, void when v1 rules allow |
+| Payment | Entity | create, read, void when current release rules allow |
 | Payment method | Value | cash, card, transfer |
 | Payment idempotency | Safety record | prevent duplicate payment records |
 | Payment void idempotency | Safety record | prevent duplicate payment void commands |
@@ -46,16 +46,16 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 - Partial payments reduce remaining balance but do not close TableSession.
 - Full payment can enable session closure, but closure remains explicit CashierApp action.
-- V1 payment methods are `cash`, `card`, and `transfer`.
+- Current release payment methods are `cash`, `card`, and `transfer`.
 - Mixed payment is represented by multiple Payment records, not a `mixed` enum value.
-- V1 payment splitting is amount-based only; item/person-level settlement is out of scope.
-- External payment providers are out of scope for v1.
+- Current release payment splitting is amount-based only; item/person-level settlement is out of scope.
+- External payment providers are out of scope for the current release.
 - CustomerApp cannot create or mutate payments.
 - Payment totals must be calculated server-side.
-- Payment cannot exceed the current remaining balance in v1.
-- Payments attach to the single Check/Adisyon in v1.
+- Payment cannot exceed the current remaining balance in the current release.
+- Payments attach to the single Check/Adisyon in the current release.
 - Payment void is allowed only while the Check is open and only for non-provider payments.
-- Refunds after session closure are out of v1.
+- Refunds after session closure are out of the current release.
 
 ## Operational Safety
 
@@ -70,10 +70,10 @@ In v1, payments are cashier-recorded settlement records unless an external payme
 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
-| Payment | recorded -> voided | tenant, check, amount, method, status, cashier, receivedAt, void fields | Amount positive; cannot exceed remaining balance in v1; CustomerApp cannot create/mutate payments; provider payments are out of v1 | Preserve permanently; void instead of deleting |
+| Payment | recorded -> voided | tenant, check, amount, method, status, cashier, receivedAt, void fields | Amount positive; cannot exceed remaining balance in the current release; CustomerApp cannot create/mutate payments; provider payments are out of the current release | Preserve permanently; void instead of deleting |
 | PaymentIdempotency | processing -> completed / failed | tenant, check, idempotencyKey, paymentId, requestHash/status if needed | Unique by tenant + check + idempotencyKey; duplicate clicks/retries return original payment result | Retain long enough to cover cashier/network retries and audit payment safety |
 | PaymentVoidIdempotency | processing -> completed / failed | tenant, payment, idempotencyKey, requestHash, status, completedAt | Unique by tenant + payment + idempotencyKey; duplicate compatible void returns original void result | Retain with payment audit history |
-| PaymentVoid | represented by immutable Payment void fields in v1 | tenant, payment, reason, actor, voidedAt | Allowed only on open Check and only for non-provider payments in v1; reason required; no separate v1 `payment_voids` table | Immutable void fields plus required correction; never erase original payment |
+| PaymentVoid | represented by immutable Payment void fields in the current release | tenant, payment, reason, actor, voidedAt | Allowed only on open Check and only for non-provider payments in the current release; reason required; no separate current release `payment_voids` table | Immutable void fields plus required correction; never erase original payment |
 
 ## App Surfaces
 

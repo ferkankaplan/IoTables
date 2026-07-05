@@ -1,7 +1,7 @@
-# V1 Out-of-Scope Scenario Requests
-These requests must not be implemented as hidden branches in v1:
+# Current Release Out-of-Scope Scenario Requests
+These requests must not be implemented as hidden branches in the current release:
 
-| Request | V1 Result |
+| Request | Current Release Result |
 | --- | --- |
 | Customer pays from CustomerApp | Out of scope |
 | Customer cancels submitted order | Out of scope; staff/cashier correction only |

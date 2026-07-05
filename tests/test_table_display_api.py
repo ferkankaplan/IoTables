@@ -30,13 +30,13 @@ def test_table_display_qr_token_requires_display_credential_scheme() -> None:
     service = FakeTablePresenceService()
     client = make_client(service)
 
-    missing = client.get("/api/v1/table-display/qr-token")
+    missing = client.get("/api/table-display/qr-token")
     wrong_scheme = client.get(
-        "/api/v1/table-display/qr-token",
+        "/api/table-display/qr-token",
         headers={"Authorization": "Bearer abc"},
     )
     response = client.get(
-        "/api/v1/table-display/qr-token",
+        "/api/table-display/qr-token",
         headers={"Authorization": "DisplayCredential display-secret"},
     )
 

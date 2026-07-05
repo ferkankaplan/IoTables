@@ -6,7 +6,7 @@ Settlement owns the table visit billing surface: TableSession, Check/Adisyon, pa
 
 | Module | Purpose |
 | --- | --- |
-| [table-session-billing.md](table-session-billing.md) | TableSession, single v1 Check/Adisyon, bill summary, closure |
+| [table-session-billing.md](table-session-billing.md) | TableSession, single current release Check/Adisyon, bill summary, closure |
 | [payments.md](payments.md) | Cashier-recorded payments, payment history, and payment voids |
 
 ## Contract Documents
@@ -31,4 +31,4 @@ Settlement owns the table visit billing surface: TableSession, Check/Adisyon, pa
 
 ## Boundary Rule
 
-Settlement is the financial/runtime authority for payment and closure. CustomerApp cannot mutate Settlement records in v1.
+Settlement is the financial/runtime authority for payment and closure. CustomerApp cannot mutate Settlement records in the current release.

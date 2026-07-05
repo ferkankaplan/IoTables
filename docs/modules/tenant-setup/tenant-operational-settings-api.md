@@ -9,8 +9,8 @@ Tenant Operational Settings exposes tenant-owned customer-visible display settin
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/tenant-setup/operational-settings` | TenantApp | `tenant_operational_settings.get_settings` | Tenant Admin session | none | `TenantOperationalSettings` | `not_authorized`, `tenant_settings_missing` |
-| `PATCH` | `/api/v1/tenant-setup/operational-settings` | TenantApp | `tenant_operational_settings.update_settings` | Tenant Admin session + CSRF | Body: `TenantOperationalSettingsUpdate` | `TenantOperationalSettings` | `validation_failed`, `tenant_settings_missing` |
+| `GET` | `/api/tenant-setup/operational-settings` | TenantApp | `tenant_operational_settings.get_settings` | Tenant Admin session | none | `TenantOperationalSettings` | `not_authorized`, `tenant_settings_missing` |
+| `PATCH` | `/api/tenant-setup/operational-settings` | TenantApp | `tenant_operational_settings.update_settings` | Tenant Admin session + CSRF | Body: `TenantOperationalSettingsUpdate` | `TenantOperationalSettings` | `validation_failed`, `tenant_settings_missing` |
 
 ## Internal-Only Contracts
 

@@ -1,6 +1,6 @@
 # CashierApp
 
-This folder contains the v1 product behavior source for CashierApp.
+This folder contains the current production behavior source for CashierApp.
 
 | Document | Purpose |
 | --- | --- |
@@ -9,7 +9,7 @@ This folder contains the v1 product behavior source for CashierApp.
 | [end-to-end.md](end-to-end.md) | This app's role in the shared end-to-end flow |
 | [scenarios.md](scenarios.md) | Happy paths and branch behavior |
 | [visibility.md](visibility.md) | What this app sees from shared cross-app state |
-| [acceptance-criteria.md](acceptance-criteria.md) | V1 acceptance criteria |
+| [acceptance-criteria.md](acceptance-criteria.md) | Current release acceptance criteria |
 | [ui-states.md](ui-states.md) | Required UI states |
 | [api-usage.md](api-usage.md) | Module-owned API endpoints used by this app |
 | [wireframes.md](wireframes.md) | Cashier board, session, payment, correction, close, and responsive behavior |
@@ -17,6 +17,6 @@ This folder contains the v1 product behavior source for CashierApp.
 | [components.md](components.md) | Product-level CashierApp component responsibilities |
 | [test-plan.md](test-plan.md) | CashierApp scenario, state, API, security, UI, and copy test coverage |
 | [analytics.md](analytics.md) | Cashier settlement metrics and audit separation |
-| [out-of-scope.md](out-of-scope.md) | Behaviors this app must not implement in v1 |
+| [out-of-scope.md](out-of-scope.md) | Behaviors this app must not implement in the current release |
 
 Shared cross-app docs are in [../_shared](../_shared/semantic-source-rule.md).

@@ -1,6 +1,6 @@
 # TenantApp Test Plan
 
-This document defines TenantApp-visible test coverage for v1. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
+This document defines TenantApp-visible test coverage for the current release. It does not replace module, database, API, security, or implementation tests. Executable tests must reference the owning semantic source when implementation begins.
 
 Source context:
 
@@ -74,7 +74,7 @@ Out of scope for this test plan:
 | Duplicate/reordered positions conflict | Server normalization/rejection visible. |
 | Table has historical sessions/orders | Hard delete absent; disable/preserve history. |
 | Table has active TableSession | Normal disable blocked. |
-| Standalone table management attempted | Not a primary v1 page; hall workspace used. |
+| Standalone table management attempted | Not a primary current release page; hall workspace used. |
 | Display claim expires | Claim rejected; new claim can be created. |
 | Display claim reused | Rejected safely. |
 | Display claim wrong table | Rejected safely. |
@@ -89,7 +89,7 @@ Out of scope for this test plan:
 | Station has active preparation items | Disable blocked. |
 | Product still routes to disabled station | Product cannot remain orderable. |
 | Product has no station | Product cannot be orderable. |
-| Product has more than one station | Rejected in v1. |
+| Product has more than one station | Rejected in the current release. |
 | Product disabled | Historical orders preserved; product not orderable. |
 | Product unavailable | Product may be visible but not orderable. |
 | Price changes | Existing OrderItem snapshots unchanged. |
@@ -122,7 +122,7 @@ Out of scope for this test plan:
 | Tenant admin first login requires password change and OTP | Browser login and OTP API tests. |
 | Tenant name/subdomain not editable | UI blocked state and API rejection. |
 | Halls/tables one workspace with contextual table panels | Browser E2E and forbidden route/control checks. |
-| V1 table layout ordered grid, not floor-plan coordinates | UI absence and copy checks. |
+| Current release table layout ordered grid, not floor-plan coordinates | UI absence and copy checks. |
 | Table display provisioning from table detail | Browser/API tests for claim lifecycle. |
 | Stations can be created/disabled | UI/API tests with disable blockers. |
 | Menu setup supports variants/modifiers/prices/availability/one station | Component/API tests. |
@@ -152,25 +152,25 @@ TenantApp executable tests must cover the app-visible behavior of these endpoint
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/v1/tenant/context` | Public-safe context only; tenant unavailable states. |
-| `GET /api/v1/auth/login-requirements` | First-login/setup requirement discovery. |
-| `POST /api/v1/auth/login` | Tenant admin login, wrong app scope, first-password required. |
-| `GET /api/v1/auth/session` | Protected admin route access. |
-| `POST /api/v1/auth/logout` | Session revocation. |
-| `POST /api/v1/auth/first-password/begin` | Setup-token and OTP-required states. |
-| `POST /api/v1/auth/first-password/complete` | OTP proof and password policy. |
-| `GET/POST /api/v1/auth/otp-challenges/{challengeId}...` | OTP state, send, verify, expired, locked. |
-| `GET/PATCH /api/v1/tenant/profile` | Mutable profile only; immutable identity rejection. |
-| `GET/PATCH /api/v1/tenant-setup/operational-settings` | Public display and service tracking mode. |
-| `GET /api/v1/tenant/starter-template-application` | Read-only starter proof. |
-| `GET/POST/PATCH /api/v1/tenant/staff...` | Staff list/create/profile/role/scope changes and rollback. |
-| `GET /api/v1/tenant-setup/venue/board` | Hall/table board and empty states. |
-| `/api/v1/tenant-setup/halls...` | Hall create/update/disable blockers. |
-| `/api/v1/tenant-setup/tables...` | Table create/update/disable/context blockers. |
-| `/api/v1/tenant-setup/stations...` | Station create/update/disable blockers. |
-| `/api/v1/tenant-setup/menu...` | Menu/category/product/variant/modifier/availability/routing validation. |
-| `/api/v1/tenant-setup/tables/{tableId}/display...` | Claim create, display state, revoke, rotate. |
-| `GET /api/v1/tenant/audit-events` | Tenant setup/security audit only. |
+| `GET /api/tenant/context` | Public-safe context only; tenant unavailable states. |
+| `GET /api/auth/login-requirements` | First-login/setup requirement discovery. |
+| `POST /api/auth/login` | Tenant admin login, wrong app scope, first-password required. |
+| `GET /api/auth/session` | Protected admin route access. |
+| `POST /api/auth/logout` | Session revocation. |
+| `POST /api/auth/first-password/begin` | Setup-token and OTP-required states. |
+| `POST /api/auth/first-password/complete` | OTP proof and password policy. |
+| `GET/POST /api/auth/otp-challenges/{challengeId}...` | OTP state, send, verify, expired, locked. |
+| `GET/PATCH /api/tenant/profile` | Mutable profile only; immutable identity rejection. |
+| `GET/PATCH /api/tenant-setup/operational-settings` | Public display and service tracking mode. |
+| `GET /api/tenant/starter-template-application` | Read-only starter proof. |
+| `GET/POST/PATCH /api/tenant/staff...` | Staff list/create/profile/role/scope changes and rollback. |
+| `GET /api/tenant-setup/venue/board` | Hall/table board and empty states. |
+| `/api/tenant-setup/halls...` | Hall create/update/disable blockers. |
+| `/api/tenant-setup/tables...` | Table create/update/disable/context blockers. |
+| `/api/tenant-setup/stations...` | Station create/update/disable blockers. |
+| `/api/tenant-setup/menu...` | Menu/category/product/variant/modifier/availability/routing validation. |
+| `/api/tenant-setup/tables/{tableId}/display...` | Claim create, display state, revoke, rotate. |
+| `GET /api/tenant/audit-events` | Tenant setup/security audit only. |
 
 ## Security and Abuse Coverage
 
@@ -209,7 +209,7 @@ Tests must assert that:
 - menu copy distinguishes disabled and unavailable;
 - service tracking copy states ServiceStaffApp/customer/cashier impact;
 - display provisioning copy explains one-time secret behavior;
-- forbidden runtime and unsupported v1 claims from [copy.md](copy.md) are absent.
+- forbidden runtime and unsupported current release claims from [copy.md](copy.md) are absent.
 
 ## Forbidden Control Coverage
 

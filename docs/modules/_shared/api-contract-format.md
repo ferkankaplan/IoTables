@@ -7,7 +7,7 @@ They do not create new product behavior. They wrap app scenarios, module contrac
 ## Rules
 
 - Put API contracts beside the module that owns the command/query.
-- Use `/api/v1`.
+- Use `/api`.
 - Resolve tenant scope from host/subdomain for tenant-scoped APIs.
 - Use `camelCase` JSON fields.
 - Use string IDs, ISO 8601 UTC timestamps, and integer minor units for money.
@@ -21,7 +21,7 @@ They do not create new product behavior. They wrap app scenarios, module contrac
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `POST` | `/api/v1/example` | App | `module.command` | Required actor | Body/query/header fields | Response fields | Domain/API error codes |
+| `POST` | `/api/example` | App | `module.command` | Required actor | Body/query/header fields | Response fields | Domain/API error codes |
 
 ## Response Shape Rule
 

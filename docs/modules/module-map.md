@@ -91,9 +91,9 @@ These references are not copied as architecture. They are evidence used to avoid
 
 | Internal Module | Doc | Owns | Public Consumers |
 | --- | --- | --- | --- |
-| Table Session and Billing | [settlement/table-session-billing.md](settlement/table-session-billing.md) | TableSession, single v1 Check/Adisyon, bill totals, remaining balance, close-session eligibility | CustomerApp read, CashierApp, Ordering command |
+| Table Session and Billing | [settlement/table-session-billing.md](settlement/table-session-billing.md) | TableSession, single current release Check/Adisyon, bill totals, remaining balance, close-session eligibility | CustomerApp read, CashierApp, Ordering command |
 | Payments | [settlement/payments.md](settlement/payments.md) | Manual payment records, payment idempotency, non-provider payment void | CashierApp, CustomerApp read |
-| Corrections | [settlement/table-session-billing.md](settlement/table-session-billing.md), [settlement/payments.md](settlement/payments.md), [governance/audit.md](governance/audit.md) | Narrow v1 cashier correction workflows with reason and audit | CashierApp |
+| Corrections | [settlement/table-session-billing.md](settlement/table-session-billing.md), [settlement/payments.md](settlement/payments.md), [governance/audit.md](governance/audit.md) | Narrow current release cashier correction workflows with reason and audit | CashierApp |
 
 ### Governance
 
@@ -167,9 +167,9 @@ Rules:
 | Audit was listed beside business modules | Audit could become a noisy utility without policy ownership | Move it under Governance |
 | Station setup ownership was implicit | TenantApp manages stations but no module clearly owned station lifecycle | Add Tenant Setup / Station Setup as station definition owner |
 | Table Access / QR mixed two owners | Provisioning is tenant setup; fresh presence is ordering security | Split into Table Display Provisioning and Table Presence; keep [shared QR flow](_shared/table-access-qr-flow.md) as cross-module explanation |
-| Product/service station routing was open | Menu and fulfillment ownership would change if one product routed to many stations | V1 keeps exactly one station per product/service |
-| Tenant lifecycle status was open | Provisioning and runtime availability needed exact states | V1 uses `provisioning`, `active`, `suspended`, `provisioning_failed` |
-| Correction workflows were broad | Cashier corrections could become history rewrite | V1 allows only cashier note, pending/cannot_prepare item void before payment, and non-provider payment void on open Check |
+| Product/service station routing was open | Menu and fulfillment ownership would change if one product routed to many stations | The current release keeps exactly one station per product/service |
+| Tenant lifecycle status was open | Provisioning and runtime availability needed exact states | The current release uses `provisioning`, `active`, `suspended`, `provisioning_failed` |
+| Correction workflows were broad | Cashier corrections could become history rewrite | The current release allows only cashier note, pending/cannot_prepare item void before payment, and non-provider payment void on open Check |
 | Mandatory audit events were vague | Critical commands needed consistent event names | V1 mandatory event list is defined in [governance/audit.md](governance/audit.md) and [data-model.md](../data-model.md) |
 | Staff assignment ownership overlapped Tenant Setup and Access | Schema/API ownership would split station and hall permissions across contexts | Staff roles, station assignments, and hall assignments belong to Access / Staff Access; Tenant Setup owns only the referenced halls/stations |
 | Availability/sold-out model was too minimal | Live menus need temporary sold-out without disabling catalog history | Menu Catalog owns `AvailabilityOverride` for temporary product/variant orderability |

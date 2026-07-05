@@ -48,5 +48,5 @@
 ### Copy Requirements
 
 - Use "tenant unavailable", "setup failed", "DNS not ready", and "provisioning" language.
-- Do not claim DNS automation in v1.
+- Do not claim DNS automation in the current release.
 - Do not present tenant as a fiscal/POS-complete system.

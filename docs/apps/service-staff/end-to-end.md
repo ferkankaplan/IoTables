@@ -1,6 +1,6 @@
 # ServiceStaffApp End-to-End Role
 
-This document extracts the parts of the shared v1 end-to-end flow where this app participates.
+This document extracts the parts of the shared current release end-to-end flow where this app participates.
 
 See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-end-to-end.md).
 

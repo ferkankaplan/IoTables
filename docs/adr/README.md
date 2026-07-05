@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This folder records locked architecture decisions for IoTables v1.
+This folder records locked architecture decisions for IoTables the current release.
 
 ADR files do not replace app, module, data, API, or test documents. They explain why a foundational decision is locked and which source documents must stay synchronized with it.
 
@@ -11,7 +11,7 @@ ADR files do not replace app, module, data, API, or test documents. They explain
 | [modular-monolith.md](modular-monolith.md) | Build IoTables as a modular monolith with bounded contexts. |
 | [six-app-semantic-source.md](six-app-semantic-source.md) | Treat the six apps as the semantic source for lower layers. |
 | [qr-presence-session-model.md](qr-presence-session-model.md) | Separate table display credentials, QR presence, CustomerOrderingSession, and TableSession. |
-| [shared-schema-tenancy.md](shared-schema-tenancy.md) | Use shared PostgreSQL tables with tenant-owned rows in v1. |
+| [shared-schema-tenancy.md](shared-schema-tenancy.md) | Use shared PostgreSQL tables with tenant-owned rows in the current release. |
 | [reliable-side-effects-outbox.md](reliable-side-effects-outbox.md) | Use durable outbox and attempt records for non-transactional side effects. |
 
 ## Rules

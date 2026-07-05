@@ -29,7 +29,7 @@ It decides who a person is, which tenant they belong to, which app they may ente
 
 | App / Actor | Access | Limits |
 | --- | --- | --- |
-| PlatformApp / Platform Owner | platform login | Single-user platform scope in v1 |
+| PlatformApp / Platform Owner | platform login | Single-user platform scope in the current release |
 | TenantApp / Tenant Admin | tenant admin login | Own tenant only |
 | CashierApp / Cashier | cashier login | Own tenant and cashier role |
 | StationStaffApp / Station Staff | station login | Own tenant and station role |
@@ -51,13 +51,13 @@ It decides who a person is, which tenant they belong to, which app they may ente
 - Bootstrap credentials must not allow continued access without first password change.
 - Platform Owner is a platform-scoped user with `tenantId = null` and role `platform_owner`.
 - The first Platform Owner must be created by an explicit one-time bootstrap command, not automatically on every server startup.
-- PlatformApp login uses username/password only in v1.
+- PlatformApp login uses username/password only in the current release.
 - Tenant admin first password setup requires OTP.
 - Cashier first password setup requires OTP to tenant GSM during bootstrap.
-- Station and service staff first password setup does not require OTP in v1.
+- Station and service staff first password setup does not require OTP in the current release.
 - Users can access only their tenant unless explicitly platform scoped.
-- V1 password policy: minimum 12 characters for user-chosen passwords, reject known bootstrap/default passwords, and store only strong password hashes.
-- Tenant admin and cashier use OTP only for first password setup in v1.
+- Current release password policy: minimum 12 characters for user-chosen passwords, reject known bootstrap/default passwords, and store only strong password hashes.
+- Tenant admin and cashier use OTP only for first password setup in the current release.
 
 ## Operational Safety
 
@@ -66,7 +66,7 @@ It decides who a person is, which tenant they belong to, which app they may ente
 - Authentication must never trust tenant or role data from the frontend.
 - Disabled users cannot keep using old sessions.
 - First-login state transitions must be idempotent.
-- The app-scope and session portion of the v1 permission policy is defined in [permission-policy-matrix.md](permission-policy-matrix.md).
+- The app-scope and session portion of the current release permission policy is defined in [permission-policy-matrix.md](permission-policy-matrix.md).
 
 ## Data Model
 
@@ -75,8 +75,8 @@ It decides who a person is, which tenant they belong to, which app they may ente
 | User | bootstrap/active -> disabled | tenant nullable for platform owner, username, status, firstPasswordChangeRequired | Username unique within tenant/platform scope; tenant users cannot access PlatformApp; disabled users cannot keep using old sessions | Disable instead of hard-delete when audit, orders, payments, or transitions reference the user |
 | Credential | bootstrap -> changed -> rotated | user, passwordHash, bootstrapCredential, changedAt | Plaintext passwords are never stored; bootstrap credentials cannot grant continued access after first login | Preserve credential metadata needed for audit; never preserve raw secrets |
 | LoginSession | active -> expired/revoked | user, tenant, app scope, session token hash, issuedAt, expiresAt, revokedAt | Session tenant/app scope must match requested app; revoked/expired sessions fail closed | Expire/revoke; retain only safe metadata as needed |
-| PlatformRoleAssignment | active -> disabled | user, role, status | Only `tenantId = null` users can hold `platform_owner`; v1 allows exactly one active Platform Owner | Preserve role assignment history for platform audit |
-| TotpFactor | enrolled -> enabled -> disabled/rotated | user, secretCiphertext, enrolledAt, enabled | Reserved for future PlatformApp security hardening; not required by v1 PlatformApp login | Disable/rotate instead of deleting if audit needs evidence |
+| PlatformRoleAssignment | active -> disabled | user, role, status | Only `tenantId = null` users can hold `platform_owner`; current release allows exactly one active Platform Owner | Preserve role assignment history for platform audit |
+| TotpFactor | enrolled -> enabled -> disabled/rotated | user, secretCiphertext, enrolledAt, enabled | Reserved for future PlatformApp security hardening; not required by current release PlatformApp login | Disable/rotate instead of deleting if audit needs evidence |
 
 ## App Surfaces
 

@@ -8,11 +8,11 @@ It is the core customer experience of IoTables. It lets a customer prove fresh t
 
 CustomerApp is not an admin, cashier, or station staff interface. It must optimize for customer experience while protecting the tenant from fake, stale, duplicated, or cross-table orders.
 
-## V1 Scope
+## Current Release Scope
 
-CustomerApp supports only dine-in table QR ordering in v1.
+CustomerApp supports only dine-in table QR ordering in the current release.
 
-Out of scope for CustomerApp v1:
+Out of scope for CustomerApp the current release:
 
 - customer payment or pay-at-table;
 - payment provider checkout;
@@ -38,7 +38,7 @@ TableSession
   table-based operational/billing session opened by the first order and closed by cashier
 ```
 
-Initial v1 timing policy:
+Initial current release timing policy:
 
 | Concept | Lifetime |
 | --- | --- |
@@ -204,7 +204,7 @@ Product detail should support:
 
 CustomerApp may show an estimated price, but the backend is the pricing authority. Final order pricing is calculated server-side at submission time.
 
-V1 does not have a separate price preview or customer price-confirmation step. Menu prices are expected to be stable during normal customer ordering. If the cart is no longer valid at submission time because a product, variant, modifier, availability, or tenant/table state changed, CustomerApp rejects the affected submission and keeps the cart editable instead of asking the customer to approve a new price.
+The current release does not have a separate price preview or customer price-confirmation step. Menu prices are expected to be stable during normal customer ordering. If the cart is no longer valid at submission time because a product, variant, modifier, availability, or tenant/table state changed, CustomerApp rejects the affected submission and keeps the cart editable instead of asking the customer to approve a new price.
 
 ### Modifiers and Options
 

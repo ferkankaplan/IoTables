@@ -18,7 +18,7 @@ Source context:
 - Use `Adisyon` for the cashier-facing Check.
 - Make remaining balance, required reason, and audit consequences explicit.
 - Say when an action is blocked and why.
-- Do not imply discounts, refunds, split checks, fiscal documents, or customer payment flows exist in v1.
+- Do not imply discounts, refunds, split checks, fiscal documents, or customer payment flows exist in the current release.
 
 ## Navigation and Surface Labels
 
@@ -153,9 +153,9 @@ Do not show labels or copy that imply:
 
 - CashierApp can configure tenant setup;
 - cashier can split checks, merge checks, move items, or split payment by item/person;
-- cashier can apply manual discounts, service fees, campaign discounts, tax overrides, or price edits in v1;
-- customer can pay from CustomerApp in v1;
-- fiscal/e-Adisyon/ÖKC issuance exists in v1;
+- cashier can apply manual discounts, service fees, campaign discounts, tax overrides, or price edits in the current release;
+- customer can pay from CustomerApp in the current release;
+- fiscal/e-Adisyon/ÖKC issuance exists in the current release;
 - zero balance automatically closes the table session;
 - frontend totals are final authority.
 

@@ -51,7 +51,7 @@ It starts when Customer Ordering routes order items to stations and ends when st
 - One customer order may create work for multiple stations.
 - `ready` means station work is finished, not customer delivery.
 - Station staff cannot mark items delivered.
-- State model in v1:
+- State model in the current release:
 
 ```text
 pending -> preparing -> ready
@@ -62,11 +62,11 @@ preparing -> cannot_prepare
 - `cannot_prepare` is an operational exception, not a cancellation, refund, discount, or price change.
 - `cannot_prepare` must include a reason and actor.
 - CashierApp handles any customer/account correction through allowed cashier workflows.
-- V1 station queue groups items by preparation status and sorts oldest first inside each group.
+- Current release station queue groups items by preparation status and sorts oldest first inside each group.
 - One staff user may operate multiple authorized stations; StationStaffApp shows station selection before the queue.
 - Station staff can see customer item notes relevant to preparation, but not cashier-only notes or payment data.
 - Ready items remain visible until picked up/delivered or until disabled-service-tracking mode treats `ready` as final.
-- Minimum v1 station metrics are pending count, preparing count, ready waiting count, oldest pending item age, and average preparation time for the current business day when enough data exists.
+- Minimum current release station metrics are pending count, preparing count, ready waiting count, oldest pending item age, and average preparation time for the current business day when enough data exists.
 
 ## Operational Safety
 

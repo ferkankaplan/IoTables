@@ -11,8 +11,8 @@ Normal apps do not enqueue or execute side effects directly.
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/platform/side-effects/failed` | Platform/recovery tooling | `side_effects.list_failed_effects` | Platform Owner/recovery session | Query: `effectType?`, `status?`, `from?`, `to?`, `cursor`, `limit` | `FailedEffectList` | `not_authorized` |
-| `GET` | `/api/v1/platform/side-effects/{outboxMessageId}` | Platform/recovery tooling | `side_effects.get_effect_state` | Platform Owner/recovery session | Path: `outboxMessageId` | `EffectState` | `not_authorized`, `not_found_or_hidden` |
+| `GET` | `/api/platform/side-effects/failed` | Platform/recovery tooling | `side_effects.list_failed_effects` | Platform Owner/recovery session | Query: `effectType?`, `status?`, `from?`, `to?`, `cursor`, `limit` | `FailedEffectList` | `not_authorized` |
+| `GET` | `/api/platform/side-effects/{outboxMessageId}` | Platform/recovery tooling | `side_effects.get_effect_state` | Platform Owner/recovery session | Path: `outboxMessageId` | `EffectState` | `not_authorized`, `not_found_or_hidden` |
 
 ## Internal-Only Contracts
 

@@ -32,7 +32,7 @@ CustomerOrderingSession is not a human identity and belongs to Ordering.
 
 | Document | Purpose |
 | --- | --- |
-| [permission-policy-matrix.md](permission-policy-matrix.md) | V1 source for who may call each module command/query and which scope checks are required |
+| [permission-policy-matrix.md](permission-policy-matrix.md) | Current release source for who may call each module command/query and which scope checks are required |
 
 ## Primary Apps
 

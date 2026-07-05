@@ -19,7 +19,7 @@ Source context:
 - Components may display estimated prices, but they do not own pricing authority.
 - Components must preserve table/menu/cart context across panels and sheets.
 - Components must not expose internal identifiers, token values, credential state, station routing, or cashier-only data.
-- Components must not provide payment, cancellation, refund, discount, close-session, tenant setup, staff, station, or cashier actions in v1.
+- Components must not provide payment, cancellation, refund, discount, close-session, tenant setup, staff, station, or cashier actions in the current release.
 
 ## Component Map
 
@@ -234,4 +234,4 @@ The component model is acceptable when:
 - QR retry and cart preservation are represented;
 - duplicate submit behavior is represented;
 - order and bill components are read-only after submission;
-- forbidden v1 actions cannot be reached from any component.
+- forbidden current release actions cannot be reached from any component.

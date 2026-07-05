@@ -1,6 +1,6 @@
 # CashierApp End-to-End Role
 
-This document extracts the parts of the shared v1 end-to-end flow where this app participates.
+This document extracts the parts of the shared current release end-to-end flow where this app participates.
 
 See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-end-to-end.md).
 
@@ -11,26 +11,26 @@ See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-en
 4. Cashier opens a table session panel.
 5. Cashier receives partial or full payments against the single Check/Adisyon.
 6. Payments are amount-based only.
-7. Cashier may apply only allowed v1 corrections.
+7. Cashier may apply only allowed current release corrections.
 8. When remaining balance is zero, Cashier explicitly closes the TableSession.
 9. The table becomes available for a future session.
 
 Acceptance criteria:
 
-- V1 has exactly one Check/Adisyon per TableSession.
-- Split checks, merge checks, item/person-based split payment, item move, and customer payment are out of v1.
+- The current release has exactly one Check/Adisyon per TableSession.
+- Split checks, merge checks, item/person-based split payment, item move, and customer payment are out of the current release.
 - Payment creation and session closure are idempotent.
 - Session closure is explicit; zero balance alone does not silently close.
 - Closed sessions do not accept new orders, payments, or corrections except explicit recovery workflows.
 
 ## Allowed Cashier Corrections
-V1 allows:
+The current release allows:
 
 - internal cashier note on active TableSession/Check;
 - order item void only while preparation state is `pending` or `cannot_prepare` and before any payment has been recorded for the Check;
 - non-provider payment void only on an open Check.
 
-V1 does not allow:
+The current release does not allow:
 
 - manual order items;
 - manual discounts;

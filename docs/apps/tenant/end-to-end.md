@@ -1,6 +1,6 @@
 # TenantApp End-to-End Role
 
-This document extracts the parts of the shared v1 end-to-end flow where this app participates.
+This document extracts the parts of the shared current release end-to-end flow where this app participates.
 
 See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-end-to-end.md).
 
@@ -18,7 +18,7 @@ See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-en
 Acceptance criteria:
 
 - Tables are managed inside hall context, not as a primary standalone page.
-- Each product/service routes to exactly one station in v1.
+- Each product/service routes to exactly one station in the current release.
 - Service delivery tracking is enabled by default for the cafe starter.
 - If service delivery tracking is disabled, ServiceStaffApp controls are hidden and `PreparationItem.ready` becomes the final tracked fulfillment state.
 - TenantApp cannot edit tenant name or subdomain.
@@ -35,7 +35,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- ESP32 is a table display surface, not a separate device inventory aggregate in v1.
+- ESP32 is a table display surface, not a separate device inventory aggregate in the current release.
 - Only one active display credential exists per tenant/table.
 - Re-provisioning revokes the previous active credential.
 - Raw display credentials are never embedded in customer QR payloads.

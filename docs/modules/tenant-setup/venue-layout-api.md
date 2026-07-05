@@ -9,16 +9,16 @@ Venue Layout owns halls, tables, ordered display, and table context. It does not
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/tenant-setup/venue/board` | TenantApp | `venue_layout.get_hall_table_board` | Tenant Admin session | none | `HallTableBoard` | `not_authorized` |
-| `GET` | `/api/v1/cashier/venue/board` | CashierApp | `venue_layout.get_hall_table_board` | Cashier session | none | `CashierHallTableBoard` | `missing_role` |
-| `GET` | `/api/v1/tenant-setup/halls` | TenantApp | `venue_layout.list_halls` | Tenant Admin session | Query: `includeDisabled?` | `HallList` | `not_authorized` |
-| `POST` | `/api/v1/tenant-setup/halls` | TenantApp | `venue_layout.create_hall` | Tenant Admin session + CSRF | Body: `HallWriteRequest` | `Hall` | `duplicate_hall`, `validation_failed` |
-| `PATCH` | `/api/v1/tenant-setup/halls/{hallId}` | TenantApp | `venue_layout.update_hall` | Tenant Admin session + CSRF | Body: editable hall fields | `Hall` | `duplicate_hall`, `not_found_or_hidden` |
-| `POST` | `/api/v1/tenant-setup/halls/{hallId}/disable` | TenantApp | `venue_layout.disable_hall` | Tenant Admin session + CSRF | Body: `reason` | `Hall` | `active_session_blocks_disable`, `reason_required` |
-| `POST` | `/api/v1/tenant-setup/halls/{hallId}/tables` | TenantApp | `venue_layout.create_table` | Tenant Admin session + CSRF | Body: `TableWriteRequest` | `Table` | `duplicate_table`, `validation_failed` |
-| `PATCH` | `/api/v1/tenant-setup/tables/{tableId}` | TenantApp | `venue_layout.update_table` | Tenant Admin session + CSRF | Body: editable table fields | `Table` | `duplicate_table`, `active_session_blocks_disable` |
-| `POST` | `/api/v1/tenant-setup/tables/{tableId}/disable` | TenantApp | `venue_layout.disable_table` | Tenant Admin session + CSRF | Body: `reason` | `Table` | `active_session_blocks_disable`, `reason_required` |
-| `GET` | `/api/v1/tenant-setup/tables/{tableId}/context` | TenantApp | `venue_layout.get_table_context` | Tenant Admin session | Path: `tableId` | `TableContext` | `not_found_or_hidden` |
+| `GET` | `/api/tenant-setup/venue/board` | TenantApp | `venue_layout.get_hall_table_board` | Tenant Admin session | none | `HallTableBoard` | `not_authorized` |
+| `GET` | `/api/cashier/venue/board` | CashierApp | `venue_layout.get_hall_table_board` | Cashier session | none | `CashierHallTableBoard` | `missing_role` |
+| `GET` | `/api/tenant-setup/halls` | TenantApp | `venue_layout.list_halls` | Tenant Admin session | Query: `includeDisabled?` | `HallList` | `not_authorized` |
+| `POST` | `/api/tenant-setup/halls` | TenantApp | `venue_layout.create_hall` | Tenant Admin session + CSRF | Body: `HallWriteRequest` | `Hall` | `duplicate_hall`, `validation_failed` |
+| `PATCH` | `/api/tenant-setup/halls/{hallId}` | TenantApp | `venue_layout.update_hall` | Tenant Admin session + CSRF | Body: editable hall fields | `Hall` | `duplicate_hall`, `not_found_or_hidden` |
+| `POST` | `/api/tenant-setup/halls/{hallId}/disable` | TenantApp | `venue_layout.disable_hall` | Tenant Admin session + CSRF | Body: `reason` | `Hall` | `active_session_blocks_disable`, `reason_required` |
+| `POST` | `/api/tenant-setup/halls/{hallId}/tables` | TenantApp | `venue_layout.create_table` | Tenant Admin session + CSRF | Body: `TableWriteRequest` | `Table` | `duplicate_table`, `validation_failed` |
+| `PATCH` | `/api/tenant-setup/tables/{tableId}` | TenantApp | `venue_layout.update_table` | Tenant Admin session + CSRF | Body: editable table fields | `Table` | `duplicate_table`, `active_session_blocks_disable` |
+| `POST` | `/api/tenant-setup/tables/{tableId}/disable` | TenantApp | `venue_layout.disable_table` | Tenant Admin session + CSRF | Body: `reason` | `Table` | `active_session_blocks_disable`, `reason_required` |
+| `GET` | `/api/tenant-setup/tables/{tableId}/context` | TenantApp | `venue_layout.get_table_context` | Tenant Admin session | Path: `tableId` | `TableContext` | `not_found_or_hidden` |
 
 ## Request Schemas
 

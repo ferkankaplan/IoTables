@@ -9,10 +9,10 @@ Sector Starter Templates expose only safe PlatformApp selection and template app
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/platform/sectors` | PlatformApp | `sector_starter_templates.list_sectors` | Platform Owner session | none | `SectorList` | `not_authorized` |
-| `GET` | `/api/v1/platform/sectors/{sector}/starter-template` | PlatformApp | `sector_starter_templates.get_template` | Platform Owner session | Path: `sector`; query: `version?` | `StarterTemplatePreview` | `unsupported_sector`, `template_version_retired` |
-| `GET` | `/api/v1/platform/tenants/{tenantId}/starter-template-application` | PlatformApp | `sector_starter_templates.get_application_state` | Platform Owner session | Path: `tenantId` | `StarterTemplateApplicationState` | `not_authorized`, `not_found_or_hidden` |
-| `GET` | `/api/v1/tenant/starter-template-application` | TenantApp | `sector_starter_templates.get_application_state` | Tenant Admin session | Host-derived tenant | `StarterTemplateApplicationState` | `not_authorized` |
+| `GET` | `/api/platform/sectors` | PlatformApp | `sector_starter_templates.list_sectors` | Platform Owner session | none | `SectorList` | `not_authorized` |
+| `GET` | `/api/platform/sectors/{sector}/starter-template` | PlatformApp | `sector_starter_templates.get_template` | Platform Owner session | Path: `sector`; query: `version?` | `StarterTemplatePreview` | `unsupported_sector`, `template_version_retired` |
+| `GET` | `/api/platform/tenants/{tenantId}/starter-template-application` | PlatformApp | `sector_starter_templates.get_application_state` | Platform Owner session | Path: `tenantId` | `StarterTemplateApplicationState` | `not_authorized`, `not_found_or_hidden` |
+| `GET` | `/api/tenant/starter-template-application` | TenantApp | `sector_starter_templates.get_application_state` | Tenant Admin session | Host-derived tenant | `StarterTemplateApplicationState` | `not_authorized` |
 
 ## Internal-Only Contracts
 

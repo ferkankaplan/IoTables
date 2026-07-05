@@ -156,7 +156,7 @@ def bulk_delivery_request_hash(*, actor: ActorContext, payload: BulkDeliverReque
         "tenantId": str(actor.tenant_id),
         "tableId": str(payload.table_id),
         "orderItemIds": sorted(str(order_item_id) for order_item_id in payload.order_item_ids),
-        "route": "POST /api/v1/service-staff/items/bulk-deliver",
+        "route": "POST /api/service-staff/items/bulk-deliver",
     }
     encoded = json.dumps(normalized_payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()

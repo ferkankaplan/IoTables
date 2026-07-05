@@ -48,7 +48,7 @@ Required states:
 | No cashier role | Block app access. |
 | Tenant unavailable/suspended | Block access. |
 
-Cashier first-password setup requires OTP in v1. Station and service staff OTP behavior must not be copied into this flow.
+Cashier first-password setup requires OTP in the current release. Station and service staff OTP behavior must not be copied into this flow.
 
 ## Cashier Workspace
 
@@ -94,7 +94,7 @@ It shows:
 
 - table and hall label;
 - TableSession status and opened time;
-- single v1 Check/Adisyon;
+- single current release Check/Adisyon;
 - orders and order items with price snapshots;
 - preparation and delivery state where relevant;
 - payments and void state;
@@ -107,7 +107,7 @@ Allowed actions:
 | --- | --- |
 | Active check, remaining > 0 | Record payment, allowed corrections. |
 | Active check, remaining = 0 | Close session, allowed corrections that remain legal. |
-| Closed check/session | Read-only except explicit recovery outside normal v1 flow. |
+| Closed check/session | Read-only except explicit recovery outside normal current release flow. |
 | Stale panel | Refresh before mutation. |
 
 ## Payment Drawer
@@ -149,7 +149,7 @@ Zero balance must not silently close the TableSession.
 
 ## Correction Drawer
 
-Correction drawer supports only v1 allowed corrections.
+Correction drawer supports only current release allowed corrections.
 
 | Correction | Availability |
 | --- | --- |
@@ -172,7 +172,7 @@ It shows:
 - recorded time;
 - void state and reason when visible.
 
-Historical arbitrary reporting is out of v1 unless a reporting workspace is introduced.
+Historical arbitrary reporting is out of the current release unless a reporting workspace is introduced.
 
 ## Responsive Layout
 
@@ -208,9 +208,9 @@ Never show:
 - raw internal IDs as authority;
 - stack traces or provider payloads.
 
-## V1 Out-of-Scope UI
+## Current Release Out-of-Scope UI
 
-The following UI must not appear in CashierApp v1:
+The following UI must not appear in CashierApp the current release:
 
 - create/edit tenant, halls, tables, stations, products, prices, categories, or staff;
 - create customer order;
@@ -231,4 +231,4 @@ This wireframe package is valid when:
 - money totals are server-calculated and never frontend-authoritative;
 - payment/correction idempotency and duplicate-submit protection are visible;
 - close session is explicit and zero-balance-gated;
-- no forbidden v1 control appears.
+- no forbidden current release control appears.

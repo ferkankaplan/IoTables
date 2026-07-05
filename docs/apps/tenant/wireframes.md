@@ -123,9 +123,9 @@ Hall Management owns halls and tables in one workspace.
 Rules:
 
 - tables are always managed inside hall context;
-- v1 layout is an ordered grid, not floor-plan coordinates;
+- current release layout is an ordered grid, not floor-plan coordinates;
 - selecting a table opens a contextual panel;
-- no standalone primary table management page exists in v1.
+- no standalone primary table management page exists in the current release.
 
 States:
 
@@ -219,7 +219,7 @@ Product/service detail supports:
 
 Rules:
 
-- each product/service has exactly one station in v1;
+- each product/service has exactly one station in the current release;
 - product cannot be orderable without an enabled station and valid orderable variant;
 - price changes do not rewrite existing order snapshots;
 - unavailable means temporary not orderable;
@@ -300,7 +300,7 @@ Service delivery tracking disabled mode must be visually prominent, not hidden a
 
 ## Tenant Audit View
 
-Tenant Audit is a settings view/panel, not a separate primary workspace in v1.
+Tenant Audit is a settings view/panel, not a separate primary workspace in the current release.
 
 It shows tenant setup/security audit only:
 
@@ -350,9 +350,9 @@ Never show:
 - raw display credentials after one-time reveal;
 - stack traces or provider payloads.
 
-## V1 Out-of-Scope UI
+## Current Release Out-of-Scope UI
 
-The following UI must not appear in TenantApp v1:
+The following UI must not appear in TenantApp the current release:
 
 - standalone primary table management page;
 - visual floor-plan coordinate editor;
@@ -376,4 +376,4 @@ This wireframe package is valid when:
 - menu orderability blockers are visible;
 - staff role/scope warnings are visible;
 - service tracking mode impact is visible;
-- no forbidden v1 control appears.
+- no forbidden current release control appears.

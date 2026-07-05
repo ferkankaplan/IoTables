@@ -142,7 +142,7 @@ def test_service_staff_ready_items_uses_actor_scope_and_hall_filter() -> None:
     client = TestClient(app)
     client.cookies.set("iotables_session", "service-token")
 
-    response = client.get(f"/api/v1/service-staff/ready-items?hallId={HALL_ID}")
+    response = client.get(f"/api/service-staff/ready-items?hallId={HALL_ID}")
 
     assert response.status_code == 200
     assert response.json()["items"][0]["itemLabel"] == "Americano"
@@ -158,13 +158,13 @@ def test_service_staff_delivery_transitions_require_csrf_and_bind_actor() -> Non
     client = TestClient(app)
     client.cookies.set("iotables_session", "service-token")
 
-    missing_csrf = client.post(f"/api/v1/service-staff/items/{ORDER_ITEM_ID}/pick-up")
+    missing_csrf = client.post(f"/api/service-staff/items/{ORDER_ITEM_ID}/pick-up")
     pickup = client.post(
-        f"/api/v1/service-staff/items/{ORDER_ITEM_ID}/pick-up",
+        f"/api/service-staff/items/{ORDER_ITEM_ID}/pick-up",
         headers={"X-CSRF-Token": "csrf"},
     )
     deliver = client.post(
-        f"/api/v1/service-staff/items/{ORDER_ITEM_ID}/deliver",
+        f"/api/service-staff/items/{ORDER_ITEM_ID}/deliver",
         headers={"X-CSRF-Token": "csrf"},
     )
 
@@ -189,12 +189,12 @@ def test_service_staff_bulk_delivery_requires_idempotency_and_uses_request_hash(
     payload = {"tableId": str(TABLE_ID), "orderItemIds": [str(ORDER_ITEM_ID)]}
 
     missing_key = client.post(
-        "/api/v1/service-staff/items/bulk-deliver",
+        "/api/service-staff/items/bulk-deliver",
         headers={"X-CSRF-Token": "csrf"},
         json=payload,
     )
     delivered = client.post(
-        "/api/v1/service-staff/items/bulk-deliver",
+        "/api/service-staff/items/bulk-deliver",
         headers={"X-CSRF-Token": "csrf", "Idempotency-Key": "bulk-1"},
         json=payload,
     )

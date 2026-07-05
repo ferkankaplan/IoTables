@@ -9,9 +9,9 @@ Audit owns append-only critical action records. Apps may query authorized audit 
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/platform/audit-events` | PlatformApp | `audit.query_platform_audit` | Platform Owner session | Query: `tenantId?`, `action?`, `from?`, `to?`, `cursor`, `limit` | `AuditEventList` | `not_authorized` |
-| `GET` | `/api/v1/tenant/audit-events` | TenantApp | `audit.query_tenant_audit` | Tenant Admin session | Query: `action?`, `from?`, `to?`, `cursor`, `limit` | `AuditEventList` | `not_authorized` |
-| `GET` | `/api/v1/cashier/audit-events` | CashierApp | `audit.query_operational_audit` | Cashier session | Query: `checkId?`, `tableSessionId?`, `action?`, `from?`, `to?`, `cursor`, `limit` | `AuditEventList` | `missing_role` |
+| `GET` | `/api/platform/audit-events` | PlatformApp | `audit.query_platform_audit` | Platform Owner session | Query: `tenantId?`, `action?`, `from?`, `to?`, `cursor`, `limit` | `AuditEventList` | `not_authorized` |
+| `GET` | `/api/tenant/audit-events` | TenantApp | `audit.query_tenant_audit` | Tenant Admin session | Query: `action?`, `from?`, `to?`, `cursor`, `limit` | `AuditEventList` | `not_authorized` |
+| `GET` | `/api/cashier/audit-events` | CashierApp | `audit.query_operational_audit` | Cashier session | Query: `checkId?`, `tableSessionId?`, `action?`, `from?`, `to?`, `cursor`, `limit` | `AuditEventList` | `missing_role` |
 
 ## Internal-Only Contracts
 

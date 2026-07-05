@@ -1,6 +1,6 @@
 # Accessibility and Responsive UI Rules
 
-This document defines shared v1 accessibility and responsive behavior for all six apps.
+This document defines shared current release accessibility and responsive behavior for all six apps.
 
 Source context:
 

@@ -6,7 +6,7 @@ from iotables.main import create_app
 def test_health_live_returns_safe_status() -> None:
     client = TestClient(create_app())
 
-    response = client.get("/api/v1/health/live")
+    response = client.get("/api/health/live")
 
     assert response.status_code == 200
     assert response.json() == {

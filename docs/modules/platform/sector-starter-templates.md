@@ -44,14 +44,14 @@ It is a provisioning helper, not a runtime seeding mechanism.
 - Changing tenant sector after creation must not re-run starter data.
 - Resulting records are normal tenant-owned editable data.
 - A durable application record must exist before the operation is considered complete.
-- V1 supports only the `cafe` sector starter template.
+- The current release supports only the `cafe` sector starter template.
 - Starter template versions use monotonic semantic identifiers such as `cafe.v1`.
 - A later template version must not apply automatically to an existing tenant.
 - Initial `cafe` starter data enables service delivery tracking by default.
 
 ## `cafe.v1` Template Definition
 
-The active v1 cafe template is immutable after implementation begins.
+The active current release cafe template is immutable after implementation begins.
 
 | Field | Value |
 | --- | --- |
@@ -117,7 +117,7 @@ All starter staff must change the temporary password on first login. Tenant admi
 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
-| Sector | configured -> selectable | code, displayName, enabled | `cafe` is the initial v1 sector; disabled sectors cannot be selected for new tenant creation | Preserve historical sector codes used by existing tenants/templates |
+| Sector | configured -> selectable | code, displayName, enabled | `cafe` is the initial current release sector; disabled sectors cannot be selected for new tenant creation | Preserve historical sector codes used by existing tenants/templates |
 | StarterTemplate | drafted/configured -> active -> retired | sector, templateVersion, halls, tables, stations, products, variants, staff, serviceDeliveryTracking default | Template versions are immutable after activation; applying a template must create normal tenant-owned records | Retire instead of mutating active templates used in historical provisioning |
 | StarterTemplateApplication | pending -> applied / failed / recovery_needed | tenant, sector, templateKey, templateVersion, status, appliedAt, failureSummary | Unique by tenant + templateKey + templateVersion; successful application must never re-run on restart/deploy/migration/release | Preserve forever as seed-rerun proof |
 

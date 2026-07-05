@@ -1,6 +1,6 @@
 # Runtime Deployment
 
-This document defines the v1 deployment policy for IoTables. It does not prescribe a final hosting provider or container topology.
+This document defines the production deployment policy for IoTables. It does not prescribe a final hosting provider or container topology.
 
 Source context:
 
@@ -14,13 +14,13 @@ Source context:
 
 ## Deployment Shape
 
-IoTables v1 is deployed as a modular monolith:
+IoTables current release is deployed as a modular monolith:
 
 | Runtime Unit | Responsibility |
 | --- | --- |
 | Frontend build | React/Vite app surfaces for six apps. |
 | Backend API | FastAPI app exposing app/module API contracts. |
-| PostgreSQL | Shared v1 database with tenant-owned rows. |
+| PostgreSQL | Shared production database with tenant-owned rows. |
 | Background worker | Durable outbox/side-effect processing when implemented. |
 | Static assets | Frontend assets served by chosen deployment layer. |
 
@@ -39,7 +39,7 @@ Branch-to-environment mapping:
 
 The staging namespace uses `tabflow.uk` so staging tenant subdomains do not collide with production tenant subdomains under `iotables.net`. Runtime image deploys use commit SHA tags; moving convenience tags are separated as `production-latest` and `staging-latest`.
 
-DNS records are managed manually in v1:
+DNS records are managed manually in the current release:
 
 | Environment | DNS records | Target |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Repository-owned release files:
 | `.github/workflows/release.yml` | Verifies `master` or `staging`, publishes backend/frontend images to GHCR, uploads release compose/nginx files, runs migrations, restarts Compose services, and performs a smoke check against the matching GitHub environment. |
 | `compose.production.yaml` | Defines the VPS runtime using immutable image tags from the GitHub commit SHA. |
 | `frontend/Dockerfile.production` | Builds the React/Vite frontend and serves static assets with nginx. |
-| `deploy/nginx/default.conf` | Routes `/api/` to the backend service and all other paths to the SPA. |
+| `deploy/nginx/default.conf` | Routes `/health` and `/api/` to the backend service and all other paths to the SPA. |
 
 The first VPS setup is manual and must install Docker with the Compose plugin, create the `/opt/iotables` release directory, create a deployment user with least-privilege Docker access, and write the environment-specific `.env` file in the release directory. After that, a push to the mapped branch performs the release.
 
@@ -66,7 +66,7 @@ Required GitHub secrets:
 | `VPS_USER` | SSH user used by the workflow. |
 | `VPS_SSH_PRIVATE_KEY` | Private key for the deployment user. |
 | `VPS_SSH_PORT` | Optional SSH port; defaults to `22`. |
-| `RELEASE_HEALTH_URL` | Public smoke URL for the selected GitHub environment, for example `https://iotables.net/api/v1/health/live` or `https://tabflow.uk/api/v1/health/live`. |
+| `RELEASE_HEALTH_URL` | Public smoke URL for the selected GitHub environment, for example `https://iotables.net/health` or `https://tabflow.uk/health`. |
 
 The VPS release directory must contain `.env` with:
 
@@ -117,7 +117,7 @@ Database migrations should complete before code paths depend on new schema. Dest
 ## Tenant Provisioning and DNS
 
 - PlatformApp creates tenant records and starter data through the provisioning workflow.
-- DNS records for `[tenant].iotables.net` are manual in v1.
+- DNS records for `[tenant].iotables.net` are manual in the current release.
 - Platform DNS readiness is an explicit PlatformApp state, not an automated DNS provider result.
 - Provisioning and starter templates must be idempotent and durable per tenant.
 - Starter templates must never rerun on server restart, deployment, migration, or release upgrade.
@@ -155,7 +155,7 @@ Do not use audit events, analytics records, or logs as rollback mechanisms. They
 
 ## Zero-Downtime Direction
 
-V1 does not require a full zero-downtime platform, but releases should prefer:
+The current release does not require a full zero-downtime platform, but releases should prefer:
 
 - additive schema changes before code that uses them;
 - backwards-compatible API changes when possible;

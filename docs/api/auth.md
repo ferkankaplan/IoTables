@@ -24,7 +24,7 @@ Human and customer browser sessions use cookies with:
 | --- | --- |
 | `HttpOnly` | Required. |
 | `Secure` | Required outside local development. |
-| `SameSite` | `Lax` default in v1. |
+| `SameSite` | `Lax` default in the current release. |
 | `Path` | API/app appropriate path; avoid broader scope than needed. |
 | Domain | Host-only where possible; do not share PlatformApp cookies with tenant subdomains. |
 
@@ -68,7 +68,7 @@ Platform Owner:
 
 - `tenant_id = null`;
 - PlatformApp scope only;
-- username/password login only in v1.
+- username/password login only in the current release.
 
 Tenant users:
 
@@ -82,11 +82,11 @@ Bootstrap users cannot enter normal app workflows until first password setup com
 
 | User | OTP Requirement |
 | --- | --- |
-| Platform Owner | No OTP/TOTP requirement in v1 |
+| Platform Owner | No OTP/TOTP requirement in the current release |
 | Tenant Admin | OTP SMS to tenant GSM required |
 | Cashier | OTP SMS to tenant GSM required |
-| Station Staff | OTP not required in v1 |
-| Service Staff | OTP not required in v1 |
+| Station Staff | OTP not required in the current release |
+| Service Staff | OTP not required in the current release |
 
 OTP challenges are created when first password setup begins, not during tenant provisioning.
 

@@ -107,7 +107,7 @@ If service delivery tracking is disabled, ServiceStaffApp should not show an ope
 
 ### Queue Defaults and Metrics
 
-V1 service queue grouping:
+Current release service queue grouping:
 
 - primary grouping: table;
 - secondary ordering: oldest ready item first;
@@ -115,7 +115,7 @@ V1 service queue grouping:
 
 Service staff may bulk-mark items delivered only for selected items on the same table. Bulk delivery must use one idempotency key, record one actor, and validate every selected item server-side.
 
-Minimum v1 service metrics:
+Minimum current release service metrics:
 
 - ready item count;
 - picked-up item count;
