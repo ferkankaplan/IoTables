@@ -22,7 +22,7 @@ It coordinates Platform Tenant Registry, Access, Sector Starter Templates, and T
 - User credentials and roles, owned by Access.
 - Starter template definitions and application record, owned by Sector Starter Templates.
 - Halls, tables, stations, menu, and display setup records after creation, owned by Tenant Setup.
-- DNS record creation, which is manual in the current release.
+- Environment wildcard DNS setup, owned by deployment/ops.
 
 ## Users and App Access
 
@@ -46,7 +46,7 @@ It coordinates Platform Tenant Registry, Access, Sector Starter Templates, and T
 - Failed provisioning must end in `provisioning_failed` with a safe error summary.
 - One-time starter template application must be durable and must not rerun after completion.
 - Tenant name and subdomain immutability begins at creation.
-- Manual DNS readiness is tracked after provisioning; DNS is not automated in the current release.
+- Tenant host routing depends on the environment wildcard DNS namespace; provisioning does not create or track per-tenant DNS state.
 
 ## Operational Safety
 

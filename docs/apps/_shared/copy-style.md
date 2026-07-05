@@ -145,7 +145,7 @@ Preferred labels:
 - `Tenant oluştur`
 - `Tenant sağlığı`
 - `Provisioning durumu`
-- `DNS hazır`
+- `Tenant adresi`
 - `Starter veri durumu`
 - `Kurtarma gerekli`
 
@@ -153,7 +153,7 @@ Rules:
 
 - Platform health copy must not expose tenant customer/order/payment detail.
 - Tenant creation must clearly mark tenant name, subdomain, and GSM as required.
-- DNS copy must reflect manual DNS responsibility.
+- Platform copy must not expose a tenant-level DNS action. Tenant host routing is an environment wildcard DNS responsibility.
 
 ## Error Copy Mapping
 

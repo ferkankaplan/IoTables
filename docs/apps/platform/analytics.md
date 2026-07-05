@@ -17,9 +17,9 @@ Source context:
 
 | Concern | PlatformApp Analytics | Audit |
 | --- | --- | --- |
-| Purpose | Summarize tenant lifecycle, provisioning, DNS readiness, and health trends. | Preserve immutable evidence of sensitive actions. |
+| Purpose | Summarize tenant lifecycle, provisioning, starter setup, and health trends. | Preserve immutable evidence of sensitive actions. |
 | Mutability | Derived and rebuildable. | Append-only. |
-| Authority | Never authorizes tenant creation, suspension, recovery, or DNS readiness. | Evidence only; business modules still own decisions. |
+| Authority | Never authorizes tenant creation, suspension, or recovery. | Evidence only; business modules still own decisions. |
 | Detail | Aggregated platform-owned metadata. | Actor, action, target, reason, timestamp, safe metadata. |
 
 Platform analytics may reference audit counts, but it must not use audit records as the only source for current tenant state.
@@ -32,7 +32,6 @@ Platform analytics may reference audit counts, but it must not use audit records
 | Suspended tenant count | Tenant Registry | Include reason category only when safe. |
 | Tenant creation attempts | Provisioning + Audit | Created, failed, recoverable. |
 | Provisioning failure count | Provisioning | Group by failure stage without leaking secrets. |
-| DNS readiness count | Tenant Registry | Manual readiness status only. |
 | Starter template applied count | Provisioning | One-time per tenant proof. |
 | Tenant health summary count | Tenant Registry health summary | Healthy/degraded/unknown at high level. |
 | Platform login/security events count | Audit | Aggregate only. |
@@ -42,7 +41,7 @@ Platform analytics may reference audit counts, but it must not use audit records
 | Surface | Analytics Behavior |
 | --- | --- |
 | Platform Dashboard | High-level tenant counts, provisioning status, and health summaries. |
-| Tenant List | Sort/filter by lifecycle, DNS readiness, provisioning state, health summary. |
+| Tenant List | Sort/filter by lifecycle, provisioning state, starter state, and health summary. |
 | Tenant Detail | Tenant-scoped lifecycle timeline summary and recovery state. |
 
 PlatformApp analytics must stay inside existing dashboard/list/detail surfaces. It must not create tenant runtime dashboards for orders, payments, stations, table sessions, or customer activity in the current release.
@@ -52,7 +51,7 @@ PlatformApp analytics must stay inside existing dashboard/list/detail surfaces. 
 PlatformApp analytics may use:
 
 - tenant identity/profile metadata owned by Platform/Tenant Registry;
-- tenant lifecycle and DNS readiness state;
+- tenant lifecycle state;
 - provisioning attempt state and starter template application state;
 - high-level tenant health summaries explicitly exposed to PlatformApp;
 - platform-level audit event aggregates.

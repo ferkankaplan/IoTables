@@ -5,7 +5,6 @@ type TenantHealthSummary = {
   name: string;
   subdomain: string;
   status: string;
-  dnsReady: boolean;
   sector: string | null;
   provisioningState: string;
   lastLifecycleEventAt: string | null;
@@ -73,7 +72,6 @@ type ProvisioningResult = {
   subdomain: string;
   starterTemplateApplied: boolean;
   failureSummary: string | null;
-  dnsReady: boolean;
 };
 
 type ProvisioningState = {
@@ -83,7 +81,6 @@ type ProvisioningState = {
   templateKey: string | null;
   templateVersion: number | null;
   failureSummary: string | null;
-  dnsReady: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -594,7 +591,7 @@ export function App() {
     return {
       active: tenants.filter((tenant) => tenant.status === "active").length,
       failed: tenants.filter((tenant) => tenant.status === "provisioning_failed").length,
-      dnsNotReady: tenants.filter((tenant) => !tenant.dnsReady).length
+      suspended: tenants.filter((tenant) => tenant.status === "suspended").length
     };
   }, [tenants]);
 
@@ -620,7 +617,6 @@ export function App() {
               name: updated.name,
               subdomain: updated.subdomain,
               status: updated.status,
-              dnsReady: updated.dnsReady,
               sector: updated.sector,
               provisioningState: updated.provisioningState,
               lastLifecycleEventAt: updated.lastLifecycleEventAt,
@@ -731,7 +727,7 @@ export function App() {
               <div className="grid gap-3 md:grid-cols-3">
                 <Metric label="Aktif" value={counters.active} />
                 <Metric label="Provisioning hatası" value={counters.failed} />
-                <Metric label="DNS hazır değil" value={counters.dnsNotReady} />
+                <Metric label="Askıda" value={counters.suspended} />
               </div>
 
               <div className="mt-5 overflow-hidden border border-zinc-200 bg-white">
@@ -795,7 +791,7 @@ export function App() {
                   <div className="divide-y divide-zinc-200">
                     {tenants.map((tenant) => (
                       <button
-                        className={`grid w-full gap-3 px-4 py-4 text-left hover:bg-zinc-50 md:grid-cols-[minmax(0,1.4fr)_120px_120px_140px] ${
+                        className={`grid w-full gap-3 px-4 py-4 text-left hover:bg-zinc-50 md:grid-cols-[minmax(0,1.4fr)_120px_140px] ${
                           selectedTenantId === tenant.tenantId ? "bg-emerald-50" : "bg-white"
                         }`}
                         key={tenant.tenantId}
@@ -809,7 +805,6 @@ export function App() {
                           </p>
                         </div>
                         <StatusBadge value={tenant.status} />
-                        <StatusBadge value={tenant.dnsReady ? "dns_ready" : "dns_not_ready"} />
                         <div className="min-w-0 text-xs text-zinc-600">
                           <p className="truncate">{tenant.provisioningState}</p>
                           <p className="mt-1 truncate">{tenant.sector ?? "Sektör yok"}</p>
@@ -1948,7 +1943,7 @@ function TenantWorkspace({
             label="Admin bootstrap"
             value={tenant.tenantAdminBootstrapState === "completed" ? 1 : 0}
           />
-          <Metric label="DNS hazır" value={tenant.dnsReady ? 1 : 0} />
+          <Metric label="Lifecycle" value={tenant.status === "active" ? 1 : 0} />
         </div>
         <div className="border border-zinc-200 bg-white px-5 py-5">
           <h3 className="text-sm font-semibold">Kurulum özeti</h3>
@@ -2190,34 +2185,6 @@ function TenantDetailPanel({
     }
   }
 
-  async function setDnsReady(dnsReady: boolean) {
-    if (!tenant || actionState === "submitting") {
-      return;
-    }
-
-    setActionState("submitting");
-    setActionError(null);
-    try {
-      const updated = await apiRequest<TenantProfile>(
-        `/api/platform/tenants/${tenant.tenantId}/dns-ready`,
-        {
-          body: JSON.stringify({dnsReady}),
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": crypto.randomUUID()
-          },
-          method: "POST"
-        }
-      );
-      onTenantChanged(updated);
-      refreshTenantEvidence(updated.tenantId);
-      setActionState("idle");
-    } catch (error) {
-      setActionError(errorMessageFrom(error));
-      setActionState("error");
-    }
-  }
-
   async function changeStatus(nextStatus: "active" | "suspended") {
     if (!tenant || actionState === "submitting") {
       return;
@@ -2273,7 +2240,6 @@ function TenantDetailPanel({
           </div>
           <div className="flex flex-wrap gap-2">
             <StatusBadge value={tenant.status} />
-            <StatusBadge value={tenant.dnsReady ? "dns_ready" : "dns_not_ready"} />
             <StatusBadge value={tenant.starterTemplateState} />
           </div>
           <DetailRows
@@ -2377,15 +2343,7 @@ function TenantDetailPanel({
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
               Operasyonlar
             </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                className="h-10 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={actionState === "submitting"}
-                onClick={() => void setDnsReady(!tenant.dnsReady)}
-                type="button"
-              >
-                {tenant.dnsReady ? "DNS hazır değil yap" : "DNS hazır yap"}
-              </button>
+            <div className="grid gap-2">
               <button
                 className="h-10 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
                 disabled={

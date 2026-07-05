@@ -128,7 +128,7 @@ Rules:
 - First-login SMS failure must not rollback the committed tenant setup.
 - First-login SMS failure must be visible as delivery failure/retry state.
 - Provider responses must be redacted.
-- DNS is manual in the current release and must not be represented as an automated side effect.
+- DNS is an environment wildcard namespace prerequisite and must not be represented as tenant provisioning state or an automated side effect.
 
 ## Retry and Recovery
 
@@ -239,7 +239,7 @@ Recovery tools must not:
 - mutate tenant runtime records;
 - hide previous failure history;
 - change immutable tenant name or subdomain;
-- pretend DNS was automated.
+- pretend DNS was automated or mutate tenant state to recover wildcard DNS faults.
 
 ## Relationship to Alembic Migrations
 

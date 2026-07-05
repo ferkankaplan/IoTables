@@ -9,5 +9,5 @@ PlatformApp is accepted for the current release when:
 - tenant becomes `active` only after required setup records commit;
 - provisioning failure is visible and recoverable;
 - starter template is applied exactly once;
-- manual DNS readiness is trackable but not automated;
+- tenant host routing is provided by the deployed wildcard DNS namespace and is not a tenant-level state;
 - PlatformApp cannot mutate tenant runtime orders, payments, sessions, preparation, or delivery as a normal flow.

@@ -103,7 +103,7 @@ V1 provider-sensitive areas:
 | Area | Rule |
 | --- | --- |
 | OTP/SMS | Production requires real provider config; local/test may use fake provider. |
-| DNS | Manual in the current release; no provider credentials required unless automation is explicitly introduced. |
+| DNS | Environment wildcard records are managed outside the app; no provider credentials are required unless automation is explicitly introduced. |
 | Payment provider | Out of the current release; provider config must not appear until the product contract exists. |
 | Fiscal/e-Adisyon/ÖKC | Out of the current release; provider config must not appear until explicitly introduced. |
 

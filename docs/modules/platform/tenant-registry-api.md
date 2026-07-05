@@ -3,7 +3,7 @@
 Source contracts: [tenant-registry-contracts.md](tenant-registry-contracts.md)
 Shared rules: [../_shared/api-contract-format.md](../_shared/api-contract-format.md)
 
-Tenant Registry owns tenant identity, immutable subdomain/name rules, profile fields, lifecycle status, DNS readiness flag, and platform health summary.
+Tenant Registry owns tenant identity, immutable subdomain/name rules, profile fields, lifecycle status, and platform health summary.
 
 Tenant-scoped apps resolve tenant context from host/subdomain. They must not trust a body/query `tenantId`.
 
@@ -15,11 +15,10 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | `GET` | `/api/platform/tenants/{tenantId}` | PlatformApp | `tenant_registry.get_profile` | Platform Owner session | Path: `tenantId` | `TenantProfile` | `not_authorized`, `not_found_or_hidden` |
 | `PATCH` | `/api/platform/tenants/{tenantId}/profile` | PlatformApp | `tenant_registry.update_profile` | Platform Owner session + CSRF | Body: `gsmNumber?`, `sector?`, `capacity?`, `address?` | `TenantProfile` | `immutable_identity`, `validation_failed` |
 | `POST` | `/api/platform/tenants/{tenantId}/status` | PlatformApp | `tenant_registry.change_status` | Platform Owner session + CSRF | Body: `nextStatus`, `reason` | `TenantProfile` | `invalid_lifecycle_transition`, `reason_required` |
-| `POST` | `/api/platform/tenants/{tenantId}/dns-ready` | PlatformApp | `tenant_registry.set_dns_ready` | Platform Owner session + CSRF | Body: `dnsReady` | `TenantProfile` | `not_authorized`, `validation_failed` |
 | `GET` | `/api/platform/tenants/{tenantId}/lifecycle-events` | PlatformApp | `tenant_registry.get_lifecycle_events` | Platform Owner session | Query: `cursor`, `limit` | `TenantLifecycleEventList` | `not_authorized` |
 | `GET` | `/api/tenant/context` | TenantApp, runtime apps | `tenant_registry.resolve_by_subdomain` | Public safe read | Host-derived subdomain | `TenantContext` | `tenant_unavailable` |
 | `GET` | `/api/tenant/profile` | TenantApp | `tenant_registry.get_profile` | Tenant Admin session | Host-derived tenant | `TenantProfile` | `not_authorized`, `tenant_unavailable` |
-| `PATCH` | `/api/tenant/profile` | TenantApp | `tenant_registry.update_profile` | Tenant Admin session + CSRF | Body: editable profile fields except `name`, `subdomain`, `status`, `dnsReady` | `TenantProfile` | `immutable_identity`, `not_authorized` |
+| `PATCH` | `/api/tenant/profile` | TenantApp | `tenant_registry.update_profile` | Tenant Admin session + CSRF | Body: editable profile fields except `name`, `subdomain`, `status` | `TenantProfile` | `immutable_identity`, `not_authorized` |
 
 ## Request Schemas
 
@@ -55,7 +54,6 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | `capacity` | integer/null | Optional. |
 | `address` | object/string/null | Optional. |
 | `status` | string enum | Tenant lifecycle status. |
-| `dnsReady` | boolean | Manual platform checklist flag. |
 | `createdAt` | timestamp | UTC. |
 | `updatedAt` | timestamp | UTC. |
 
@@ -66,7 +64,7 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | `items` | array of `TenantHealthSummary` | Runtime order/payment details are not exposed. |
 | `page` | object | Cursor pagination. |
 
-`TenantHealthSummary` includes `tenantId`, `name`, `subdomain`, `status`, `dnsReady`, `sector`, `provisioningState`, `lastLifecycleEventAt`, safe `healthFlags`, `createdAt`, and `updatedAt`.
+`TenantHealthSummary` includes `tenantId`, `name`, `subdomain`, `status`, `sector`, `provisioningState`, `lastLifecycleEventAt`, safe `healthFlags`, `createdAt`, and `updatedAt`.
 
 `TenantLifecycleEventList`:
 

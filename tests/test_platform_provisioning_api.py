@@ -61,7 +61,6 @@ class FakeProvisioningService:
             subdomain=command.subdomain,
             starter_template_applied=command.sector == "cafe",
             failure_summary=None,
-            dns_ready=False,
         )
 
     async def get_state(self, tenant_id: UUID) -> ProvisioningState:
@@ -120,7 +119,6 @@ def make_provisioning_state(
         template_key="cafe_default",
         template_version=1,
         failure_summary=failure_summary,
-        dns_ready=False,
         created_at=now,
         updated_at=now,
     )
@@ -156,11 +154,10 @@ class FakeTenantRegistryQueryService:
                     name="Cafe Demo",
                     subdomain="demo-cafe",
                     status="active",
-                    dns_ready=False,
                     sector="cafe",
                     provisioning_state="ready",
                     last_lifecycle_event_at=now,
-                    health_flags=("dns_not_ready",),
+                    health_flags=(),
                     created_at=now,
                     updated_at=now,
                 )
@@ -180,11 +177,10 @@ class FakeTenantRegistryQueryService:
             capacity=24,
             address='{"city":"Istanbul"}',
             status="active",
-            dns_ready=False,
             provisioning_state="ready",
             starter_template_state="applied",
             tenant_admin_bootstrap_state="first_password_required",
-            health_flags=("dns_not_ready",),
+            health_flags=(),
             created_at=now,
             updated_at=now,
         )
@@ -213,7 +209,6 @@ class FakeTenantRegistryQueryService:
 class FakeTenantRegistryMutationService:
     def __init__(self) -> None:
         self.profile_args: dict[str, object] | None = None
-        self.dns_args: dict[str, object] | None = None
         self.status_args: dict[str, object] | None = None
 
     async def update_profile(
@@ -230,16 +225,6 @@ class FakeTenantRegistryMutationService:
             capacity=command.fields.get("capacity"),
             address=command.fields.get("address"),
         )
-
-    async def set_dns_ready(
-        self,
-        *,
-        actor: ActorContext,
-        tenant_id: UUID,
-        dns_ready: bool,
-    ) -> TenantProfile:
-        self.dns_args = {"actor": actor, "tenant_id": tenant_id, "dns_ready": dns_ready}
-        return make_profile(tenant_id=tenant_id, dns_ready=dns_ready)
 
     async def change_status(
         self,
@@ -265,7 +250,6 @@ def make_profile(
     capacity: int | None = 24,
     address: str | None = '{"city":"Istanbul"}',
     status: str = "active",
-    dns_ready: bool = False,
 ) -> TenantProfile:
     now = datetime(2026, 7, 2, 12, 0, tzinfo=UTC)
     return TenantProfile(
@@ -277,11 +261,10 @@ def make_profile(
         capacity=capacity,
         address=address,
         status=status,
-        dns_ready=dns_ready,
         provisioning_state="ready",
         starter_template_state="applied",
         tenant_admin_bootstrap_state="first_password_required",
-        health_flags=("dns_not_ready",) if not dns_ready else (),
+        health_flags=(),
         created_at=now,
         updated_at=now,
     )
@@ -428,7 +411,6 @@ def test_create_tenant_passes_normalized_command_to_provisioning_service() -> No
         "subdomain": "demo-cafe",
         "starterTemplateApplied": True,
         "failureSummary": None,
-        "dnsReady": False,
     }
     assert service.actor == make_platform_actor()
     assert service.command == CreateTenantCommand(
@@ -456,7 +438,6 @@ def test_get_tenant_provisioning_state_returns_safe_state() -> None:
         "templateKey": "cafe_default",
         "templateVersion": 1,
         "failureSummary": "starter template failed",
-        "dnsReady": False,
         "createdAt": "2026-07-02T12:00:00+00:00",
         "updatedAt": "2026-07-02T12:00:00+00:00",
     }
@@ -536,11 +517,10 @@ def test_list_tenants_returns_platform_safe_health_response() -> None:
                 "name": "Cafe Demo",
                 "subdomain": "demo-cafe",
                 "status": "active",
-                "dnsReady": False,
                 "sector": "cafe",
                 "provisioningState": "ready",
                 "lastLifecycleEventAt": "2026-07-02T12:00:00+00:00",
-                "healthFlags": ["dns_not_ready"],
+                "healthFlags": [],
                 "createdAt": "2026-07-02T12:00:00+00:00",
                 "updatedAt": "2026-07-02T12:00:00+00:00",
             }
@@ -575,11 +555,10 @@ def test_get_tenant_returns_platform_profile_response() -> None:
         "capacity": 24,
         "address": '{"city":"Istanbul"}',
         "status": "active",
-        "dnsReady": False,
         "provisioningState": "ready",
         "starterTemplateState": "applied",
         "tenantAdminBootstrapState": "first_password_required",
-        "healthFlags": ["dns_not_ready"],
+        "healthFlags": [],
         "createdAt": "2026-07-02T12:00:00+00:00",
         "updatedAt": "2026-07-02T12:00:00+00:00",
     }
@@ -679,25 +658,6 @@ def test_update_tenant_profile_requires_csrf() -> None:
 
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "csrf_required"
-
-
-def test_set_dns_ready_calls_mutation_service() -> None:
-    mutation_service = FakeTenantRegistryMutationService()
-    client = make_client(actor=make_platform_actor(), mutation_service=mutation_service)
-
-    response = client.post(
-        f"/api/platform/tenants/{TENANT_ID}/dns-ready",
-        headers={"X-CSRF-Token": "csrf"},
-        json={"dnsReady": True},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["dnsReady"] is True
-    assert mutation_service.dns_args == {
-        "actor": make_platform_actor(),
-        "tenant_id": TENANT_ID,
-        "dns_ready": True,
-    }
 
 
 def test_change_tenant_status_requires_reason_and_calls_mutation_service() -> None:

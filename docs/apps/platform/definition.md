@@ -71,7 +71,7 @@ Tenant runtime apps are served from tenant subdomains:
 https://[tenant].iotables.net
 ```
 
-DNS records for tenant subdomains are managed manually by the platform owner outside the application.
+Tenant subdomains are expected to resolve through the environment wildcard DNS record configured during deployment. PlatformApp does not create, verify, or track per-tenant DNS records.
 
 ## Core Workflows
 
@@ -92,7 +92,7 @@ DNS records for tenant subdomains are managed manually by the platform owner out
 7. Provisioning creates the initial tenant admin and starter staff users through Access.
 8. Provisioning applies the selected sector starter template once and creates required tenant setup records.
 9. Provisioning activates the tenant only after required records commit.
-10. Platform Owner manually creates or updates the DNS record for the tenant domain.
+10. The tenant becomes reachable through the deployed wildcard tenant namespace.
 
 Required fields:
 
@@ -122,7 +122,7 @@ Current release tenant creation implies these product boundaries:
 
 - one tenant represents one restaurant/location;
 - ordering channel is dine-in table QR only;
-- DNS is manual outside the application;
+- tenant host routing depends on the deployed wildcard DNS namespace;
 - CustomerApp cannot take payments;
 - CashierApp records operational payments only;
 - no fiscal/e-Adisyon/ÖKC integration;
@@ -146,7 +146,7 @@ Current release tenant lifecycle states:
 
 New tenants start as `provisioning`. PlatformApp moves the tenant to `active` only after the tenant registry record, first tenant admin, starter data record, and required setup metadata are committed successfully.
 
-Manual DNS setup is tracked as an explicit setup checklist field such as `dnsReady`, because DNS records are managed outside the application. PlatformApp does not automate DNS in the current release.
+DNS is not tenant state. If `*.iotables.net` or the environment-specific wildcard namespace is missing or misconfigured, that is a deployment/ops fault, not a per-tenant checklist item.
 
 The current release does not enforce tenant packages, trials, feature limits, or billing entitlements. Restaurant capacity is informational in the current release unless a later entitlement model explicitly gives it enforcement meaning.
 
@@ -156,12 +156,11 @@ Current release tenant health summary is limited to high-level signals:
 - setup/provisioning state;
 - starter template applied or failed state;
 - tenant admin bootstrap pending or completed state;
-- manual DNS readiness state;
 - latest platform-visible runtime error summary when available.
 
 Tenant health must not require PlatformApp to inspect or mutate live tenant runtime data such as orders, payments, table sessions, or station queues.
 
-V1 platform support actions are limited to platform-owned control surfaces: inspect tenant metadata, inspect platform audit events, suspend/reactivate tenant, edit tenant GSM number, mark DNS readiness, and retry or inspect failed provisioning through explicit recovery tooling. PlatformApp does not directly rewrite tenant runtime records.
+V1 platform support actions are limited to platform-owned control surfaces: inspect tenant metadata, inspect platform audit events, suspend/reactivate tenant, edit tenant GSM number, and retry or inspect failed provisioning through explicit recovery tooling. PlatformApp does not directly rewrite tenant runtime records.
 
 ### Apply Sector Starter Data
 
@@ -250,7 +249,6 @@ PlatformApp may display these concepts, but it does not necessarily own all futu
 | Tenant capacity | Full | Optional and editable |
 | Tenant status | Full | Platform lifecycle state |
 | Tenant health | Summary | High-level operational state shown in lists and detail screens |
-| Tenant DNS setup state | Full | Manual DNS readiness tracked by Platform Owner |
 | Tenant setup state | Full | Tracks readiness/provisioning |
 | Tenant starter data state | Full | Records whether one-time starter data was applied |
 | Tenant owner/admin | Partial | Created during tenant provisioning; username is tenant subdomain |
@@ -264,13 +262,13 @@ PlatformApp interacts with domain modules through explicit interfaces.
 | Context / Module | Expected Use |
 | --- | --- |
 | Platform / Provisioning | Start tenant creation, inspect provisioning state, retry explicit recovery |
-| Platform / Tenant Registry | Manage tenant identity, lifecycle, profile, subdomain, GSM, DNS readiness, and tenant health summary |
+| Platform / Tenant Registry | Manage tenant identity, lifecycle, profile, subdomain, GSM, and tenant health summary |
 | Platform / Sector Starter Templates | List sector options and record one-time starter application through Provisioning |
 | Access / Identity and Access | Create platform owner, tenant admin, and starter staff accounts through controlled bootstrap flows |
 | Access / OTP Messaging | Support first-password OTP flows for tenant admin and cashier |
 | Governance / Audit | Record platform-level actions |
 
-DNS automation is not part of PlatformApp for the initial product. Tenant DNS records are created manually by the platform owner.
+DNS automation is not part of PlatformApp for the initial product. Tenant host routing is provided by wildcard DNS configured at the environment/deployment layer.
 
 SMS provider selection is not a PlatformApp product decision. PlatformApp depends on the OTP / Messaging contract; the concrete SMS provider should be selected later behind that adapter.
 
