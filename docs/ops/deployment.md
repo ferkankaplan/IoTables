@@ -95,9 +95,9 @@ GitHub Environments must also restrict deployments:
 | GitHub Environment | Allowed Deployment Branch | Admin Bypass | Required Review |
 | --- | --- | --- | --- |
 | `staging` | `staging` only | Disabled | Not required |
-| `production` | `production` only | Disabled | Required by release process; enforce with GitHub required reviewers when the repository plan supports it |
+| `production` | `production` only | Disabled | Required and enforced by GitHub required reviewers |
 
-If GitHub required reviewers are unavailable for the repository plan, production approval must happen before updating the `production` branch. This is an operational approval gate, not a relaxation of the deployment model.
+The required production reviewer is the repository owner account until a broader release-approval group exists.
 
 The workflow itself also fails closed when manually dispatched from any branch other than `staging` or `production`.
 
