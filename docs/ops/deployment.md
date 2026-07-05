@@ -158,7 +158,7 @@ The deployment user convention is:
 iotables-deploy
 ```
 
-Staging and production must use separate Ed25519 SSH key pairs. The private key belongs only in the matching GitHub Environment secret. The public key is installed only on the matching VPS under the `iotables-deploy` user's `authorized_keys`. Do not reuse a human SSH key, root SSH key, or GitHub account key as a deployment key.
+Staging and production must use separate Ed25519 SSH key pairs. The private key belongs only in the matching GitHub Environment secret. Because GitHub Actions uses the key non-interactively, deployment private keys must not have a passphrase. The public key is installed only on the matching VPS under the `iotables-deploy` user's `authorized_keys`. Do not reuse a human SSH key, root SSH key, or GitHub account key as a deployment key.
 
 Required GitHub Environment secrets:
 
