@@ -92,10 +92,12 @@ Long-lived branches must be protected:
 
 GitHub Environments must also restrict deployments:
 
-| GitHub Environment | Allowed Deployment Branch | Required Review |
-| --- | --- | --- |
-| `staging` | `staging` only | Optional while the team is small |
-| `production` | `production` only | Required manual approval |
+| GitHub Environment | Allowed Deployment Branch | Admin Bypass | Required Review |
+| --- | --- | --- | --- |
+| `staging` | `staging` only | Disabled | Not required |
+| `production` | `production` only | Disabled | Required by release process; enforce with GitHub required reviewers when the repository plan supports it |
+
+If GitHub required reviewers are unavailable for the repository plan, production approval must happen before updating the `production` branch. This is an operational approval gate, not a relaxation of the deployment model.
 
 The workflow itself also fails closed when manually dispatched from any branch other than `staging` or `production`.
 
