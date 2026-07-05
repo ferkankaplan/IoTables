@@ -223,7 +223,7 @@ States:
 | Filtered empty | Show no events match filters. |
 | Access denied | Hide event details and show safe authorization state. |
 
-Audit must not show raw OTP, secrets, provider payloads, runtime order/payment detail, or stack traces.
+Audit must not show raw OTP, secrets, provider payloads, runtime order/payment detail, stack traces, or raw/internal metadata keys. Metadata summaries must be allowlisted and user-safe.
 
 ## Lifecycle Actions
 
