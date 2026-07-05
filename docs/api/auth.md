@@ -8,9 +8,9 @@ The permission source is [../modules/access/permission-policy-matrix.md](../modu
 
 | Session Type | Actor | Transport | Owner |
 | --- | --- | --- | --- |
-| Platform session | Platform Owner | Secure HttpOnly host cookie on `platform.iotables.net` | Identity and Access |
-| Tenant staff/admin session | Tenant Admin, Cashier, Station Staff, Service Staff | Secure HttpOnly host cookie on `[tenant].iotables.net` | Identity and Access |
-| Customer ordering session | Anonymous Customer | Secure HttpOnly host cookie on `[tenant].iotables.net` | Customer Ordering |
+| Platform session | Platform Owner | Secure HttpOnly host cookie on the platform host, such as `platform.iotables.net` or `platform.tabflow.uk` | Identity and Access |
+| Tenant staff/admin session | Tenant Admin, Cashier, Station Staff, Service Staff | Secure HttpOnly host cookie on the tenant host, such as `[tenant].iotables.net` or `[tenant].tabflow.uk` | Identity and Access |
+| Customer ordering session | Anonymous Customer | Secure HttpOnly host cookie on the tenant host, such as `[tenant].iotables.net` or `[tenant].tabflow.uk` | Customer Ordering |
 | Table display credential | ESP32 table display | Dedicated display credential auth header | Table Display Provisioning |
 | Worker identity | Background worker | Internal configuration/runtime identity | Reliable Side Effects |
 

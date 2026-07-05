@@ -88,10 +88,12 @@ Endpoint-specific contracts define the authoritative route, actor, authenticatio
 
 Tenant APIs resolve tenant from the request host/subdomain, not from client-supplied `tenantId`.
 
-| Host | Meaning |
-| --- | --- |
-| `platform.iotables.net` | PlatformApp and platform APIs. |
-| `[tenant].iotables.net` | TenantApp, CustomerApp, StationStaffApp, ServiceStaffApp, CashierApp, tenant-scoped APIs. |
+Production and staging use the same host-resolution model with different public namespaces:
+
+| Environment | Platform host | Tenant host pattern | Meaning |
+| --- | --- | --- | --- |
+| Production | `platform.iotables.net` | `[tenant].iotables.net` | Live PlatformApp, tenant apps, and APIs. |
+| Staging | `platform.tabflow.uk` | `[tenant].tabflow.uk` | Production-like staging PlatformApp, tenant apps, and APIs. |
 
 Platform APIs may accept `tenantId` as a target identifier because PlatformApp is global. Tenant-scoped APIs must treat body/query `tenantId` as informational at most and must not trust it for authorization.
 

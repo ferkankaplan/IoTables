@@ -2,7 +2,7 @@
 
 This document extracts the parts of the shared current release end-to-end flow where this app participates.
 
-See the full shared flow: [../_shared/master-end-to-end.md](../_shared/master-end-to-end.md).
+See the full shared flow: [../_shared/canonical-end-to-end.md](../_shared/canonical-end-to-end.md).
 
 ### 1. Platform Owner Creates Tenant
 1. Platform Owner logs into PlatformApp.

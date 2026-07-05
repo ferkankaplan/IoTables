@@ -38,6 +38,25 @@ The core principle is merge, not append.
 - Avoid duplicate flows, duplicate concepts, disconnected helper layers, and scattered special cases.
 - Make changes that look like they were part of the original architecture, not later patches.
 
+## Branch and Deployment Discipline
+
+The repository uses a promotion-based branch model:
+
+```text
+feature/* -> integration -> staging -> production
+```
+
+- `feature/*` branches are short-lived work branches.
+- `integration` is the repository default branch and the only normal merge target for completed feature work. It runs CI and does not deploy.
+- `staging` receives promoted work from `integration` and deploys to the staging VPS.
+- `production` receives promoted work from `staging` and deploys to the production VPS.
+
+Do not bypass the promotion chain. Do not merge feature work directly into `staging` or `production`. Do not treat `integration` as a dumping ground; it must remain coherent, tested, and ready to become a deployment candidate. Production fixes must be propagated back through the chain so `integration`, `staging`, and `production` do not drift.
+
+Production promotion must preserve the exact commit SHA that passed staging. Do not create a new production-only merge commit, squash commit, or rebase result for deployment promotion; production must deploy the immutable artifact already proven on staging.
+
+Legacy `main` and `master` branches are transitional only and must not be treated as IoTables deployment branches after branch migration is complete.
+
 ## Consistency Repair Trigger
 
 Whenever the agent detects a real inconsistency, contradiction, duplicate concept, stale decision, naming drift, broken trace, or cross-layer mismatch, it must treat that finding as a consistency repair job.

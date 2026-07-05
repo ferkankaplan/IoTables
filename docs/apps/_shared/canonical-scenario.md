@@ -1,4 +1,4 @@
-# Cross-App Master Scenario
+# Cross-App Canonical Scenario
 ### E2E-01: First Complete Table Visit
 
 Happy path:

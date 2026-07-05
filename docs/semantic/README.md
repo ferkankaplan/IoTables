@@ -68,7 +68,7 @@ Examples:
 
 ```text
 semantic_id: module.docs-modules-ordering-customer-ordering-contracts.module-contracts-customer-ordering-commands
-semantic_id: app.docs-apps-shared-master-end-to-end.v1-end-to-end-app-flow-main-happy-path-5-customer-submits-order
+semantic_id: app.docs-apps-shared-canonical-end-to-end.current-release-end-to-end-app-flow-main-happy-path-5-customer-submits-order
 ```
 
 The reference direction is one-way: code and tests can point to semantic documentation, but documentation remains the source that defines behavior.

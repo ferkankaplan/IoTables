@@ -7,7 +7,7 @@ Source context:
 - [semantic-source-rule.md](semantic-source-rule.md)
 - [component-model.md](component-model.md)
 - [wireframe-rules.md](wireframe-rules.md)
-- [master-end-to-end.md](master-end-to-end.md)
+- [canonical-end-to-end.md](canonical-end-to-end.md)
 - [cross-app-state-visibility.md](cross-app-state-visibility.md)
 - [../../api/auth.md](../../api/auth.md)
 - [../../api/errors.md](../../api/errors.md)

@@ -26,47 +26,137 @@ IoTables current release is deployed as a modular monolith:
 
 Separate services may be extracted later only if they preserve documented module boundaries.
 
-## GitHub-to-VPS Release Path
+## GitHub-to-VPS Deployment Path
 
 Production and staging releases are driven by GitHub Actions. Each VPS is a Docker Compose runtime target; operators should not SSH into a VPS for normal releases after the initial host setup is complete.
 
-Branch-to-environment mapping:
+Branch promotion is linear and must not be bypassed:
+
+```text
+feature/* -> integration -> staging -> production
+```
+
+`integration` is the non-deploying integration branch and repository default branch. It is the normal merge target for completed feature branches and must pass CI. `staging` is the staging deployment branch and deploys to the staging VPS. `production` is the production deployment branch and deploys to production. Feature branches must not merge directly into `staging` or `production`; hotfixes must be propagated back so all three long-lived branches remain synchronized. Legacy `main` and `master` branch names are not part of the IoTables deployment model after branch migration is complete.
+
+Branch responsibility matrix:
+
+| Branch | Purpose | Normal target | CI | Deploy | GitHub environment | Runtime target | Public namespace |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `feature/<short-kebab-slug>` | New product or technical capability | `integration` | Pull request | No | none | none | none |
+| `fix/<short-kebab-slug>` | Non-production bug fix before deployment | `integration` | Pull request | No | none | none | none |
+| `docs/<short-kebab-slug>` | Documentation-only change | `integration` | Pull request | No | none | none | none |
+| `chore/<short-kebab-slug>` | Tooling, dependency, or repository maintenance | `integration` | Pull request | No | none | none | none |
+| `hotfix/<short-kebab-slug>` | Production-impacting fix | `staging`, then `production`, then back to `integration` | Pull request | No direct deploy | none | none | none |
+| `integration` | Coherent integration baseline and default branch | `staging` | Push and pull request | No | none | none | none |
+| `staging` | Production candidate verification | `production` | Push and pull request | Yes | `staging` | Staging VPS | `tabflow.uk` |
+| `production` | Live tenant/customer traffic | release tag after smoke | Push and approved promotion | Yes | `production` | Production VPS | `iotables.net` |
+
+Long-lived branch-to-environment mapping:
 
 | Branch | GitHub environment | Domain namespace | VPS host | Runtime target |
 | --- | --- | --- | --- | --- |
-| `master` | `production` | `iotables.net`, `*.iotables.net` | `31.57.187.226` | Production VPS |
-| `staging` | `staging` | `tabflow.uk`, `*.tabflow.uk` | `185.169.180.201` | Staging VPS |
+| `integration` | none | none | none | CI only; no deploy |
+| `staging` | `staging` | `tabflow.uk`, `platform.tabflow.uk`, `*.tabflow.uk` | `185.169.180.201` | Staging VPS |
+| `production` | `production` | `iotables.net`, `platform.iotables.net`, `*.iotables.net` | `31.57.187.226` | Production VPS |
 
-The staging namespace uses `tabflow.uk` so staging tenant subdomains do not collide with production tenant subdomains under `iotables.net`. Runtime image deploys use commit SHA tags; moving convenience tags are separated as `production-latest` and `staging-latest`.
+Public app surface matrix:
+
+| App surface | Staging URL | Production URL |
+| --- | --- | --- |
+| PlatformApp | `https://platform.tabflow.uk` | `https://platform.iotables.net` |
+| Platform login | `https://platform.tabflow.uk/login` | `https://platform.iotables.net/login` |
+| Tenant public page | `https://[tenant].tabflow.uk/` | `https://[tenant].iotables.net/` |
+| Tenant login | `https://[tenant].tabflow.uk/login` | `https://[tenant].iotables.net/login` |
+| Tenant admin workspace | `https://[tenant].tabflow.uk/admin` | `https://[tenant].iotables.net/admin` |
+| CustomerApp | `https://[tenant].tabflow.uk/order` | `https://[tenant].iotables.net/order` |
+| StationStaffApp | `https://[tenant].tabflow.uk/station` | `https://[tenant].iotables.net/station` |
+| ServiceStaffApp | `https://[tenant].tabflow.uk/service` | `https://[tenant].iotables.net/service` |
+| CashierApp | `https://[tenant].tabflow.uk/cashier` | `https://[tenant].iotables.net/cashier` |
+| Health check | `https://tabflow.uk/health` | `https://iotables.net/health` |
+
+The staging namespace uses `tabflow.uk` so staging tenant subdomains do not collide with production tenant subdomains under `iotables.net`. Runtime image deploys use immutable `sha-<commit>` tags; moving convenience tags are separated as `production-latest` and `staging-latest`. Convenience tags are not rollback identifiers.
+
+Staging builds the deployable runtime images. Production does not rebuild the same commit. Production promotion reuses the existing `sha-<commit>` images that already passed staging and moves only the `production-latest` convenience tags. The production environment approval must happen before any production tag is moved or any VPS state is changed. If the `sha-<commit>` images do not exist, production deployment must fail closed.
+
+The `staging -> production` promotion must preserve the exact tested commit SHA. Squash merges, rebase merges, or merge commits that create a new production commit are not acceptable for deployment promotion because they would point production at an artifact that never passed staging. Use a controlled fast-forward promotion, or an equivalent approved branch update that leaves `production` on the same commit that was tested on `staging`.
+
+## Branch and Environment Protection
+
+Long-lived branches must be protected:
+
+| Branch | Protection |
+| --- | --- |
+| `integration` | Pull request required, CI required, no force-push, no direct commit |
+| `staging` | Pull request from `integration` or approved `hotfix/*`, CI required, no force-push, no direct commit |
+| `production` | Approved promotion from `staging`, CI required, fast-forward to a staged commit only, no force-push, no direct human commit |
+
+GitHub Environments must also restrict deployments:
+
+| GitHub Environment | Allowed Deployment Branch | Required Review |
+| --- | --- | --- |
+| `staging` | `staging` only | Optional while the team is small |
+| `production` | `production` only | Required manual approval |
+
+The workflow itself also fails closed when manually dispatched from any branch other than `staging` or `production`.
+
+Temporary branch names use lowercase kebab-case after a slash:
+
+| Branch Pattern | Naming Rule |
+| --- | --- |
+| `feature/<short-kebab-slug>` | Lowercase, hyphen-separated, capability-oriented slug |
+| `fix/<short-kebab-slug>` | Lowercase, hyphen-separated, defect-oriented slug |
+| `hotfix/<short-kebab-slug>` | Lowercase, hyphen-separated, production-impacting slug |
+| `docs/<short-kebab-slug>` | Lowercase, hyphen-separated, documentation slug |
+| `chore/<short-kebab-slug>` | Lowercase, hyphen-separated, maintenance slug |
+
+Commit messages should follow Conventional Commits format where practical: `type(scope): summary`. Use `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, or `build`; mark breaking changes explicitly with `!` and a body note.
+
+Production releases may be labeled after a successful production smoke check with SemVer tags:
+
+```text
+vMAJOR.MINOR.PATCH
+```
+
+Use `MAJOR` for incompatible public API/data-contract changes, `MINOR` for backward-compatible capability, and `PATCH` for backward-compatible fixes. Tags are release evidence and changelog anchors; branch promotion remains the deployment trigger in the current workflow.
+
+## Hotfix Flow
+
+Hotfixes do not bypass staging:
+
+```text
+hotfix/* -> staging -> production
+```
+
+After production deploy, the same fix must be merged or cherry-picked back into `integration`. If the hotfix changes schema, API contracts, auth, payment, ordering, or deployment assumptions, document the migration and rollback path before the hotfix is promoted.
 
 DNS records are managed manually in the current release:
 
 | Environment | DNS records | Target |
 | --- | --- | --- |
-| Production | `iotables.net`, `*.iotables.net` | `31.57.187.226` |
-| Staging | `tabflow.uk`, `*.tabflow.uk` | `185.169.180.201` |
+| Production | `iotables.net`, `platform.iotables.net`, `*.iotables.net` | `31.57.187.226` |
+| Staging | `tabflow.uk`, `platform.tabflow.uk`, `*.tabflow.uk` | `185.169.180.201` |
 
-Repository-owned release files:
+Repository-owned deployment files:
 
 | File | Responsibility |
 | --- | --- |
-| `.github/workflows/ci.yml` | Runs lint, backend tests, frontend build, and runtime image builds for pull requests, `master`, and `staging`. |
-| `.github/workflows/release.yml` | Verifies `master` or `staging`, publishes backend/frontend images to GHCR, uploads release compose/nginx files, runs migrations, restarts Compose services, and performs a smoke check against the matching GitHub environment. |
-| `compose.production.yaml` | Defines the VPS runtime using immutable image tags from the GitHub commit SHA. |
+| `.github/workflows/ci.yml` | Runs lint, backend tests, frontend build, and runtime image builds for pull requests, `integration`, `staging`, and `production`. |
+| `.github/workflows/deploy.yml` | Verifies only `production` or `staging`, builds staging images, verifies existing SHA images for production, moves production convenience tags only after production environment approval, uploads deploy compose/nginx files, runs migrations, restarts Compose services, and performs a smoke check against the matching GitHub environment. Manual dispatch from any other branch fails closed. |
+| `compose.deploy.yaml` | Defines the VPS runtime using immutable `sha-<commit>` image tags. |
 | `frontend/Dockerfile.production` | Builds the React/Vite frontend and serves static assets with nginx. |
 | `deploy/nginx/default.conf` | Routes `/health` and `/api/` to the backend service and all other paths to the SPA. |
 
 The first VPS setup is manual and must install Docker with the Compose plugin, create the `/opt/iotables` release directory, create a deployment user with least-privilege Docker access, and write the environment-specific `.env` file in the release directory. After that, a push to the mapped branch performs the release.
 
-Required GitHub secrets:
+Required GitHub Environment secrets:
 
 | Secret | Purpose |
 | --- | --- |
-| `VPS_HOST` | VPS hostname or IP. |
-| `VPS_USER` | SSH user used by the workflow. |
-| `VPS_SSH_PRIVATE_KEY` | Private key for the deployment user. |
-| `VPS_SSH_PORT` | Optional SSH port; defaults to `22`. |
-| `RELEASE_HEALTH_URL` | Public smoke URL for the selected GitHub environment, for example `https://iotables.net/health` or `https://tabflow.uk/health`. |
+| `DEPLOY_HOST` | VPS hostname or IP for the selected GitHub environment. |
+| `DEPLOY_USER` | SSH user used by the workflow. |
+| `DEPLOY_SSH_PRIVATE_KEY` | Private key for the deployment user. |
+| `DEPLOY_SSH_PORT` | Optional SSH port; defaults to `22`. |
+| `DEPLOY_HEALTH_URL` | Public smoke URL for the selected GitHub environment, for example `https://iotables.net/health` or `https://tabflow.uk/health`. |
 
 The VPS release directory must contain `.env` with:
 
@@ -74,13 +164,14 @@ The VPS release directory must contain `.env` with:
 POSTGRES_DB=iotables
 POSTGRES_USER=iotables
 POSTGRES_PASSWORD=<strong database password>
+IOTABLES_ENV=production
 IOTABLES_DATABASE_URL=postgresql+asyncpg://iotables:<strong database password>@db:5432/iotables
 IOTABLES_SECURITY_SECRET_KEY=<strong application secret>
 IOTABLES_CORS_ORIGINS=["https://platform.iotables.net"]
 IOTABLES_HTTP_PORT=80
 ```
 
-For staging, the same file shape applies on the staging VPS, but CORS/domain values must use `tabflow.uk`, such as `["https://platform.tabflow.uk"]`.
+For staging, the same file shape applies on the staging VPS, but `IOTABLES_ENV=staging` and CORS/domain values must use `tabflow.uk`, such as `["https://platform.tabflow.uk"]`.
 
 The VPS `.env` file is host-owned configuration and must not be committed. If public package visibility is disabled for GHCR images, the deployment user also needs registry credentials with permission to pull the repository packages.
 

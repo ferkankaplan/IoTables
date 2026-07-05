@@ -23,6 +23,19 @@ Out of scope for CustomerApp the current release:
 
 CustomerApp may show read-only table bill and balance information, but it must not create payment intents, record payments, close sessions, or initiate fiscal receipt flows.
 
+## Screens and URLs
+
+CustomerApp is served from the tenant host and uses one primary customer order workspace.
+
+| Screen | URL | Purpose |
+| --- | --- | --- |
+| Menu | `https://[tenant].iotables.net/order` | Main customer workspace after valid QR redemption |
+| My Orders | `https://[tenant].iotables.net/order?view=my-orders` | Orders created by the current CustomerOrderingSession |
+| Table Orders | `https://[tenant].iotables.net/order?view=table-orders` | Active table orders after fresh table presence |
+| Bill | `https://[tenant].iotables.net/order?view=bill` | Read-only bill and balance after fresh table presence |
+
+The QR displayed on the table screen opens the same CustomerApp workspace and carries only redemption material for the backend table-presence endpoint. The URL, query string, and client-side route never provide trusted table, tenant, pricing, station, session, or payment authority.
+
 ## Locked Session Model
 
 CustomerApp uses three separate concepts. These must not be merged.

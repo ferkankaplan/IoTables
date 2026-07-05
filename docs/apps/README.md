@@ -20,8 +20,8 @@ Each app has its own folder. Shared cross-app rules live under `_shared` to avoi
 | Document | Purpose |
 | --- | --- |
 | [_shared/semantic-source-rule.md](_shared/semantic-source-rule.md) | Rule that app docs govern module/schema/API semantics |
-| [_shared/master-end-to-end.md](_shared/master-end-to-end.md) | Shared tenant-to-order-to-settlement flow |
-| [_shared/master-scenario.md](_shared/master-scenario.md) | Cross-app master happy path and branch scenario |
+| [_shared/canonical-end-to-end.md](_shared/canonical-end-to-end.md) | Shared tenant-to-order-to-settlement flow |
+| [_shared/canonical-scenario.md](_shared/canonical-scenario.md) | Cross-app canonical happy path and branch scenario |
 | [_shared/branch-coverage-checklist.md](_shared/branch-coverage-checklist.md) | Required branch coverage before API contracts |
 | [_shared/scenario-format.md](_shared/scenario-format.md) | Format and scope rule for app scenarios |
 | [_shared/cross-app-state-visibility.md](_shared/cross-app-state-visibility.md) | Full cross-app state visibility matrix |

@@ -21,7 +21,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      IOTABLES_ENV: production
+      IOTABLES_ENV: ${IOTABLES_ENV:?IOTABLES_ENV is required}
       IOTABLES_LOG_LEVEL: ${IOTABLES_LOG_LEVEL:-INFO}
       IOTABLES_DATABASE_URL: ${IOTABLES_DATABASE_URL:?IOTABLES_DATABASE_URL is required}
       IOTABLES_SECURITY_SECRET_KEY: ${IOTABLES_SECURITY_SECRET_KEY:?IOTABLES_SECURITY_SECRET_KEY is required}
