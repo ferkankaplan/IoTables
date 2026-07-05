@@ -123,7 +123,7 @@ Backend remains responsible for final authorization, uniqueness, idempotency, pr
 
 It displays tenant name and subdomain as immutable. It must state that sector changes after creation do not re-run starter data.
 
-`TenantAuditPanel` owns platform-level audit and lifecycle event display. It must not show runtime order/payment/session details, raw secrets, stack traces, or provider payloads.
+`TenantAuditPanel` owns platform-level audit and lifecycle event display. It must not show runtime order/payment/session details, raw secrets, stack traces, provider payloads, or raw/internal metadata keys. Audit metadata shown in the UI must use an explicit allowlist so legacy or obsolete metadata does not reintroduce removed product concepts.
 
 ## Provisioning and Recovery Components
 
