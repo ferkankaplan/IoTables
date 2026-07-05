@@ -21,6 +21,16 @@ type TenantProfile = TenantHealthSummary & {
   tenantAdminBootstrapState: string;
 };
 
+type TenantContext = {
+  tenantId: string;
+  name: string;
+  subdomain: string;
+  status: string;
+  sector: string | null;
+  capacity: number | null;
+  address: string | null;
+};
+
 type TenantListResponse = {
   items: TenantHealthSummary[];
   page: {
@@ -489,6 +499,10 @@ export function App() {
   const [sectorFilter, setSectorFilter] = useState("");
   const [searchText, setSearchText] = useState("");
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [tenantContextState, setTenantContextState] = useState<
+    "idle" | "checking" | "ready" | "unavailable"
+  >("idle");
+  const [tenantContext, setTenantContext] = useState<TenantContext | null>(null);
 
   async function loadTenants(nextSelectedTenantId?: string, cursor = "0", append = false) {
     setListState("loading");
@@ -548,6 +562,38 @@ export function App() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!requiresTenantContext(appSurface)) {
+      setTenantContextState("idle");
+      setTenantContext(null);
+      return;
+    }
+
+    let active = true;
+    async function loadTenantContext() {
+      setTenantContextState("checking");
+      try {
+        const payload = await apiRequest<TenantContext>("/api/tenant/context", {
+          headers: tenantHeaders()
+        });
+        if (active) {
+          setTenantContext(payload);
+          setTenantContextState(payload.status === "active" ? "ready" : "unavailable");
+        }
+      } catch {
+        if (active) {
+          setTenantContext(null);
+          setTenantContextState("unavailable");
+        }
+      }
+    }
+
+    void loadTenantContext();
+    return () => {
+      active = false;
+    };
+  }, [appSurface]);
 
   useEffect(() => {
     if (authState === "authenticated" && appSurface === "platform") {
@@ -637,6 +683,18 @@ export function App() {
     );
   }
 
+  if (tenantContextState === "checking") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-stone-100 text-zinc-950">
+        <StateBlock title="İşletme durumu kontrol ediliyor" />
+      </main>
+    );
+  }
+
+  if (tenantContextState === "unavailable") {
+    return <TenantUnavailableScreen />;
+  }
+
   if (authState === "anonymous") {
     const handleAuthenticated = (nextActor: AuthenticatedActor) => {
       setActor(nextActor);
@@ -657,6 +715,7 @@ export function App() {
               ? "Kasa girişi"
               : "Tenant girişi"
         }
+        tenantName={tenantContext?.name ?? tenantSubdomainFromLocation()}
         onAuthenticated={handleAuthenticated}
       />
     ) : (
@@ -924,14 +983,15 @@ function TenantLoginScreen({
   appScope,
   defaultUsername,
   heading,
+  tenantName,
   onAuthenticated
 }: {
   appScope: "cashier" | "service" | "tenant";
   defaultUsername: string;
   heading: string;
+  tenantName: string;
   onAuthenticated: (actor: AuthenticatedActor) => void;
 }) {
-  const tenantSubdomain = tenantSubdomainFromLocation();
   const [username, setUsername] = useState(defaultUsername);
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -1035,7 +1095,7 @@ function TenantLoginScreen({
       <section className="w-full max-w-sm border border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            {tenantHost(tenantSubdomain)}
+            {tenantName}
           </p>
           <h1 className="mt-2 text-2xl font-semibold">{heading}</h1>
         </div>
@@ -1091,6 +1151,22 @@ function TenantLoginScreen({
             </button>
           </form>
         )}
+      </section>
+    </main>
+  );
+}
+
+function TenantUnavailableScreen() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-stone-100 px-4 text-zinc-950">
+      <section className="w-full max-w-sm border border-zinc-200 bg-white px-5 py-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          {tenantHost(tenantSubdomainFromLocation())}
+        </p>
+        <h1 className="mt-2 text-2xl font-semibold">İşletme bulunamadı</h1>
+        <p className="mt-3 text-sm text-zinc-600">
+          Bu tenant adresi aktif bir işletmeye bağlı değil veya şu anda kullanılamıyor.
+        </p>
       </section>
     </main>
   );
@@ -4133,11 +4209,56 @@ function errorMessageFrom(error: unknown): string {
 function auditMetadataSummary(metadata: Record<string, unknown>): string {
   const changedFields = metadata.changedFields;
   if (Array.isArray(changedFields) && changedFields.length > 0) {
-    return `Değişen alanlar: ${changedFields.join(", ")}`;
+    const safeChangedFields = changedFields
+      .filter((field): field is string => typeof field === "string")
+      .filter(isAuditMetadataKeyVisible);
+    return safeChangedFields.length > 0
+      ? `Değişen alanlar: ${safeChangedFields.map(auditMetadataKeyLabel).join(", ")}`
+      : "Ek detay yok";
   }
-  const keys = Object.keys(metadata);
-  return keys.length > 0 ? keys.join(", ") : "Ek detay yok";
+  const keys = Object.keys(metadata).filter(isAuditMetadataKeyVisible);
+  return keys.length > 0 ? keys.map(auditMetadataKeyLabel).join(", ") : "Ek detay yok";
 }
+
+function isAuditMetadataKeyVisible(key: string): boolean {
+  const normalized = key.toLowerCase();
+  if (
+    normalized.includes("credential") ||
+    normalized.includes("dns") ||
+    normalized.includes("hash") ||
+    normalized.includes("otp") ||
+    normalized.includes("password") ||
+    normalized.includes("secret") ||
+    normalized.includes("token")
+  ) {
+    return false;
+  }
+  return visibleAuditMetadataKeys.has(key);
+}
+
+function auditMetadataKeyLabel(key: string): string {
+  return auditMetadataLabels[key] ?? key;
+}
+
+const visibleAuditMetadataKeys = new Set([
+  "changedFields",
+  "role",
+  "sector",
+  "subdomain",
+  "templateKey",
+  "templateVersion",
+  "username"
+]);
+
+const auditMetadataLabels: Record<string, string> = {
+  changedFields: "değişen alanlar",
+  role: "rol",
+  sector: "sektör",
+  subdomain: "subdomain",
+  templateKey: "starter şablonu",
+  templateVersion: "starter sürümü",
+  username: "kullanıcı adı"
+};
 
 const tenantRootDomains = ["iotables.net", "tabflow.uk"] as const;
 
@@ -4189,6 +4310,10 @@ function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "
     return "service";
   }
   return tenantSubdomainFromHostname(window.location.hostname.toLowerCase()) ? "tenant" : "platform";
+}
+
+function requiresTenantContext(appSurface: ReturnType<typeof detectAppSurface>): boolean {
+  return appSurface === "tenant" || appSurface === "service" || appSurface === "cashier";
 }
 
 function tenantSubdomainFromLocation(): string {

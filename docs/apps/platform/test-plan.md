@@ -99,6 +99,7 @@ Out of scope for this test plan:
 | Tenant not found/hidden | Safe not-found state; no record leakage. |
 | Audit empty | Audit empty state appears. |
 | Audit filtered empty | Filtered empty state appears. |
+| Audit event has legacy/internal metadata | UI hides non-allowlisted keys and does not reintroduce removed product concepts. |
 | Runtime health signal unavailable | Platform metadata view still works. |
 | Platform attempts tenant runtime mutation | UI control absent and API rejects wrong scope. |
 
@@ -170,6 +171,7 @@ Required tests:
 - starter template application is unique per tenant/template/version and does not rerun on restart, deployment, migration, retry, or sector edit;
 - provisioning failure leaves no silent active tenant with partial required setup;
 - platform audit and side-effect views redact raw OTP, secrets, provider payloads, internal paths, and stack traces.
+- platform audit metadata summaries hide legacy/internal keys unless explicitly allowlisted for the current product contract.
 
 ## Accessibility and Responsive Coverage
 
