@@ -82,13 +82,15 @@ The `staging -> production` promotion must preserve the exact tested commit SHA.
 
 ## Branch and Environment Protection
 
-Long-lived branches must be protected:
+Long-lived branches must be protected by repository rulesets:
 
-| Branch | Protection |
-| --- | --- |
-| `integration` | Pull request required, CI required, no force-push, no direct commit |
-| `staging` | Pull request from `integration` or approved `hotfix/*`, CI required, no force-push, no direct commit |
-| `production` | Approved promotion from `staging`, CI required, fast-forward to a staged commit only, no force-push, no direct human commit |
+| Branch | Ruleset | Enforced Rules |
+| --- | --- | --- |
+| `integration` | `protect-integration` | Pull request required, `Lint, test, and build` required, `Build runtime images` required, stale review threads resolved, no deletion, no force-push |
+| `staging` | `protect-staging` | Pull request required, `Lint, test, and build` required, `Build runtime images` required, stale review threads resolved, no deletion, no force-push |
+| `production` | `protect-production-promotion` | `Lint, test, and build` required, `Build runtime images` required, successful `staging` deployment required, linear history required, no deletion, no force-push |
+
+`production` intentionally does not require a pull request because production must be advanced to the exact commit that already passed staging. Production update authority is constrained by the `protect-production-promotion` ruleset, the deploy workflow's staged-commit check, and the production environment approval gate.
 
 GitHub Environments must also restrict deployments:
 
