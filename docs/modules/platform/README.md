@@ -22,7 +22,7 @@ Platform owns tenant identity, lifecycle, provisioning, and platform-only operat
 
 | API Contract | Purpose |
 | --- | --- |
-| [tenant-registry-api.md](tenant-registry-api.md) | Tenant profile, lifecycle, DNS readiness, health, and tenant context endpoints |
+| [tenant-registry-api.md](tenant-registry-api.md) | Tenant profile, lifecycle, health, and tenant context endpoints |
 | [provisioning-api.md](provisioning-api.md) | Tenant creation, provisioning state, retry, and recovery endpoints |
 | [sector-starter-templates-api.md](sector-starter-templates-api.md) | Sector list, starter template preview, and starter application state endpoints |
 

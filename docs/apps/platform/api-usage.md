@@ -23,7 +23,6 @@ This document maps PlatformApp behavior to module-owned API contracts. It does n
 | Sector options | `GET /api/platform/sectors` | [Sector Starter Templates](../../modules/platform/sector-starter-templates-api.md) | Used by tenant creation form. |
 | Starter template preview | `GET /api/platform/sectors/{sector}/starter-template` | [Sector Starter Templates](../../modules/platform/sector-starter-templates-api.md) | Preview only; application is internal to provisioning. |
 | Starter application state | `GET /api/platform/tenants/{tenantId}/starter-template-application` | [Sector Starter Templates](../../modules/platform/sector-starter-templates-api.md) | Shows one-time starter application state. |
-| DNS readiness | `POST /api/platform/tenants/{tenantId}/dns-ready` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | Manual flag; no DNS automation. |
 | Lifecycle status | `POST /api/platform/tenants/{tenantId}/status` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | Reason required for sensitive transitions. |
 | Tenant lifecycle events | `GET /api/platform/tenants/{tenantId}/lifecycle-events` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | Lifecycle timeline for selected tenant detail/audit. |
 | Platform audit | `GET /api/platform/audit-events` | [Audit](../../modules/governance/audit-api.md) | Redacted events only. |

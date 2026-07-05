@@ -88,7 +88,6 @@ Owned by: Platform / Tenant Registry
 | `capacity` | `integer` | Optional, informational in the current release |
 | `address` | `text` | Optional |
 | `status` | `text` | `tenant_status` check |
-| `dns_ready` | `boolean` | Manual DNS checklist flag |
 | `provisioning_error` | `text` | Safe error summary only |
 | `created_at` | `timestamptz` | Creation time |
 | `updated_at` | `timestamptz` | Last profile/status update |
@@ -118,7 +117,6 @@ Rebuildable platform read model. It must not contain tenant runtime detail.
 | `setup_state` | `text` | Setup readiness summary |
 | `starter_template_state` | `text` | Starter application summary |
 | `tenant_admin_bootstrap_state` | `text` | First admin readiness summary |
-| `dns_ready` | `boolean` | Copied high-level readiness flag |
 | `runtime_error_summary` | `text` | Safe platform-visible summary |
 | `updated_at` | `timestamptz` | Last recalculation |
 
@@ -887,7 +885,7 @@ Owned by: Audit
 | `metadata` | `jsonb` | Safe JSON object metadata, no secrets |
 | `created_at` | `timestamptz` | Append-only event time |
 
-Allowed current release action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `tenant.dns_ready_changed`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `venue_layout.changed`, `table.disabled`, `station.changed`, `station.disabled`, `menu_catalog.changed`, `availability.changed`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
+Allowed current release action names are owned by Governance. The current database catalog includes `platform_owner.created`, `platform_owner.totp_enrolled`, `tenant.created`, `tenant.provisioning_failed`, `tenant.activated`, `tenant.suspended`, `tenant.gsm_changed`, `tenant.profile_updated`, `starter_template.applied`, `user.created`, `user.disabled`, `password.changed`, `otp.verified`, `venue_layout.changed`, `table.disabled`, `station.changed`, `station.disabled`, `menu_catalog.changed`, `availability.changed`, `table_display.provisioned`, `table_display.revoked`, `order.submitted`, `preparation.status_changed`, `delivery.status_changed`, `payment.recorded`, `payment.voided`, `session.closed`, and `cashier.correction_applied`.
 
 ### `outbox_messages`
 

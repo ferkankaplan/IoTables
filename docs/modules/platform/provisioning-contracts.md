@@ -14,7 +14,7 @@ Source module: [provisioning.md](provisioning.md)
 
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
-| `provisioning.get_state` | PlatformApp | tenantId | Platform Owner only | Tenant lifecycle, starter application state, safe failure summary, DNS checklist |
+| `provisioning.get_state` | PlatformApp | tenantId | Platform Owner only | Tenant lifecycle, starter application state, and safe failure summary |
 | `provisioning.get_recovery_summary` | PlatformApp | tenantId | Platform Owner only; no runtime mutation | Missing required setup records and side-effect status |
 
 ## Consumed Contracts

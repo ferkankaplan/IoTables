@@ -51,7 +51,6 @@ class FakeTenantRegistryQueryService:
             capacity=24,
             address="Kadikoy",
             status="active",
-            dns_ready=True,
             provisioning_state="ready",
             starter_template_state="applied",
             tenant_admin_bootstrap_state="completed",

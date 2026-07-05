@@ -143,12 +143,14 @@ hotfix/* -> staging -> production
 
 After production deploy, the same fix must be merged or cherry-picked back into `integration`. If the hotfix changes schema, API contracts, auth, payment, ordering, or deployment assumptions, document the migration and rollback path before the hotfix is promoted.
 
-DNS records are managed manually in the current release:
+DNS records are managed at the environment namespace level:
 
 | Environment | DNS records | Target |
 | --- | --- | --- |
 | Production | `iotables.net`, `platform.iotables.net`, `*.iotables.net` | `31.57.187.226` |
 | Staging | `tabflow.uk`, `platform.tabflow.uk`, `*.tabflow.uk` | `185.169.180.201` |
+
+The wildcard records are mandatory deployment prerequisites. Tenant creation does not create or wait on per-tenant DNS records; `[tenant].tabflow.uk` and `[tenant].iotables.net` resolve through the wildcard namespace. If wildcard DNS fails, the environment is unhealthy and must be repaired in Cloudflare/origin routing rather than by mutating tenant state.
 
 Cloudflare SSL/TLS requirements:
 
@@ -258,8 +260,8 @@ Database migrations should complete before code paths depend on new schema. Dest
 ## Tenant Provisioning and DNS
 
 - PlatformApp creates tenant records and starter data through the provisioning workflow.
-- DNS records for tenant subdomains are manual in the current release: `[tenant].tabflow.uk` in staging and `[tenant].iotables.net` in production.
-- Platform DNS readiness is an explicit PlatformApp state, not an automated DNS provider result.
+- Tenant subdomains are resolved by the environment wildcard DNS records: `*.tabflow.uk` in staging and `*.iotables.net` in production.
+- PlatformApp does not expose per-tenant DNS state or DNS mutation controls.
 - Provisioning and starter templates must be idempotent and durable per tenant.
 - Starter templates must never rerun on server restart, deployment, migration, or release upgrade.
 

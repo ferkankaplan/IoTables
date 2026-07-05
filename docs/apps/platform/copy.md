@@ -34,7 +34,7 @@ Source context:
 | Tenant Settings | `Tenant ayarları` |
 | Tenant Audit | `Tenant denetimi` |
 | Provisioning | `Provisioning durumu` |
-| DNS readiness | `DNS hazır` |
+| Tenant host | `Tenant adresi` |
 | Starter data | `Starter veri durumu` |
 
 ## Primary Actions
@@ -45,8 +45,6 @@ Source context:
 | Logout | `Çıkış yap` |
 | Create tenant | `Tenant oluştur` |
 | Save profile | `Kaydet` |
-| Mark DNS ready | `DNS hazır olarak işaretle` |
-| Mark DNS not ready | `DNS hazır değil olarak işaretle` |
 | Suspend tenant | `Tenantı askıya al` |
 | Reactivate tenant | `Tenantı tekrar aktif et` |
 | Retry provisioning | `Provisioning tekrar dene` |
@@ -82,7 +80,7 @@ Source context:
 | Provisioning running | `Provisioning devam ediyor.` |
 | Provisioning failed | `Provisioning başarısız oldu.` |
 | Recovery needed | `Kurtarma gerekli.` |
-| DNS checklist | `DNS kaydını manuel oluşturduktan sonra hazır olarak işaretleyin.` |
+| Tenant host available through wildcard namespace | `Tenant adresi wildcard DNS üzerinden yayınlanır.` |
 
 Immutable field helper:
 
@@ -99,7 +97,7 @@ Sektör, tenant oluşturulurken starter veriyi belirler. Sonradan değişirse st
 V1 scope helper:
 
 ```text
-V1 tek lokasyonlu, masadan QR sipariş akışını kapsar. Ödeme sağlayıcısı, mali entegrasyon ve DNS otomasyonu yoktur.
+V1 tek lokasyonlu, masadan QR sipariş akışını kapsar. Ödeme sağlayıcısı ve mali entegrasyon yoktur. Tenant adresleri ortamın wildcard DNS kaydı üzerinden yayınlanır.
 ```
 
 ## Tenant Status and Health Copy
@@ -110,8 +108,6 @@ V1 tek lokasyonlu, masadan QR sipariş akışını kapsar. Ödeme sağlayıcıs�
 | Provisioning | `Provisioning` |
 | Provisioning failed | `Provisioning başarısız` |
 | Suspended | `Askıda` |
-| DNS ready | `DNS hazır` |
-| DNS not ready | `DNS hazır değil` |
 | Starter applied | `Starter veri uygulandı` |
 | Starter failed | `Starter veri başarısız` |
 | Admin bootstrap pending | `Admin ilk giriş bekliyor` |
@@ -197,6 +193,7 @@ Do not show:
 Do not claim:
 
 - DNS record is created automatically;
+- DNS state can be changed per tenant;
 - starter data can be re-run by changing sector;
 - CustomerApp takes payments in the current release;
 - PlatformApp is a cashier, station, service, or tenant runtime console;
@@ -208,7 +205,7 @@ PlatformApp copy is acceptable when:
 
 - login and setup gates reveal no tenant data before authorization;
 - tenant creation marks name, subdomain, and GSM as required;
-- immutable identity and manual DNS are clear;
+- immutable identity and wildcard tenant host routing are clear;
 - provisioning failure and recovery copy stays redacted and actionable;
 - lifecycle actions mention reason/audit consequences;
 - no tenant runtime mutation or unsupported automation is implied.

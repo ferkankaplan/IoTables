@@ -47,10 +47,9 @@ Source context:
 | Component | Responsibility |
 | --- | --- |
 | PlatformLogin | Platform Owner username/password login state. |
-| TenantHealthList | Active tenant list with lifecycle, DNS, provisioning, and safe health summaries. |
+| TenantHealthList | Active tenant list with lifecycle, provisioning, starter, and safe health summaries. |
 | TenantCreateDrawer | Tenant creation flow with required name, subdomain, GSM, and optional profile fields. |
 | ProvisioningStatePanel | Provisioning, starter application, failure, and retry/recovery state. |
-| DnsReadinessControl | Manual DNS readiness flag without DNS automation. |
 
 ### TenantApp
 
