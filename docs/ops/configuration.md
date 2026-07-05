@@ -71,6 +71,7 @@ Secrets include:
 
 - database credentials;
 - `IOTABLES_SECURITY_SECRET_KEY`, used for encrypting Platform Owner TOTP secret material and other local security primitives until a deployment secret store/KMS is introduced;
+- origin TLS private keys installed on VPS hosts for Cloudflare `Full (strict)` origin connections;
 - session/CSRF signing keys;
 - TOTP encryption keys;
 - OTP/SMS provider credentials;
@@ -108,9 +109,9 @@ V1 provider-sensitive areas:
 
 Provider calls that create side effects must use durable outbox/attempt records and must not pretend to roll back automatically.
 
-## Configuration Validation
+## Configuration and Deployment Validation
 
-Startup validation must check:
+Startup validation must check runtime-owned settings, and deployment validation must check host-owned release files:
 
 - required values are present;
 - production secrets are not placeholders;
@@ -118,6 +119,7 @@ Startup validation must check:
 - secure cookies are enabled in production;
 - allowed hosts/origins are explicit;
 - database URL points to the intended environment;
+- production and staging origin TLS files exist on the VPS before deployment and are not committed to git;
 - provider fake mode is disabled in production;
 - tenant root domain/platform host are consistent;
 - TTL/rate-limit values are positive and sane.

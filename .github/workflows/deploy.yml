@@ -184,7 +184,7 @@ jobs:
 
       - name: Upload deployment files
         run: |
-          ssh -i ~/.ssh/iotables_deploy -p "${{ secrets.DEPLOY_SSH_PORT || '22' }}" "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" "mkdir -p '${{ env.DEPLOY_PATH }}/nginx'"
+          ssh -i ~/.ssh/iotables_deploy -p "${{ secrets.DEPLOY_SSH_PORT || '22' }}" "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" "mkdir -p '${{ env.DEPLOY_PATH }}/nginx' '${{ env.DEPLOY_PATH }}/certs'"
           scp -i ~/.ssh/iotables_deploy -P "${{ secrets.DEPLOY_SSH_PORT || '22' }}" compose.deploy.yaml "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ env.DEPLOY_PATH }}/compose.yaml"
           scp -i ~/.ssh/iotables_deploy -P "${{ secrets.DEPLOY_SSH_PORT || '22' }}" deploy/nginx/default.conf "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ env.DEPLOY_PATH }}/nginx/default.conf"
 
@@ -194,6 +194,8 @@ jobs:
             set -euo pipefail
             cd '${{ env.DEPLOY_PATH }}'
             test -f .env
+            test -f certs/origin.pem
+            test -f certs/origin.key
             printf '%s\n' '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
             IOTABLES_IMAGE_OWNER='${{ github.repository_owner }}' IOTABLES_IMAGE_TAG='${{ env.IMAGE_TAG }}' docker compose pull
             IOTABLES_IMAGE_OWNER='${{ github.repository_owner }}' IOTABLES_IMAGE_TAG='${{ env.IMAGE_TAG }}' docker compose run --rm backend uv run alembic upgrade head
