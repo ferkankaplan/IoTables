@@ -805,7 +805,7 @@ export function App() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{tenant.name}</p>
                           <p className="mt-1 truncate text-xs text-zinc-500">
-                            {tenant.subdomain}.iotables.net
+                            {tenantHost(tenant.subdomain)}
                           </p>
                         </div>
                         <StatusBadge value={tenant.status} />
@@ -1040,7 +1040,7 @@ function TenantLoginScreen({
       <section className="w-full max-w-sm border border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-5 py-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            {tenantSubdomain}.iotables.net
+            {tenantHost(tenantSubdomain)}
           </p>
           <h1 className="mt-2 text-2xl font-semibold">{heading}</h1>
         </div>
@@ -1157,7 +1157,7 @@ function TenantSignedInScreen({
             </p>
             <h1 className="mt-2 text-2xl font-semibold">{tenant?.name ?? "Tenant"}</h1>
             <p className="mt-1 break-all text-xs text-zinc-500">
-              {tenant?.subdomain ?? tenantSubdomainFromLocation()}.iotables.net
+              {tenantHost(tenant?.subdomain ?? tenantSubdomainFromLocation())}
             </p>
           </div>
           <nav className="mt-8 space-y-1 text-sm">
@@ -1955,7 +1955,7 @@ function TenantWorkspace({
           <DetailRows
             rows={[
               ["Tenant", tenant.name],
-              ["Subdomain", `${tenant.subdomain}.iotables.net`],
+              ["Subdomain", tenantHost(tenant.subdomain)],
               ["Sektör", tenant.sector ?? "-"],
               ["Kapasite", tenant.capacity?.toString() ?? "-"],
               ["Oturum", actor?.roles.join(", ") || "-"]
@@ -2269,7 +2269,7 @@ function TenantDetailPanel({
         <div className="mt-4 space-y-5">
           <div>
             <p className="text-xl font-semibold">{tenant.name}</p>
-            <p className="mt-1 break-all text-sm text-zinc-500">{tenant.subdomain}.iotables.net</p>
+            <p className="mt-1 break-all text-sm text-zinc-500">{tenantHost(tenant.subdomain)}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <StatusBadge value={tenant.status} />
@@ -4055,7 +4055,7 @@ function CreateTenantDrawer({
             {state === "error" ? <StateBlock title={error ?? "Tenant oluşturulamadı"} tone="error" /> : null}
             {state === "success" && result ? (
               <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-                <p className="font-semibold">{result.subdomain}.iotables.net</p>
+                <p className="font-semibold">{tenantHost(result.subdomain)}</p>
                 <p className="mt-1">Durum: {result.status}</p>
                 <p className="mt-1">Starter veri: {result.starterTemplateApplied ? "uygulandı" : "yok"}</p>
               </div>
@@ -4181,6 +4181,32 @@ function auditMetadataSummary(metadata: Record<string, unknown>): string {
   return keys.length > 0 ? keys.join(", ") : "Ek detay yok";
 }
 
+const tenantRootDomains = ["iotables.net", "tabflow.uk"] as const;
+
+function tenantRootDomainFromHostname(hostname: string): string | null {
+  return tenantRootDomains.find(
+    (rootDomain) => hostname === rootDomain || hostname.endsWith(`.${rootDomain}`)
+  ) ?? null;
+}
+
+function tenantSubdomainFromHostname(hostname: string): string | null {
+  const rootDomain = tenantRootDomainFromHostname(hostname);
+  if (!rootDomain || !hostname.endsWith(`.${rootDomain}`)) {
+    return null;
+  }
+
+  const subdomain = hostname.slice(0, -(rootDomain.length + 1));
+  return subdomain && subdomain !== "platform" ? subdomain : null;
+}
+
+function tenantRootDomainFromLocation(): string {
+  return tenantRootDomainFromHostname(window.location.hostname.toLowerCase()) ?? "iotables.net";
+}
+
+function tenantHost(subdomain: string): string {
+  return `${subdomain}.${tenantRootDomainFromLocation()}`;
+}
+
 function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "tenant" {
   const params = new URLSearchParams(window.location.search);
   if (params.get("app") === "cashier") {
@@ -4204,10 +4230,7 @@ function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "
   if (window.location.pathname.startsWith("/service")) {
     return "service";
   }
-  const hostname = window.location.hostname.toLowerCase();
-  return hostname.endsWith(".iotables.net") && hostname !== "platform.iotables.net"
-    ? "tenant"
-    : "platform";
+  return tenantSubdomainFromHostname(window.location.hostname.toLowerCase()) ? "tenant" : "platform";
 }
 
 function tenantSubdomainFromLocation(): string {
@@ -4217,8 +4240,7 @@ function tenantSubdomainFromLocation(): string {
     return explicitTenant;
   }
 
-  const hostname = window.location.hostname.toLowerCase();
-  return hostname.endsWith(".iotables.net") ? hostname.replace(".iotables.net", "") : "demo";
+  return tenantSubdomainFromHostname(window.location.hostname.toLowerCase()) ?? "demo";
 }
 
 function customerQrTokenFromLocation(): string | null {
