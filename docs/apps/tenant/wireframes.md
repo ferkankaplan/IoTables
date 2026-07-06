@@ -26,7 +26,7 @@ https://[tenant].iotables.net
 | Surface | URL | UI Shape | Purpose |
 | --- | --- | --- | --- |
 | Public Tenant Page | `/` | Durable page | Safe public tenant identity. |
-| Tenant Login | `/login` | Durable page | Tenant admin login, first password, and OTP gates. |
+| Tenant Login | `/login` | Durable page | Tenant admin login and first password setup. |
 | Admin Dashboard | `/admin` | Durable page | Setup readiness overview and starter-data summary. |
 | Hall Management | `/admin/halls` | Workspace | Halls and tables in one context. |
 | Selected table | `/admin/halls?table=:tableId` | Context panel | Table detail, disable, reorder, display provisioning. |
@@ -72,12 +72,9 @@ Required states:
 | Loading | Keep login shell stable. |
 | Invalid credentials | Safe rejection without tenant internals. |
 | First password change required | Force new password before admin access. |
-| OTP required | Show masked GSM challenge state. |
-| OTP expired | Allow new OTP challenge. |
-| OTP failed | Show remaining/locked state according to OTP policy. |
 | Tenant unavailable | Block admin access according to tenant status. |
 
-First-password setup must complete with OTP proof before Admin Dashboard access.
+First-password setup must complete before Admin Dashboard access. OTP is not required for first-password setup in the current release.
 
 ## Admin Dashboard
 
@@ -266,9 +263,9 @@ Creating a staff user with roles/scopes is one app-level operation. If requested
 
 ## Tenant Settings
 
-Tenant Settings splits platform-owned profile fields from tenant-owned operational settings.
+Tenant Settings splits read-only platform-owned profile fields from tenant-owned operational settings.
 
-Editable through Tenant Registry:
+Read-only from Tenant Registry in TenantApp:
 
 - GSM number;
 - address;
@@ -291,7 +288,7 @@ States:
 | --- | --- |
 | Loading | Keep settings sections stable. |
 | Immutable field blocked | Display immutable fields read-only. |
-| GSM changed | Show audited sensitive-contact update. |
+| GSM read-only | Explain identity GSM is changed only from PlatformApp. |
 | Service tracking changed | Explain ServiceStaffApp and customer/cashier status impact. |
 | Validation error | Field-level error and summary. |
 | Stale settings | Refresh before save. |
@@ -304,7 +301,7 @@ Tenant Audit is a settings view/panel, not a separate primary workspace in the c
 
 It shows tenant setup/security audit only:
 
-- tenant GSM/public display/address/sector/capacity changes;
+- platform-owned tenant identity GSM changes as read-only audit events, plus TenantApp-owned public display/address/sector/capacity changes;
 - service tracking changes;
 - hall/table changes;
 - table display provisioning changes;

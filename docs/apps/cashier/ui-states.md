@@ -3,7 +3,7 @@
 
 | Workspace | Required States |
 | --- | --- |
-| Login | loading, invalid credentials, first password change required, OTP required, OTP expired |
+| Login | loading, invalid credentials, first password change required |
 | Cashier Workspace | loading, empty active sessions, grouped halls/tables, stale table state |
 | Session Detail Panel | loading, no active session, active session, closed session, item exception attention |
 | Payment Drawer/Dialog | empty amount, invalid amount, over-remaining amount, submitting, recorded |

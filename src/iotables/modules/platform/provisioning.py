@@ -445,6 +445,14 @@ class TenantRegistryMutationService:
                         message="Some fields are invalid.",
                     )
                 if gsm_number != current["gsm_number"]:
+                    duplicate_gsm_id = await self.session.scalar(
+                        select(tenants.c.id).where(
+                            tenants.c.gsm_number == gsm_number,
+                            tenants.c.id != tenant_id,
+                        )
+                    )
+                    if duplicate_gsm_id is not None:
+                        raise duplicate_gsm()
                     values["gsm_number"] = gsm_number
                     changed_fields.append("gsmNumber")
             if "sector" in command.fields:
@@ -822,6 +830,8 @@ class TenantProvisioningService:
                     code="duplicate_subdomain",
                     message="A tenant with this subdomain already exists.",
                 ) from exc
+            if constraint_name == "uq_tenants__gsm_number":
+                raise duplicate_gsm() from exc
             if constraint_name == "uq_tenant_provisioning_idempotency__actor_key":
                 raise ApiError(
                     status_code=409,
@@ -931,6 +941,11 @@ class TenantProvisioningService:
                 code="duplicate_subdomain",
                 message="A tenant with this subdomain already exists.",
             )
+        duplicate_gsm_id = await self.session.scalar(
+            select(tenants.c.id).where(tenants.c.gsm_number == command.gsm_number)
+        )
+        if duplicate_gsm_id is not None:
+            raise duplicate_gsm()
 
         now = utc_now()
         tenant_id = uuid4()
@@ -1499,4 +1514,12 @@ def not_authorized() -> ApiError:
         status_code=403,
         code="not_authorized",
         message="You are not allowed to perform this action.",
+    )
+
+
+def duplicate_gsm() -> ApiError:
+    return ApiError(
+        status_code=409,
+        code="duplicate_tenant_gsm",
+        message="A tenant with this GSM number already exists.",
     )

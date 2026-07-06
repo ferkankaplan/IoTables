@@ -32,18 +32,13 @@ from iotables.security.totp import (
 SESSION_TTL = timedelta(hours=8)
 FIRST_PASSWORD_SETUP_TTL = timedelta(minutes=15)
 FIRST_PASSWORD_PURPOSE = "first_password"
-TENANT_ADMIN_OTP_PURPOSE = "tenant_admin_first_password"
-CASHIER_OTP_PURPOSE = "cashier_first_password"
 APP_SCOPE_REQUIRED_ROLES = {
     AppScope.TENANT: StaffRole.TENANT_ADMIN,
     AppScope.CASHIER: StaffRole.CASHIER,
     AppScope.STATION: StaffRole.STATION_STAFF,
     AppScope.SERVICE: StaffRole.SERVICE_STAFF,
 }
-FIRST_PASSWORD_OTP_PURPOSES = {
-    AppScope.TENANT: TENANT_ADMIN_OTP_PURPOSE,
-    AppScope.CASHIER: CASHIER_OTP_PURPOSE,
-}
+FIRST_PASSWORD_OTP_PURPOSES: dict[AppScope, str] = {}
 
 
 @dataclass(frozen=True)
@@ -359,7 +354,7 @@ class IdentityAccessService:
                 remaining_attempts=None,
             )
 
-        otp = OtpMessagingService(self.session, self.settings.security_secret_key)
+        otp = OtpMessagingService(self.session, self.settings)
         challenge = await otp.create_challenge(
             tenant_id=user_row["tenant_id"],
             user_id=user_row["id"],
@@ -418,7 +413,7 @@ class IdentityAccessService:
                     code="otp_required",
                     message="OTP proof is required.",
                 )
-            otp = OtpMessagingService(self.session, self.settings.security_secret_key)
+            otp = OtpMessagingService(self.session, self.settings)
             await otp.verify(
                 tenant_id=user_row["tenant_id"],
                 user_id=user_row["id"],

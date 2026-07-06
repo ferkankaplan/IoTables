@@ -65,7 +65,7 @@ These are stored as `text` columns with named `CHECK` constraints.
 | `payment_status` | `recorded`, `voided` |
 | `price_adjustment_type` | `tax`, `discount`, `service_charge`, `campaign`, `correction` |
 | `cashier_correction_type` | `note`, `item_void`, `payment_void` |
-| `otp_purpose` | `tenant_admin_first_password`, `cashier_first_password` |
+| `otp_purpose` | `tenant_creation`, `staff_password_reset`; `tenant_admin_first_password` and `cashier_first_password` remain accepted only for historical data compatibility |
 | `otp_attempt_result` | `success`, `failed`, `locked`, `expired` |
 | `message_delivery_status` | `queued`, `sent`, `failed` |
 | `outbox_effect_type` | `sms`, `printer`, `fiscal`, `payment_provider`, `dns`, `notification`, `device` |
@@ -83,7 +83,7 @@ Owned by: Platform / Tenant Registry
 | `id` | `uuid` | Primary key |
 | `name` | `text` | Required, immutable |
 | `subdomain` | `text` | Required, immutable, lowercase unique |
-| `gsm_number` | `text` | Required, editable, audited |
+| `gsm_number` | `text` | Required, unique, PlatformApp-owned, editable only through PlatformApp, audited |
 | `sector` | `text` | Nullable; `tenant_sector` check when present |
 | `capacity` | `integer` | Optional, informational in the current release |
 | `address` | `text` | Optional |
@@ -828,10 +828,10 @@ Owned by: OTP / Messaging
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `uuid` | Primary key |
-| `tenant_id` | `uuid` | FK to `tenants.id` |
-| `user_id` | `uuid` | FK to `users.id` |
-| `purpose` | `text` | `otp_purpose` check |
-| `target_gsm` | `text` | Snapshot at challenge creation |
+| `tenant_id` | `uuid` | Nullable FK to `tenants.id`; null only for platform-scoped tenant creation OTP |
+| `user_id` | `uuid` | Nullable FK to `users.id`; null only for tenant creation OTP |
+| `purpose` | `text` | `otp_purpose` check; `tenant_creation` is platform-scoped, `staff_password_reset` is tenant-scoped |
+| `target_gsm` | `text` | Snapshot at challenge creation; never silently follows later tenant GSM changes |
 | `code_hash` | `text` | Non-recoverable OTP hash |
 | `expires_at` | `timestamptz` | 5 minutes in the current release |
 | `verified_at` | `timestamptz` | Nullable success time |
@@ -844,7 +844,7 @@ Owned by: OTP / Messaging
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `uuid` | Primary key |
-| `tenant_id` | `uuid` | FK to `tenants.id` |
+| `tenant_id` | `uuid` | Nullable FK to `tenants.id`; follows challenge scope |
 | `otp_challenge_id` | `uuid` | FK to `otp_challenges.id` |
 | `attempt_no` | `integer` | Monotonic per challenge; current release range 1-5 |
 | `result` | `text` | `otp_attempt_result` check |
@@ -857,7 +857,7 @@ Owned by: OTP / Messaging
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `uuid` | Primary key |
-| `tenant_id` | `uuid` | FK to `tenants.id` |
+| `tenant_id` | `uuid` | Nullable FK to `tenants.id`; follows challenge scope |
 | `otp_challenge_id` | `uuid` | FK to `otp_challenges.id` |
 | `delivery_no` | `integer` | Monotonic per challenge; current release range 1-3 |
 | `provider` | `text` | SMS adapter name |

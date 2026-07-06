@@ -6,17 +6,13 @@ Happy path:
 1. Cashier opens CashierApp login.
 2. Cashier enters bootstrap credentials.
 3. Cashier changes password.
-4. OTP SMS is sent to tenant GSM.
-5. Cashier verifies OTP.
-6. Cashier workspace opens.
+4. Cashier workspace opens.
 
 Branches:
 
 | Branch | Expected Result |
 | --- | --- |
 | Invalid credentials | Reject |
-| OTP expired | Require new OTP |
-| OTP verification fails too often | Lock/slow challenge |
 | User lacks cashier role | Reject app access |
 | User disabled | Reject |
 
@@ -26,7 +22,7 @@ Result:
 
 Ownership:
 
-- CashierApp + Access + OTP/Messaging.
+- CashierApp + Access.
 
 ### K-02: Monitor and Inspect Active Session
 

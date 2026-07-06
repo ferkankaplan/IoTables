@@ -48,15 +48,15 @@ Source context:
 | Close session | `Oturumu kapat` |
 | Refresh | `Yenile` |
 
-## Login and OTP Copy
+## Login and Password Reset OTP Copy
 
 | State | Copy |
 | --- | --- |
 | Login loading | `Giriş durumu kontrol ediliyor...` |
 | Invalid credentials | `Giriş bilgileri hatalı.` |
 | First password required | `Devam etmek için geçici şifreyi değiştirin.` |
-| OTP required | `Kasa kurulumu için SMS doğrulaması gerekli.` |
-| OTP sent | `Doğrulama kodu tenant GSM numarasına gönderildi.` |
+| OTP required | `Şifre sıfırlama için SMS doğrulaması gerekli.` |
+| OTP sent | `Doğrulama kodu işletme kayıt GSM numarasına gönderildi.` |
 | OTP expired | `Kodun süresi doldu. Yeni kod isteyin.` |
 | OTP locked | `Çok fazla deneme yapıldı. Daha sonra tekrar deneyin.` |
 | No cashier role | `Kasa uygulamasına erişim yetkiniz yok.` |
@@ -164,7 +164,7 @@ Do not show labels or copy that imply:
 CashierApp copy is acceptable when:
 
 - payment and close actions are clear and short;
-- OTP copy states tenant GSM without exposing the full number;
+- Password reset OTP copy references the platform-owned tenant identity GSM without exposing the full number;
 - blocked correction reasons are explicit;
 - stale/duplicate copy tells cashier to trust refreshed server state;
 - out-of-scope payment, split, discount, provider, and fiscal language is absent.

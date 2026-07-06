@@ -39,7 +39,7 @@ Out of scope for this test plan:
 | Scenario | Coverage |
 | --- | --- |
 | T-01 Public Tenant Page | Public page shows safe tenant fields only. |
-| T-02 Tenant Admin First Login | Tenant Admin changes bootstrap password and verifies OTP to tenant GSM. |
+| T-02 Tenant Admin First Login | Tenant Admin changes bootstrap password without OTP in the current release. |
 | T-03 Configure Halls and Tables | Tenant Admin manages halls/tables in one workspace with contextual table panel. |
 | T-04 Provision Table Display | Tenant Admin creates one-time display claim; device consumes it; panel shows provisioned state. |
 | T-05 Configure Service Delivery Tracking | Tenant Admin enables/disables tracking and UI explains staff/customer impact. |
@@ -60,9 +60,9 @@ Out of scope for this test plan:
 | Visitor attempts admin action | Login required. |
 | Invalid temporary password | Reject safely. |
 | Rejected new password | Password policy error. |
-| OTP expired | New OTP challenge allowed. |
-| OTP locked/too many attempts | Locked/slow state shown. |
-| Tenant GSM changed before verification | New challenge uses current tenant GSM. |
+| Password reset OTP expired | New OTP challenge allowed. |
+| Password reset OTP locked/too many attempts | Locked/slow state shown. |
+| Tenant GSM changed before password reset verification | New challenge uses current platform-owned tenant identity GSM. |
 | First login already completed | Bootstrap password cannot continue; normal login path. |
 
 ### Halls, Tables, and Display
@@ -106,7 +106,7 @@ Out of scope for this test plan:
 | Sector changed after creation | Classification updates; starter data does not rerun. |
 | Capacity changed | Informational update only; no entitlement enforcement. |
 | Public display name omitted | Public page falls back to tenant name. |
-| GSM changed | Audited and used for future OTP only. |
+| GSM edit attempted in TenantApp | Blocked; only PlatformApp can change platform-owned tenant identity GSM. |
 | Starter record deleted/disabled | Does not regenerate after restart/deploy. |
 | New starter template version exists | Existing tenant does not receive it automatically. |
 | Staff role without required scope | Affected app shows no operational access. |
@@ -119,7 +119,7 @@ Out of scope for this test plan:
 | Acceptance Criterion | Test Evidence |
 | --- | --- |
 | Public page exposes only safe fields | Browser/API visibility tests. |
-| Tenant admin first login requires password change and OTP | Browser login and OTP API tests. |
+| Tenant admin first login requires password change without OTP | Browser login and first-password API tests. |
 | Tenant name/subdomain not editable | UI blocked state and API rejection. |
 | Halls/tables one workspace with contextual table panels | Browser E2E and forbidden route/control checks. |
 | Current release table layout ordered grid, not floor-plan coordinates | UI absence and copy checks. |
@@ -138,12 +138,12 @@ Every state in [ui-states.md](ui-states.md) requires a UI test or documented non
 | Surface | Required UI States |
 | --- | --- |
 | Public Tenant Page | loading, tenant not found, tenant unavailable, public info empty/fallback |
-| Tenant Login | loading, invalid credentials, first password change required, OTP required, OTP expired, OTP failed |
+| Tenant Login | loading, invalid credentials, first password change required |
 | Admin Dashboard | loading, starter data present, setup incomplete, tenant suspended/blocked |
 | Hall Management | loading, empty halls, selected hall empty tables, table panel loading, table active-session blocked |
 | Station Management | loading, empty stations, station disabled, station has active items blocked |
 | Menu Management | loading, empty categories, empty category products, invalid product, unavailable product, disabled product |
-| Tenant Settings | loading, immutable field blocked, service tracking changed, GSM changed |
+| Tenant Settings | loading, immutable field blocked, service tracking changed, GSM read-only |
 | Staff Management | loading, empty staff, disabled user, missing role/scope, active session permission changed |
 
 ## API Usage Coverage
@@ -157,10 +157,10 @@ TenantApp executable tests must cover the app-visible behavior of these endpoint
 | `POST /api/auth/login` | Tenant admin login, wrong app scope, first-password required. |
 | `GET /api/auth/session` | Protected admin route access. |
 | `POST /api/auth/logout` | Session revocation. |
-| `POST /api/auth/first-password/begin` | Setup-token and OTP-required states. |
-| `POST /api/auth/first-password/complete` | OTP proof and password policy. |
-| `GET/POST /api/auth/otp-challenges/{challengeId}...` | OTP state, send, verify, expired, locked. |
-| `GET/PATCH /api/tenant/profile` | Mutable profile only; immutable identity rejection. |
+| `POST /api/auth/first-password/begin` | Setup-token and no-OTP password-change state. |
+| `POST /api/auth/first-password/complete` | Password policy and setup-token validation. |
+| `GET/POST /api/auth/otp-challenges/{challengeId}...` | Password reset OTP state, send, verify, expired, locked. |
+| `GET /api/tenant/profile` | Read-only tenant profile; identity GSM not mutable from TenantApp. |
 | `GET/PATCH /api/tenant-setup/operational-settings` | Public display and service tracking mode. |
 | `GET /api/tenant/starter-template-application` | Read-only starter proof. |
 | `GET/POST/PATCH /api/tenant/staff...` | Staff list/create/profile/role/scope changes and rollback. |
@@ -244,7 +244,7 @@ TenantApp is ready for implementation only when:
 
 - all happy paths and branches above have an owner test layer;
 - hall/table, display provisioning, menu routing, staff scope, and service tracking safety coverage are defined;
-- first-login OTP coverage is defined;
+- first-login no-OTP coverage is defined;
 - UI state and copy coverage are defined;
 - forbidden TenantApp runtime controls are explicitly tested absent;
 - semantic index is regenerated after this document changes.
