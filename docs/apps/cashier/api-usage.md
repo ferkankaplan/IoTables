@@ -6,10 +6,10 @@ CashierApp uses tenant-scoped APIs on `https://[tenant].iotables.net`.
 
 | App Need | Endpoint | Module API Contract | Notes |
 | --- | --- | --- | --- |
-| Login requirements | `GET /api/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe first-password/OTP requirement discovery. |
+| Login requirements | `GET /api/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe first-password requirement discovery. |
 | Login | `POST /api/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | Cashier app scope. |
-| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | Cashier requires OTP proof. |
-| OTP state/send/verify | `/api/auth/otp-challenges/{challengeId}...` | [OTP Messaging](../../modules/access/otp-messaging-api.md) | Used only during protected setup flows. |
+| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | No OTP proof in the current release. |
+| OTP state/send/verify | `/api/auth/otp-challenges/{challengeId}...` | [OTP Messaging](../../modules/access/otp-messaging-api.md) | Used for password reset flows, not current first-password setup. |
 | Session check/logout | `GET /api/auth/session`, `POST /api/auth/logout` | [Identity and Access](../../modules/access/identity-access-api.md) | Human staff session. |
 | Venue board | `GET /api/cashier/venue/board` | [Venue Layout](../../modules/tenant-setup/venue-layout-api.md) | Operational table overview. |
 | Active table session | `GET /api/cashier/tables/{tableId}/active-session` | [Table Session and Billing](../../modules/settlement/table-session-billing-api.md) | Cashier opens table context. |

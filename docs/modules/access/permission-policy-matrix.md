@@ -57,12 +57,12 @@ Frontend visibility is never authorization proof.
 
 | Contract | Allowed Caller | Required Scope Checks | Domain Guards |
 | --- | --- | --- | --- |
-| `tenant_registry.register_identity` | Provisioning | Provisioning was started by Platform Owner | Name/subdomain/GSM required; subdomain unique |
-| `tenant_registry.update_profile` | PlatformApp, TenantApp | Platform Owner global or Tenant Admin own tenant | TenantApp cannot change name, subdomain, lifecycle, or platform-only health |
+| `tenant_registry.register_identity` | Provisioning | Provisioning was started by Platform Owner and tenant-creation OTP was verified | Name/subdomain/GSM required; subdomain unique; GSM unique |
+| `tenant_registry.update_profile` | PlatformApp | Platform Owner global | TenantApp cannot change name, subdomain, GSM, lifecycle, or platform-only health |
 | `tenant_registry.change_status` | PlatformApp | Platform Owner | Valid lifecycle transition; reason required for suspend/reactivate/recovery |
 | `tenant_registry.mark_provisioning_failed` | Provisioning | Internal provisioning workflow | Tenant not active; redacted failure summary |
 | `tenant_registry.activate_tenant` | Provisioning | Internal provisioning workflow | Required setup records committed |
-| `provisioning.start_tenant` | PlatformApp | Platform Owner | Required tenant fields; supported sector; starter idempotency |
+| `provisioning.start_tenant` | PlatformApp | Platform Owner | Required tenant fields; tenant-creation OTP proof; supported sector; starter idempotency |
 | `provisioning.retry_failed` | PlatformApp | Platform Owner | Tenant failed/incomplete; completed starter data must not rerun |
 | `provisioning.mark_recovery_needed` | Platform recovery tooling | Platform Owner/recovery authority | Preserve failure history |
 | `sector_starter_templates.apply_template` | Provisioning | Internal provisioning lock | Template active; application not already applied |
@@ -89,8 +89,8 @@ Frontend visibility is never authorization proof.
 | `identity_access.create_platform_owner` | Bootstrap Tool | Explicit setup command; no existing active Platform Owner | No automatic startup seed |
 | `identity_access.create_bootstrap_user` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | Username unique in tenant/platform scope |
 | `identity_access.authenticate` | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | App scope must match target app and tenant | Disabled users fail; first-login users forced to setup |
-| `identity_access.begin_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Tenant admin and cashier require OTP; station/service do not |
-| `identity_access.complete_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | OTP proof required for tenant admin/cashier |
+| `identity_access.begin_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | No first-password OTP in the current release |
+| `identity_access.complete_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Password policy only; no first-password OTP in the current release |
 | `identity_access.change_password` | Authenticated user | Own active user session | Current password valid |
 | `identity_access.enroll_totp` | PlatformApp | Platform Owner | Reserved for future PlatformApp hardening; not required by current release login |
 | `identity_access.logout_or_revoke_session` | Authenticated user, TenantApp admin recovery, Platform recovery | Own session, Tenant Admin own tenant, or Platform recovery | Revoked/expired sessions fail closed |
@@ -102,9 +102,9 @@ Frontend visibility is never authorization proof.
 | `staff_access.revoke_station` | TenantApp | Tenant Admin own tenant | Active assignment exists |
 | `staff_access.assign_hall` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | Hall belongs to tenant; user has or is receiving service role |
 | `staff_access.revoke_hall` | TenantApp | Tenant Admin own tenant | Active assignment exists |
-| `otp_messaging.create_challenge` | Identity and Access | Internal identity setup flow | Purpose supported; target GSM snapshotted |
-| `otp_messaging.send_otp` | Identity and Access, TenantApp/CashierApp setup surfaces, Worker | Setup flow owns challenge or worker claim | Challenge active; send limit respected |
-| `otp_messaging.verify_otp` | Identity and Access | Setup flow owns challenge | Challenge active; attempt limit respected |
+| `otp_messaging.create_challenge` | PlatformApp, Identity and Access | Tenant creation or password reset flow owns challenge | Purpose supported; target GSM snapshotted |
+| `otp_messaging.send_otp` | PlatformApp, Identity and Access, Worker | Tenant creation/password reset flow owns challenge or worker claim | Challenge active; send limit respected |
+| `otp_messaging.verify_otp` | PlatformApp, Identity and Access | Tenant creation/password reset flow owns challenge | Challenge active; attempt limit respected |
 | `otp_messaging.expire_or_lock_challenge` | OTP Messaging | Internal policy | Challenge terminal state rules |
 
 ## Access Queries

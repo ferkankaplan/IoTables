@@ -9,16 +9,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from iotables.api.errors import ApiError
 from iotables.database.session import get_database_session
+from iotables.modules.access.otp import OtpMessagingService
 from iotables.modules.platform.provisioning import (
     CreateTenantCommand,
     TenantProfileUpdateCommand,
     TenantProvisioningService,
     TenantRegistryMutationService,
     TenantRegistryQueryService,
+    utc_now,
 )
 from iotables.security.context import ActorContext, AppScope
 from iotables.security.dependencies import require_app_scope, require_csrf_token
 
+TENANT_CREATION_OTP_PURPOSE = "tenant_creation"
 SUBDOMAIN_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$")
 PLATFORM_SCOPE_DEP = Depends(require_app_scope(AppScope.PLATFORM))
 CSRF_DEP = Depends(require_csrf_token)
@@ -35,6 +38,8 @@ class CreateTenantRequest(BaseModel):
     sector: str | None = None
     capacity: int | None = Field(default=None, gt=0)
     address: str | dict[str, Any] | None = None
+    otp_challenge_id: UUID = Field(alias="otpChallengeId")
+    otp_code: str = Field(alias="otpCode", min_length=6, max_length=6)
 
     @field_validator("subdomain")
     @classmethod
@@ -75,6 +80,20 @@ class ProvisioningResultResponse(BaseModel):
     subdomain: str
     starter_template_applied: bool = Field(alias="starterTemplateApplied")
     failure_summary: str | None = Field(alias="failureSummary")
+
+
+class TenantCreationOtpBeginRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    gsm_number: str = Field(alias="gsmNumber", min_length=5)
+
+
+class TenantCreationOtpBeginResponse(BaseModel):
+    status: str
+    otp_challenge_id: str = Field(alias="otpChallengeId")
+    target_hint: str = Field(alias="targetHint")
+    expires_at: str = Field(alias="expiresAt")
+    remaining_attempts: int = Field(alias="remainingAttempts")
 
 
 class ProvisioningStateResponse(BaseModel):
@@ -238,6 +257,12 @@ def get_tenant_registry_mutation_service(
     session: Annotated[AsyncSession, Depends(get_database_session)],
 ) -> TenantRegistryMutationService:
     return TenantRegistryMutationService(session)
+
+
+def get_otp_messaging_service(
+    session: Annotated[AsyncSession, Depends(get_database_session)],
+) -> OtpMessagingService:
+    return OtpMessagingService(session)
 
 
 @router.get("/tenants", response_model=TenantHealthListResponse)
@@ -416,6 +441,39 @@ async def change_tenant_status(
 
 
 @router.post(
+    "/tenant-creation-otp/begin",
+    response_model=TenantCreationOtpBeginResponse,
+    dependencies=[CSRF_DEP],
+)
+async def begin_tenant_creation_otp(
+    payload: TenantCreationOtpBeginRequest,
+    actor: Annotated[ActorContext, PLATFORM_SCOPE_DEP],
+    otp: Annotated[OtpMessagingService, Depends(get_otp_messaging_service)],
+) -> dict[str, Any]:
+    if actor.user_id is None:
+        raise ApiError(
+            status_code=403,
+            code="not_authorized",
+            message="You are not allowed to perform this action.",
+        )
+    challenge = await otp.create_challenge(
+        tenant_id=None,
+        user_id=actor.user_id,
+        purpose=TENANT_CREATION_OTP_PURPOSE,
+        target_gsm=payload.gsm_number,
+        now=utc_now(),
+    )
+    await otp.commit()
+    return {
+        "status": "otp_required",
+        "otpChallengeId": str(challenge.challenge_id),
+        "targetHint": challenge.target_hint,
+        "expiresAt": challenge.expires_at.isoformat(),
+        "remainingAttempts": challenge.remaining_attempts,
+    }
+
+
+@router.post(
     "/tenants",
     response_model=ProvisioningResultResponse,
     status_code=status.HTTP_201_CREATED,
@@ -425,11 +483,28 @@ async def create_tenant(
     payload: CreateTenantRequest,
     actor: Annotated[ActorContext, PLATFORM_SCOPE_DEP],
     service: Annotated[TenantProvisioningService, Depends(get_tenant_provisioning_service)],
+    otp: Annotated[OtpMessagingService, Depends(get_otp_messaging_service)],
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
 ) -> dict[str, Any]:
+    if actor.user_id is None:
+        raise ApiError(
+            status_code=403,
+            code="not_authorized",
+            message="You are not allowed to perform this action.",
+        )
+    await otp.verify(
+        tenant_id=None,
+        user_id=actor.user_id,
+        challenge_id=payload.otp_challenge_id,
+        purpose=TENANT_CREATION_OTP_PURPOSE,
+        code=payload.otp_code,
+        target_gsm=payload.gsm_number,
+        now=utc_now(),
+    )
     result = await service.start_tenant(
         actor=actor,
         command=payload.to_command(),
         idempotency_key=validate_idempotency_key(idempotency_key),
     )
+    await otp.commit()
     return result.as_api_payload()

@@ -90,7 +90,7 @@ Verification:
 | Threat | Impact | Required Controls |
 | --- | --- | --- |
 | Bootstrap credentials remain usable | Default password compromise | First password change is mandatory before normal app workflow. |
-| Tenant admin or cashier setup bypasses OTP | Account takeover during bootstrap | Tenant admin and cashier require OTP proof; station/service staff do not require OTP in the current release. |
+| Tenant creation or password reset bypasses OTP | Unauthorized tenant creation or account takeover | Tenant creation and password reset require OTP proof to the platform-owned tenant identity GSM. |
 | OTP brute force | Account takeover | OTP lifetime 5 minutes, max 5 verification attempts per challenge, lock after limit. |
 | OTP resend abuse | SMS cost and harassment | Max 3 sends per challenge, cooldown between sends, provider errors redacted. |
 | Tenant GSM changes during challenge | OTP retargeting confusion | Target GSM is snapshotted when challenge is created; existing challenge target is not silently changed. |
@@ -98,10 +98,11 @@ Verification:
 
 Verification:
 
-- tenant admin/cashier cannot complete first login without OTP proof;
+- tenant creation cannot start provisioning without OTP proof;
+- password reset cannot complete without OTP proof;
 - concurrent OTP attempts respect the max attempt count;
 - OTP code is never stored or logged in plaintext;
-- station/service first password setup does not require OTP.
+- first-password setup does not require OTP in the current release.
 
 ### Duplicate Submit, Replay, and Concurrency
 

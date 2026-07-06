@@ -39,7 +39,7 @@ Staff Access owns staff profiles, role assignments, station scope, and hall scop
 | `stationIds` | string array | conditional | Required when role needs station scope. |
 | `hallIds` | string array | conditional | Required when role needs hall scope. |
 
-Cashier first-password OTP uses the tenant GSM in the current release. `CreateStaffRequest` does not collect a personal staff GSM number.
+Staff first-password setup does not require OTP in the current release. Password reset OTP uses the platform-owned tenant identity GSM, so `CreateStaffRequest` does not collect a personal staff GSM number.
 
 Creating staff with initial role/scope assignments is one atomic API command from TenantApp's point of view. If any requested role, station assignment, or hall assignment is invalid, the user/profile creation must roll back or return a failed result without leaving a half-created operational staff user.
 

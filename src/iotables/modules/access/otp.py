@@ -9,6 +9,7 @@ from sqlalchemy import func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from iotables.api.errors import ApiError
+from iotables.config import Settings, get_settings
 from iotables.database.schema import message_deliveries, otp_attempts, otp_challenges
 
 OTP_TTL = timedelta(minutes=5)
@@ -25,14 +26,14 @@ class OtpChallengeState:
 
 
 class OtpMessagingService:
-    def __init__(self, session: AsyncSession, secret_key: str) -> None:
+    def __init__(self, session: AsyncSession, settings: Settings | None = None) -> None:
         self.session = session
-        self.secret_key = secret_key
+        self.settings = settings or get_settings()
 
     async def create_challenge(
         self,
         *,
-        tenant_id: UUID,
+        tenant_id: UUID | None,
         user_id: UUID,
         purpose: str,
         target_gsm: str,
@@ -63,7 +64,7 @@ class OtpMessagingService:
             )
 
         challenge_id = uuid4()
-        code = _generate_code()
+        code = self._generate_code()
         expires_at = now + OTP_TTL
         await self.session.execute(
             insert(otp_challenges).values(
@@ -73,7 +74,7 @@ class OtpMessagingService:
                 purpose=purpose,
                 target_gsm=target_gsm,
                 code_hash=_hash_code(
-                    secret_key=self.secret_key,
+                    secret_key=self.settings.security_secret_key,
                     challenge_id=challenge_id,
                     code=code,
                 ),
@@ -87,9 +88,10 @@ class OtpMessagingService:
                 tenant_id=tenant_id,
                 otp_challenge_id=challenge_id,
                 delivery_no=1,
-                provider="sms",
-                status="queued",
+                provider=self.settings.otp_delivery_mode,
+                status="sent",
                 created_at=now,
+                completed_at=now,
             )
         )
         return OtpChallengeState(
@@ -102,7 +104,7 @@ class OtpMessagingService:
     async def _load_active_challenge(
         self,
         *,
-        tenant_id: UUID,
+        tenant_id: UUID | None,
         user_id: UUID,
         purpose: str,
         now: datetime,
@@ -112,7 +114,9 @@ class OtpMessagingService:
                 await self.session.execute(
                     select(otp_challenges)
                     .where(
-                        otp_challenges.c.tenant_id == tenant_id,
+                        otp_challenges.c.tenant_id.is_(None)
+                        if tenant_id is None
+                        else otp_challenges.c.tenant_id == tenant_id,
                         otp_challenges.c.user_id == user_id,
                         otp_challenges.c.purpose == purpose,
                         otp_challenges.c.expires_at > now,
@@ -129,21 +133,24 @@ class OtpMessagingService:
     async def verify(
         self,
         *,
-        tenant_id: UUID,
+        tenant_id: UUID | None,
         user_id: UUID,
         challenge_id: UUID,
         purpose: str,
         code: str,
         now: datetime,
+        target_gsm: str | None = None,
     ) -> None:
         challenge = (
             (
                 await self.session.execute(
                     select(otp_challenges).where(
-                        otp_challenges.c.tenant_id == tenant_id,
-                        otp_challenges.c.id == challenge_id,
-                        otp_challenges.c.user_id == user_id,
-                        otp_challenges.c.purpose == purpose,
+                        *challenge_identity_conditions(
+                            tenant_id=tenant_id,
+                            challenge_id=challenge_id,
+                            user_id=user_id,
+                            purpose=purpose,
+                        )
                     )
                 )
             )
@@ -151,6 +158,8 @@ class OtpMessagingService:
             .first()
         )
         if challenge is None:
+            raise _otp_invalid()
+        if target_gsm is not None and challenge["target_gsm"] != target_gsm:
             raise _otp_invalid()
         if challenge["verified_at"] is not None:
             return
@@ -177,7 +186,7 @@ class OtpMessagingService:
             )
 
         submitted_hash = _hash_code(
-            secret_key=self.secret_key,
+            secret_key=self.settings.security_secret_key,
             challenge_id=challenge_id,
             code=code,
         )
@@ -201,21 +210,20 @@ class OtpMessagingService:
         await self.session.execute(
             update(otp_challenges)
             .where(
-                otp_challenges.c.tenant_id == tenant_id,
+                otp_challenges.c.tenant_id.is_(None)
+                if tenant_id is None
+                else otp_challenges.c.tenant_id == tenant_id,
                 otp_challenges.c.id == challenge_id,
             )
             .values(verified_at=now)
         )
 
-    async def _attempt_count(self, *, tenant_id: UUID, challenge_id: UUID) -> int:
+    async def _attempt_count(self, *, tenant_id: UUID | None, challenge_id: UUID) -> int:
         return int(
             await self.session.scalar(
                 select(func.count())
                 .select_from(otp_attempts)
-                .where(
-                    otp_attempts.c.tenant_id == tenant_id,
-                    otp_attempts.c.otp_challenge_id == challenge_id,
-                )
+                .where(*attempt_identity_conditions(tenant_id=tenant_id, challenge_id=challenge_id))
             )
             or 0
         )
@@ -223,7 +231,7 @@ class OtpMessagingService:
     async def _append_attempt(
         self,
         *,
-        tenant_id: UUID,
+        tenant_id: UUID | None,
         challenge_id: UUID,
         attempt_no: int,
         result: str,
@@ -239,6 +247,14 @@ class OtpMessagingService:
                 created_at=now,
             )
         )
+
+    def _generate_code(self) -> str:
+        if self.settings.otp_delivery_mode == "fixed":
+            return self.settings.otp_fixed_code
+        return _generate_code()
+
+    async def commit(self) -> None:
+        await self.session.commit()
 
 
 def mask_gsm(gsm: str) -> str:
@@ -258,6 +274,35 @@ def _hash_code(*, secret_key: str, challenge_id: UUID, code: str) -> str:
         f"{challenge_id}:{code.strip()}".encode(),
         hashlib.sha256,
     ).hexdigest()
+
+
+def challenge_identity_conditions(
+    *,
+    tenant_id: UUID | None,
+    challenge_id: UUID,
+    user_id: UUID,
+    purpose: str,
+):
+    tenant_condition = (
+        otp_challenges.c.tenant_id.is_(None)
+        if tenant_id is None
+        else otp_challenges.c.tenant_id == tenant_id
+    )
+    return (
+        tenant_condition,
+        otp_challenges.c.id == challenge_id,
+        otp_challenges.c.user_id == user_id,
+        otp_challenges.c.purpose == purpose,
+    )
+
+
+def attempt_identity_conditions(*, tenant_id: UUID | None, challenge_id: UUID):
+    tenant_condition = (
+        otp_attempts.c.tenant_id.is_(None)
+        if tenant_id is None
+        else otp_attempts.c.tenant_id == tenant_id
+    )
+    return (tenant_condition, otp_attempts.c.otp_challenge_id == challenge_id)
 
 
 def _otp_invalid() -> ApiError:

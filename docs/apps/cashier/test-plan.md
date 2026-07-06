@@ -20,7 +20,7 @@ Source context:
 
 ## Test Scope
 
-CashierApp tests prove that cashier staff can log in with OTP-protected first-password setup, monitor active table sessions, inspect a single Check/Adisyon, record partial/full payments, perform only allowed corrections, view current-day payment history, and explicitly close paid sessions.
+CashierApp tests prove that cashier staff can log in with first-password setup, monitor active table sessions, inspect a single Check/Adisyon, record partial/full payments, perform only allowed corrections, view current-day payment history, and explicitly close paid sessions.
 
 Out of scope for this test plan:
 
@@ -36,7 +36,7 @@ Out of scope for this test plan:
 
 | Scenario | Coverage |
 | --- | --- |
-| K-01 Cashier First Login | Bootstrap cashier changes password and verifies OTP sent to tenant GSM. |
+| K-01 Cashier First Login | Bootstrap cashier changes password without OTP in the current release. |
 | K-02 Monitor and Inspect Active Session | Cashier sees hall/table board, active session, bill summary, orders, payments, and corrections. |
 | K-03 Record Partial Payment | Cashier records amount below remaining balance with one idempotency key. |
 | K-04 Record Full Payment and Close Session | Remaining balance payment is recorded, then session closes explicitly. |
@@ -47,15 +47,12 @@ Out of scope for this test plan:
 
 ## Branch Coverage
 
-### Login, OTP, and Access
+### Login, Password Setup, and Access
 
 | Branch | Expected Test Result |
 | --- | --- |
 | Invalid credentials | Reject safely. |
 | Bootstrap password required | Force password change. |
-| OTP required | Tenant GSM OTP flow blocks workspace until verified. |
-| OTP expired | Require new OTP. |
-| OTP locked | Stop verification and show locked state. |
 | User lacks cashier role | Block CashierApp. |
 | User disabled | Reject access. |
 | Tenant unavailable | Block access. |
@@ -115,7 +112,7 @@ Out of scope for this test plan:
 | Acceptance Criterion | Test Evidence |
 | --- | --- |
 | Cashier login and bootstrap password change | Browser/API tests. |
-| Cashier first password setup requires OTP | OTP setup tests. |
+| Cashier first password setup does not require OTP | First-password setup tests. |
 | Cashier sees halls, tables, sessions, latest state, total, paid, remaining | Browser/component/API tests. |
 | Session detail opens in context | Browser layout tests. |
 | Every active TableSession has one Check/Adisyon | API/domain tests. |
@@ -134,7 +131,7 @@ Every state in [ui-states.md](ui-states.md) requires a UI test or documented non
 
 | Surface | Required UI States |
 | --- | --- |
-| Login | loading, invalid credentials, first password change required, OTP required, OTP expired. |
+| Login | loading, invalid credentials, first password change required. |
 | Cashier Workspace | loading, empty active sessions, grouped halls/tables, stale table state. |
 | Session Detail Panel | loading, no active session, active session, closed session, item exception attention. |
 | Payment Drawer/Dialog | empty amount, invalid amount, over-remaining amount, submitting, recorded. |
@@ -148,13 +145,10 @@ CashierApp executable tests must cover the app-visible behavior of these endpoin
 
 | Endpoint | Required Coverage |
 | --- | --- |
-| `GET /api/auth/login-requirements` | First-password/OTP requirement discovery. |
+| `GET /api/auth/login-requirements` | First-password requirement discovery. |
 | `POST /api/auth/login` | Cashier scope, missing role, invalid credentials. |
-| `POST /api/auth/first-password/begin` | Setup token and OTP requirement. |
-| `POST /api/auth/first-password/complete` | OTP proof required for cashier. |
-| `GET /api/auth/otp-challenges/{challengeId}` | Challenge state, expiry, lock. |
-| `POST /api/auth/otp-challenges/{challengeId}/send` | Send limits and masked target. |
-| `POST /api/auth/otp-challenges/{challengeId}/verify` | Valid/invalid/expired code. |
+| `POST /api/auth/first-password/begin` | Setup token and no-OTP password-change state. |
+| `POST /api/auth/first-password/complete` | Password policy and setup-token validation. |
 | `GET /api/auth/session` | Protected route access. |
 | `POST /api/auth/logout` | Session revocation. |
 | `GET /api/cashier/venue/board` | Hall/table board and `CashierTableState`. |
@@ -206,8 +200,8 @@ Required checks:
 
 Tests must assert that:
 
-- CashierApp uses [copy.md](copy.md) for login, OTP, payment, correction, and close states;
-- OTP copy references tenant GSM without exposing full sensitive data;
+- CashierApp uses [copy.md](copy.md) for login, password reset OTP, payment, correction, and close states;
+- Password reset OTP copy references the platform-owned tenant identity GSM without exposing full sensitive data;
 - `Adisyon`, `Toplam`, `Ödenen`, and `Kalan` labels are used consistently;
 - blocked correction/payment/close copy explains the reason;
 - duplicate/stale copy tells cashier to refresh/trust current server state;

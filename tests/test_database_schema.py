@@ -102,9 +102,12 @@ def test_tenant_registry_enforces_identity_and_lifecycle_guards() -> None:
     } <= tenant_checks
 
     subdomain_index = compiled_index_sql("tenants", "uq_tenants__subdomain_lower")
+    gsm_index = compiled_index_sql("tenants", "uq_tenants__gsm_number")
 
     assert "UNIQUE INDEX uq_tenants__subdomain_lower" in subdomain_index
     assert "lower(subdomain)" in subdomain_index
+    assert "UNIQUE INDEX uq_tenants__gsm_number" in gsm_index
+    assert "gsm_number" in gsm_index
 
 
 def test_users_have_separate_platform_and_tenant_username_uniqueness() -> None:
@@ -554,8 +557,10 @@ def test_otp_challenges_are_tenant_scoped_and_non_recoverable() -> None:
     )
 
     assert "fk_otp_challenges__tenant_users" in challenge_fks
+    assert "fk_otp_challenges__users" in challenge_fks
     assert {
         "ck_otp_challenges__purpose",
+        "ck_otp_challenges__tenant_scope",
         "ck_otp_challenges__target_gsm_required",
         "ck_otp_challenges__code_hash_required",
         "ck_otp_challenges__verified_before_expiry",
@@ -572,6 +577,7 @@ def test_otp_attempts_preserve_monotonic_v1_attempt_limit() -> None:
     attempt_range_sql = check_constraint_sql("otp_attempts", "ck_otp_attempts__attempt_no_v1_range")
 
     assert "fk_otp_attempts__tenant_otp_challenges" in attempt_fks
+    assert "fk_otp_attempts__otp_challenges" in attempt_fks
     assert "uq_otp_attempts__tenant_challenge_attempt_no" in attempt_uniques
     assert {
         "ck_otp_attempts__attempt_no_v1_range",
@@ -590,6 +596,7 @@ def test_message_deliveries_preserve_send_limit_and_redacted_failure_state() -> 
     )
 
     assert "fk_message_deliveries__tenant_otp_challenges" in delivery_fks
+    assert "fk_message_deliveries__otp_challenges" in delivery_fks
     assert "uq_message_deliveries__tenant_challenge_delivery_no" in delivery_uniques
     assert {
         "ck_message_deliveries__delivery_no_v1_range",

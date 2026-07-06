@@ -25,7 +25,7 @@ https://[tenant].iotables.net/cashier
 
 | Surface | URL | UI Shape | Purpose |
 | --- | --- | --- | --- |
-| Cashier Login | `/cashier/login` | Durable page | Cashier login, first-password change, and OTP verification. |
+| Cashier Login | `/cashier/login` | Durable page | Cashier login and first-password change. |
 | Cashier Workspace | `/cashier` | Durable workspace | Hall/table board, active sessions, balances, and latest state. |
 | Session Detail | `/cashier?session=:sessionId` | Context panel/drawer | Inspect and settle one active TableSession without leaving the board. |
 | Payment History | `/cashier/payments` | Durable page | Current business-day payment review. |
@@ -43,12 +43,10 @@ Required states:
 | Loading | Keep login shell stable. |
 | Invalid credentials | Reject without revealing tenant or user details. |
 | First password change required | Force password change before workspace access. |
-| OTP required | Send/verify OTP through tenant GSM for cashier bootstrap. |
-| OTP expired/locked | Keep cashier inside setup flow and require safe retry. |
 | No cashier role | Block app access. |
 | Tenant unavailable/suspended | Block access. |
 
-Cashier first-password setup requires OTP in the current release. Station and service staff OTP behavior must not be copied into this flow.
+Cashier first-password setup does not require OTP in the current release. Password reset flows use OTP sent to the platform-owned tenant identity GSM.
 
 ## Cashier Workspace
 

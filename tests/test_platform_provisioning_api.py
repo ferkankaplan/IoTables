@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 
 from iotables.api.platform import (
+    get_otp_messaging_service,
     get_tenant_provisioning_service,
     get_tenant_registry_mutation_service,
     get_tenant_registry_query_service,
@@ -23,6 +24,7 @@ from iotables.security.context import ActorContext, ActorType, AppScope
 
 PLATFORM_USER_ID = UUID("22222222-2222-2222-2222-222222222222")
 TENANT_ID = UUID("33333333-3333-3333-3333-333333333333")
+OTP_CHALLENGE_ID = UUID("55555555-5555-5555-5555-555555555555")
 
 
 class FakeSessionResolver:
@@ -102,6 +104,57 @@ class FakeProvisioningService:
             starter_application_status="recovery_needed",
             failure_summary=reason,
         )
+
+
+class FakeOtpMessagingService:
+    def __init__(self) -> None:
+        self.created_target_gsm: str | None = None
+        self.verified: dict[str, object] | None = None
+        self.commits = 0
+
+    async def create_challenge(
+        self,
+        *,
+        tenant_id: UUID | None,
+        user_id: UUID,
+        purpose: str,
+        target_gsm: str,
+        now: datetime,
+    ):
+        self.created_target_gsm = target_gsm
+        return type(
+            "OtpChallenge",
+            (),
+            {
+                "challenge_id": OTP_CHALLENGE_ID,
+                "target_hint": "********2233",
+                "expires_at": now,
+                "remaining_attempts": 5,
+            },
+        )()
+
+    async def verify(
+        self,
+        *,
+        tenant_id: UUID | None,
+        user_id: UUID,
+        challenge_id: UUID,
+        purpose: str,
+        code: str,
+        now: datetime,
+        target_gsm: str | None = None,
+    ) -> None:
+        self.verified = {
+            "tenant_id": tenant_id,
+            "user_id": user_id,
+            "challenge_id": challenge_id,
+            "purpose": purpose,
+            "code": code,
+            "target_gsm": target_gsm,
+        }
+
+    async def commit(self) -> None:
+        self.commits += 1
 
 
 def make_provisioning_state(
@@ -284,6 +337,7 @@ def make_client(
     service: FakeProvisioningService | None = None,
     query_service: FakeTenantRegistryQueryService | None = None,
     mutation_service: FakeTenantRegistryMutationService | None = None,
+    otp_service: FakeOtpMessagingService | None = None,
 ) -> TestClient:
     app = create_app()
     app.state.session_resolver = FakeSessionResolver(actor)
@@ -293,9 +347,23 @@ def make_client(
         app.dependency_overrides[get_tenant_registry_query_service] = lambda: query_service
     if mutation_service is not None:
         app.dependency_overrides[get_tenant_registry_mutation_service] = lambda: mutation_service
+    otp_service = otp_service or FakeOtpMessagingService()
+    app.dependency_overrides[get_otp_messaging_service] = lambda: otp_service
     client = TestClient(app)
     client.cookies.set("iotables_session", "valid")
     return client
+
+
+def tenant_create_payload(**overrides: object) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "name": "Cafe Demo",
+        "subdomain": "demo-cafe",
+        "gsmNumber": "+905551112233",
+        "otpChallengeId": str(OTP_CHALLENGE_ID),
+        "otpCode": "000000",
+    }
+    payload.update(overrides)
+    return payload
 
 
 def test_create_tenant_requires_platform_session() -> None:
@@ -308,11 +376,7 @@ def test_create_tenant_requires_platform_session() -> None:
             "X-CSRF-Token": "csrf",
             "Idempotency-Key": "tenant-create-1",
         },
-        json={
-            "name": "Cafe Demo",
-            "subdomain": "demo-cafe",
-            "gsmNumber": "+905551112233",
-        },
+        json=tenant_create_payload(),
     )
 
     assert response.status_code == 401
@@ -332,11 +396,7 @@ def test_create_tenant_rejects_wrong_app_scope() -> None:
             "X-CSRF-Token": "csrf",
             "Idempotency-Key": "tenant-create-1",
         },
-        json={
-            "name": "Cafe Demo",
-            "subdomain": "demo-cafe",
-            "gsmNumber": "+905551112233",
-        },
+        json=tenant_create_payload(),
     )
 
     assert response.status_code == 403
@@ -352,11 +412,7 @@ def test_create_tenant_requires_csrf_token() -> None:
     response = client.post(
         "/api/platform/tenants",
         headers={"X-Request-Id": "req_csrf", "Idempotency-Key": "tenant-create-1"},
-        json={
-            "name": "Cafe Demo",
-            "subdomain": "demo-cafe",
-            "gsmNumber": "+905551112233",
-        },
+        json=tenant_create_payload(),
     )
 
     assert response.status_code == 403
@@ -372,20 +428,37 @@ def test_create_tenant_requires_idempotency_key() -> None:
     response = client.post(
         "/api/platform/tenants",
         headers={"X-Request-Id": "req_idempotency", "X-CSRF-Token": "csrf"},
-        json={
-            "name": "Cafe Demo",
-            "subdomain": "demo-cafe",
-            "gsmNumber": "+905551112233",
-        },
+        json=tenant_create_payload(),
     )
 
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "idempotency_key_required"
 
 
+def test_begin_tenant_creation_otp_returns_redacted_fixed_challenge_state() -> None:
+    otp_service = FakeOtpMessagingService()
+    client = make_client(actor=make_platform_actor(), otp_service=otp_service)
+
+    response = client.post(
+        "/api/platform/tenant-creation-otp/begin",
+        headers={"X-CSRF-Token": "csrf"},
+        json={"gsmNumber": "+905551112233"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "otp_required"
+    assert response.json()["otpChallengeId"] == str(OTP_CHALLENGE_ID)
+    assert response.json()["targetHint"] == "********2233"
+    assert response.json()["remainingAttempts"] == 5
+    assert "000000" not in response.text
+    assert otp_service.created_target_gsm == "+905551112233"
+    assert otp_service.commits == 1
+
+
 def test_create_tenant_passes_normalized_command_to_provisioning_service() -> None:
     service = FakeProvisioningService()
-    client = make_client(actor=make_platform_actor(), service=service)
+    otp_service = FakeOtpMessagingService()
+    client = make_client(actor=make_platform_actor(), service=service, otp_service=otp_service)
 
     response = client.post(
         "/api/platform/tenants",
@@ -394,14 +467,12 @@ def test_create_tenant_passes_normalized_command_to_provisioning_service() -> No
             "X-CSRF-Token": "csrf",
             "Idempotency-Key": "tenant-create-1",
         },
-        json={
-            "name": "Cafe Demo",
-            "subdomain": "Demo-Cafe",
-            "gsmNumber": "+905551112233",
-            "sector": "CAFE",
-            "capacity": 24,
-            "address": {"city": "Istanbul"},
-        },
+        json=tenant_create_payload(
+            subdomain="Demo-Cafe",
+            sector="CAFE",
+            capacity=24,
+            address={"city": "Istanbul"},
+        ),
     )
 
     assert response.status_code == 201
@@ -422,6 +493,15 @@ def test_create_tenant_passes_normalized_command_to_provisioning_service() -> No
         address='{"city":"Istanbul"}',
     )
     assert service.idempotency_key == "tenant-create-1"
+    assert otp_service.verified == {
+        "tenant_id": None,
+        "user_id": PLATFORM_USER_ID,
+        "challenge_id": OTP_CHALLENGE_ID,
+        "purpose": "tenant_creation",
+        "code": "000000",
+        "target_gsm": "+905551112233",
+    }
+    assert otp_service.commits == 1
 
 
 def test_get_tenant_provisioning_state_returns_safe_state() -> None:

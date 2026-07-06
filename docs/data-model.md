@@ -86,7 +86,7 @@ Owned by: Platform / Tenant Registry
 | `id` | Opaque tenant ID |
 | `name` | Required, immutable |
 | `subdomain` | Required, immutable, unique |
-| `gsmNumber` | Required, editable, audited |
+| `gsmNumber` | Required, unique, PlatformApp-owned, editable only through PlatformApp, audited |
 | `sector` | Optional editable classification; does not re-run starter data |
 | `capacity` | Optional, editable |
 | `address` | Optional, editable |
@@ -214,14 +214,16 @@ Owned by: Identity and Access
 
 Starter usernames:
 
-| Starter User | Username | OTP |
+| Starter User | Username | First password OTP |
 | --- | --- | --- |
-| Tenant Admin | tenant subdomain | Required |
-| Cashier | `kasiyer` | Required, sent to tenant GSM |
+| Tenant Admin | tenant subdomain | Not required in the current release |
+| Cashier | `kasiyer` | Not required in the current release |
 | Cook | `asci` | Not required |
 | Barista | `barista` | Not required |
 | Waiter | `garson` | Not required |
 | Busser | `komi` | Not required |
+
+OTP is required before PlatformApp creates the tenant and for later password reset flows. Staff password reset OTP is sent to the platform-owned tenant identity GSM number.
 
 ### Credential
 
@@ -987,8 +989,8 @@ Owned by: OTP / Messaging
 | `tenantId` | Tenant |
 | `id` | Challenge ID |
 | `userId` | User being verified |
-| `purpose` | tenant_admin_first_password / cashier_first_password |
-| `targetGsm` | Tenant GSM in the current release for tenant admin/cashier bootstrap |
+| `purpose` | tenant_creation / staff_password_reset; historical first-password purpose values may exist only for old data compatibility |
+| `targetGsm` | Requested tenant GSM for tenant creation, or platform-owned tenant identity GSM for staff password reset |
 | `codeHash` | Never plaintext |
 | `expiresAt` | Short lifetime |
 | `verifiedAt` | Completion |
@@ -997,8 +999,8 @@ Invariants:
 
 - OTP values are stored hashed or otherwise non-recoverable.
 - Current release OTP lifetime is 5 minutes.
-- The current release allows at most 5 verification attempts per tenant/challenge.
-- The current release allows at most 3 send attempts per tenant/challenge with cooldown between sends.
+- The current release allows at most 5 verification attempts per challenge.
+- The current release allows at most 3 send attempts per challenge with cooldown between sends.
 - OTP verification is idempotent after success.
 
 ### OtpAttempt

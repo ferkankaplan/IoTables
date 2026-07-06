@@ -4,12 +4,12 @@
 | Workspace | Required States |
 | --- | --- |
 | Public Tenant Page | loading, tenant not found, tenant unavailable, public info empty/fallback |
-| Tenant Login | loading, invalid credentials, first password change required, OTP required, OTP expired, OTP failed |
+| Tenant Login | loading, invalid credentials, first password change required |
 | Admin Dashboard | loading, starter data present, setup incomplete, tenant suspended/blocked |
 | Hall Management | loading, empty halls, selected hall empty tables, table panel loading, table active-session blocked |
 | Station Management | loading, empty stations, station disabled, station has active items blocked |
 | Menu Management | loading, empty categories, empty category products, invalid product, unavailable product, disabled product |
-| Tenant Settings | loading, immutable field blocked, service tracking changed, GSM changed |
+| Tenant Settings | loading, immutable field blocked, service tracking changed, GSM read-only |
 | Staff Management | loading, empty staff, disabled user, missing role/scope, active session permission changed |
 | Tenant Audit | loading, empty audit, filtered empty, access denied |
 

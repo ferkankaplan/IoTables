@@ -37,7 +37,7 @@ PlatformApp can manage platform-owned records and platform-level lifecycle decis
 | Tenant limits | Define package, capacity, or feature limits when those concepts exist |
 | Platform audit | View platform-level operational history when available |
 
-Tenant name and tenant domain are immutable after creation. Tenant GSM number is required and editable, but it is treated as a sensitive operational contact because it is used for tenant admin password setup and OTP verification. Optional tenant profile fields can be changed later.
+Tenant name and tenant domain are immutable after creation. Tenant GSM number is required, unique, and editable only by PlatformApp. It is not a normal contact field; it is the tenant identity GSM used for tenant creation OTP and future tenant/staff password reset OTP flows. Optional tenant profile fields can be changed later.
 
 ## Not Authorized
 
@@ -85,9 +85,11 @@ Tenant subdomains are expected to resolve through the environment wildcard DNS r
 
 1. Platform Owner opens Create Tenant.
 2. Platform Owner enters the required tenant identity fields.
-3. PlatformApp validates uniqueness and required platform constraints.
-4. Platform Owner may enter optional restaurant metadata.
-5. PlatformApp submits the create-tenant command to Provisioning.
+3. PlatformApp sends a tenant-creation OTP challenge to the tenant identity GSM.
+4. Platform Owner enters the OTP code.
+5. PlatformApp validates uniqueness and required platform constraints.
+6. Platform Owner may enter optional restaurant metadata.
+7. PlatformApp submits the OTP-proven create-tenant command to Provisioning.
 6. Provisioning registers the tenant in `provisioning` state through Tenant Registry.
 7. Provisioning creates the initial tenant admin and starter staff users through Access.
 8. Provisioning applies the selected sector starter template once and creates required tenant setup records.
@@ -193,7 +195,7 @@ Initial `cafe` starter staff credentials:
 
 | Staff User | Username | Temporary Password | First Login Requirement |
 | --- | --- | --- | --- |
-| Kasiyer | `kasiyer` | `admin` | Must change password with OTP verification |
+| Kasiyer | `kasiyer` | `admin` | Must change password; OTP not required |
 | Aşçı | `asci` | `admin` | Must change password; OTP not required |
 | Barista | `barista` | `admin` | Must change password; OTP not required |
 | Garson | `garson` | `admin` | Must change password; OTP not required |
@@ -201,7 +203,7 @@ Initial `cafe` starter staff credentials:
 
 These are temporary bootstrap credentials only. They must not allow continued access after the first login without password change.
 
-Cashier OTP uses the tenant GSM number during bootstrap.
+Cashier first-password setup does not use OTP in the current release. Password reset OTP uses the platform-owned tenant identity GSM.
 
 ### Provision Tenant Admin
 
@@ -209,9 +211,8 @@ Cashier OTP uses the tenant GSM number during bootstrap.
 2. Tenant admin username is the tenant subdomain.
 3. Tenant admin initial password is `admin`.
 4. Tenant admin must change the password on first login.
-5. First password setup must verify the tenant GSM number with an OTP SMS.
 
-The initial `admin` password is a temporary bootstrap credential only. It must not allow continued access after first login without password change and OTP verification.
+The initial `admin` password is a temporary bootstrap credential only. It must not allow continued access after first login without password change.
 
 ### List Active Tenants
 
@@ -243,7 +244,7 @@ PlatformApp may display these concepts, but it does not necessarily own all futu
 | Tenant | Full | Primary platform object |
 | Tenant name | Full | Required and immutable |
 | Tenant subdomain | Full | Required and immutable |
-| Tenant GSM number | Full | Required, editable, sensitive operational contact |
+| Tenant GSM number | Full | Required, unique, editable only by PlatformApp, platform-owned identity GSM |
 | Tenant address | Full | Optional and editable |
 | Tenant sector | Full | Optional and editable |
 | Tenant capacity | Full | Optional and editable |
@@ -265,7 +266,7 @@ PlatformApp interacts with domain modules through explicit interfaces.
 | Platform / Tenant Registry | Manage tenant identity, lifecycle, profile, subdomain, GSM, and tenant health summary |
 | Platform / Sector Starter Templates | List sector options and record one-time starter application through Provisioning |
 | Access / Identity and Access | Create platform owner, tenant admin, and starter staff accounts through controlled bootstrap flows |
-| Access / OTP Messaging | Support first-password OTP flows for tenant admin and cashier |
+| Access / OTP Messaging | Support tenant creation and future password reset OTP flows |
 | Governance / Audit | Record platform-level actions |
 
 DNS automation is not part of PlatformApp for the initial product. Tenant host routing is provided by wildcard DNS configured at the environment/deployment layer.
@@ -284,11 +285,12 @@ SMS provider selection is not a PlatformApp product decision. PlatformApp depend
 - Destructive actions require explicit confirmation.
 - Support access to tenant runtime data must be intentional, visible, and permissioned.
 - Tenant name and tenant subdomain cannot be edited after creation.
-- Tenant GSM number changes must be audited.
+- Tenant GSM number is unique, owned by PlatformApp, editable only through PlatformApp, and every change must be audited.
+- Tenant creation requires OTP verification against the requested tenant GSM number before provisioning starts.
 - Initial tenant admin password is temporary and must be changed on first login.
-- First tenant admin password setup requires OTP SMS verification.
 - Starter staff passwords are temporary and must be changed on first login.
-- Starter cashier password setup requires OTP SMS verification through the tenant GSM number.
+- Starter tenant admin and cashier first password setup does not require OTP in the current release.
+- Staff password reset OTP is sent to the platform-owned tenant identity GSM number.
 - Starter station and service staff password setup does not require OTP unless their role is later expanded with critical financial or administrative authority.
 - Sector starter data must be applied only once during tenant creation.
 - Sector starter data must not run during server startup, restart, deployment, migration, or release upgrade.

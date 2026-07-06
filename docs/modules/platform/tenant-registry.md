@@ -13,7 +13,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | Tenant | Entity | create, read, update allowed profile fields |
 | Tenant name | Immutable identity | create only |
 | Tenant subdomain | Immutable identity | create only |
-| Tenant GSM number | Sensitive contact | create, update, audit |
+| Tenant GSM number | Platform-owned identity GSM | create, update, audit |
 | Tenant sector | Classification | create, update without re-provisioning |
 | Tenant lifecycle status | State | provisioning, active, suspended, provisioning_failed |
 | Tenant health summary | Read model | expose high-level platform health |
@@ -33,7 +33,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | App / Actor | Access | Limits |
 | --- | --- | --- |
 | PlatformApp / Platform Owner | create and manage tenants | Global platform scope |
-| TenantApp | read current tenant identity and update allowed tenant profile fields | Own tenant only; cannot change name, subdomain, lifecycle, or platform-only health |
+| TenantApp | read current tenant identity and manage tenant-owned operational settings through Tenant Setup | Own tenant only; cannot change name, subdomain, GSM, lifecycle, or platform-only health |
 | CustomerApp and staff apps | resolve tenant by subdomain | Read-only availability check |
 
 ## Public Interface
@@ -42,7 +42,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | --- | --- | --- |
 | Register tenant identity | Create tenant identity and initial platform metadata | Provisioning |
 | Resolve tenant by subdomain | Route tenant apps safely | All tenant apps |
-| Update tenant profile | Edit allowed tenant metadata | PlatformApp, TenantApp |
+| Update tenant profile | Edit platform-owned tenant metadata | PlatformApp |
 | Change tenant status | Suspend/reactivate tenant | PlatformApp |
 | Get tenant health | Show platform health summary | PlatformApp |
 
@@ -50,8 +50,11 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 
 - Tenant name is immutable after creation.
 - Tenant subdomain is immutable after creation.
-- Tenant GSM number is required and editable, but every change must be audited.
+- Tenant GSM number is required, unique, and editable only by PlatformApp.
+- Tenant GSM number is the tenant identity GSM for tenant creation and password reset OTP; it is not a normal tenant contact field.
+- Every tenant GSM change must be audited.
 - Tenant subdomain must be unique.
+- Tenant GSM number must be unique.
 - Tenant sector can change after creation but must not re-run starter data.
 - New tenants start as `provisioning`.
 - Tenants become `active` only after required setup records commit successfully.
@@ -73,7 +76,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
-| Tenant | provisioning -> active -> suspended/reactivated or provisioning_failed | id, immutable name, immutable subdomain, GSM, sector, capacity, address, status, provisioningError | subdomain unique; name/subdomain immutable; GSM required and audited; sector changes do not re-run starter data; suspended tenants block runtime actions | Do not hard-delete after runtime records exist; failed provisioning needs explicit recovery/deletion tooling |
+| Tenant | provisioning -> active -> suspended/reactivated or provisioning_failed | id, immutable name, immutable subdomain, platform-owned identity GSM, sector, capacity, address, status, provisioningError | subdomain unique; GSM unique; name/subdomain immutable; GSM required and PlatformApp-only; sector changes do not re-run starter data; suspended tenants block runtime actions | Do not hard-delete after runtime records exist; failed provisioning needs explicit recovery/deletion tooling |
 | TenantHealth | recalculated/read-only | tenant, lifecycle/setup state, starter application state, tenant admin bootstrap state, safe runtime error summary | High-level platform signal only; must not expose tenant runtime detail or mutate tenant data | Derived/read model; can be rebuilt from source state where practical |
 | TenantLifecycleEvent | append-only | tenant, previousStatus, nextStatus, actor/system, reason, createdAt | Every suspend/reactivate/provisioning failure should leave a lifecycle event and audit evidence | Append-only; never rewrite status history |
 
@@ -82,7 +85,7 @@ It is the source of truth for whether a tenant exists, where it is served, and w
 | App | Usage |
 | --- | --- |
 | PlatformApp | Primary tenant lifecycle surface; create-tenant command enters Provisioning |
-| TenantApp | Reads own tenant profile and updates allowed profile fields through Tenant Registry commands |
+| TenantApp | Reads own tenant profile. Tenant-owned settings such as public display name and service delivery mode are managed through Tenant Setup, not Tenant Registry GSM mutation |
 | CustomerApp/staff apps | Resolve tenant and enforce availability |
 
 ## Future Service Boundary

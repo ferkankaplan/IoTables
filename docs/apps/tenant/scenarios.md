@@ -31,9 +31,7 @@ Happy path:
 1. Tenant Admin opens `/login`.
 2. Tenant Admin enters username and temporary password.
 3. TenantApp forces password change.
-4. OTP SMS is sent to tenant GSM.
-5. Tenant Admin verifies OTP.
-6. TenantApp opens admin dashboard.
+4. TenantApp opens admin dashboard.
 
 Branches:
 
@@ -41,18 +39,15 @@ Branches:
 | --- | --- |
 | Invalid temporary password | Reject |
 | Password change uses rejected password | Reject |
-| OTP expired | Require new OTP challenge |
-| OTP failed too many times | Lock/slow challenge according to OTP rules |
-| Tenant GSM changed before verification | New challenge must use current tenant GSM |
 | User already completed first login | Normal login path, no bootstrap password access |
 
 Result:
 
-- Tenant admin has a non-bootstrap credential and verified first setup.
+- Tenant admin has a non-bootstrap credential.
 
 Ownership:
 
-- TenantApp + Access + OTP/Messaging.
+- TenantApp + Access.
 
 ### T-03: Configure Halls and Tables
 

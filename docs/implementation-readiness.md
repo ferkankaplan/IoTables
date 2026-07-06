@@ -94,8 +94,8 @@ Implementation must continue preserving these invariants:
 - six apps remain the semantic foundation;
 - tenant context is resolved from trusted host/session state;
 - tenant name and subdomain are immutable after creation;
-- tenant GSM is required for tenant creation and tenant-admin/cashier first-password OTP flows;
-- station/service staff first-password setup does not require OTP in the current release;
+- tenant GSM is required, unique, PlatformApp-owned, and used for tenant creation OTP plus future tenant/staff password reset OTP flows;
+- tenant-admin/cashier/station/service first-password setup does not require OTP in the current release;
 - QR tokens are short-lived, one-time, and backend/database enforced;
 - CustomerOrderingSession and TableSession remain separate;
 - order submit, payments, payment voids, cashier corrections, starter templates, and bulk delivery are idempotency-safe;

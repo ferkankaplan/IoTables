@@ -10,21 +10,22 @@ See the full shared flow: [../_shared/canonical-end-to-end.md](../_shared/canoni
    - tenant name,
    - tenant subdomain,
    - tenant GSM number.
-3. PlatformApp submits the create-tenant command to Provisioning.
-4. Provisioning registers the tenant in `provisioning` state.
-5. Provisioning creates the first tenant admin through Access:
+3. PlatformApp verifies tenant-creation OTP sent to the platform-owned tenant identity GSM.
+4. PlatformApp submits the OTP-proven create-tenant command to Provisioning.
+5. Provisioning registers the tenant in `provisioning` state.
+6. Provisioning creates the first tenant admin through Access:
    - username: tenant subdomain,
    - temporary password: `admin`,
-   - first password setup requires OTP SMS to tenant GSM.
-6. Provisioning applies the selected sector starter template exactly once.
-7. Governance records starter template completion.
-8. Provisioning moves tenant to `active` after required setup records commit.
-9. Tenant host availability relies on the environment wildcard DNS namespace configured during deployment.
+   - first password setup required before normal app access.
+7. Provisioning applies the selected sector starter template exactly once.
+8. Governance records starter template completion.
+9. Provisioning moves tenant to `active` after required setup records commit.
+10. Tenant host availability relies on the environment wildcard DNS namespace configured during deployment.
 
 Acceptance criteria:
 
 - Tenant name and subdomain cannot be changed after creation.
-- Tenant GSM is editable but audited.
+- Tenant GSM is unique, editable only by PlatformApp, and audited.
 - Starter data does not rerun after restart, deployment, migration, release upgrade, or tenant edit.
 - Failed provisioning leaves a recoverable `provisioning_failed` state instead of partial silent success.
 - PlatformApp does not track tenant-level DNS state; wildcard DNS failures are deployment/ops faults.
