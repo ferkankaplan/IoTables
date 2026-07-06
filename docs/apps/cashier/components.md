@@ -26,7 +26,7 @@ Source context:
 | Component | Responsibility | Main Sources |
 | --- | --- | --- |
 | `CashierShell` | Cashier route frame, session gate, tenant/cashier context. | Session check, tenant route |
-| `CashierLogin` | Login, first-password change, OTP setup. | Identity and Access, OTP Messaging |
+| `CashierLogin` | Login and first-password change. | Identity and Access |
 | `CashierWorkspace` | Hall/table board and selected session workspace. | Venue Layout, Settlement |
 | `CashierHeader` | Tenant label, actor, refresh, stale and logout controls. | Session, venue board |
 | `HallTableBoard` | Halls and table tiles with operational state. | Venue Layout `CashierTableState` |
@@ -54,11 +54,10 @@ Source context:
 
 - cashier login;
 - first-password change;
-- OTP send/verify flow through tenant GSM;
 - invalid credential state;
 - no-role state.
 
-Cashier login must not skip OTP for bootstrap password setup.
+Cashier login must not skip bootstrap password setup, but OTP is not required for first-password setup in the current release.
 
 ## Board Components
 

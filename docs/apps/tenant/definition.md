@@ -16,7 +16,7 @@ TenantApp is used to set up and manage the restaurant operation: halls, tables, 
 
 TenantApp is not the customer ordering interface, station preparation screen, or cashier console. Those flows may use tenant data, but they are separate apps.
 
-When PlatformApp creates a tenant with a sector starter template, TenantApp opens with those starter halls, tables, stations, products, and staff users already created. Starter staff users have bootstrap credentials and must change their password on first login. The starter cashier must also verify the password setup with OTP SMS. Starter station and service staff do not require OTP in the first version.
+When PlatformApp creates a tenant with a sector starter template, TenantApp opens with those starter halls, tables, stations, products, and staff users already created. Starter staff users have bootstrap credentials and must change their password on first login. First-password setup does not require OTP in the current release; password reset flows use OTP sent to the platform-owned tenant identity GSM.
 
 ## Users and Access
 
@@ -24,7 +24,7 @@ When PlatformApp creates a tenant with a sector starter template, TenantApp open
 | --- | --- | --- | --- |
 | Tenant Admin | Own tenant only | Configure tenant operation, manage halls, tables, stations, and menu items | Cannot access PlatformApp or other tenants |
 
-The first tenant admin is created by PlatformApp during tenant provisioning. The username is the tenant subdomain, the temporary initial password is `admin`, and the user must change the password on first login with OTP SMS verification.
+The first tenant admin is created by PlatformApp during tenant provisioning. The username is the tenant subdomain, the temporary initial password is `admin`, and the user must change the password on first login.
 
 ## App Authority
 
@@ -32,7 +32,7 @@ TenantApp can manage tenant-owned setup and configuration records.
 
 | Area | Authority |
 | --- | --- |
-| Tenant profile | View tenant identity and edit allowed tenant fields |
+| Tenant profile | View tenant identity and platform-owned profile fields |
 | Hall management | Create, update, organize, and disable halls |
 | Table management | Create, update, reorder, and disable tables within halls |
 | Station management | Create, update, and disable preparation/service stations |
@@ -50,6 +50,7 @@ TenantApp must always be tenant-scoped. Every action belongs to the current tena
 
 - It does not create or suspend tenants.
 - It does not change immutable tenant identity fields such as tenant name or tenant subdomain.
+- It does not change tenant identity GSM; only PlatformApp can change that number.
 - It does not manage platform billing, package limits, or global platform settings.
 - It does not directly operate customer table sessions as a cashier.
 - It does not prepare station tickets as station staff.
@@ -113,8 +114,7 @@ The public page must not expose tenant GSM number, platform status internals, st
 1. Tenant Admin opens `https://[tenant].iotables.net/login`.
 2. TenantApp authenticates against the current tenant.
 3. On first login, the temporary `admin` password must trigger password change.
-4. Password setup requires OTP SMS verification through the tenant GSM number.
-5. After successful login, TenantApp opens the admin dashboard.
+4. After successful password setup, TenantApp opens the admin dashboard.
 
 ### Configure Halls and Tables
 
@@ -147,13 +147,9 @@ When service delivery tracking is disabled:
 TenantApp may edit these tenant settings in the current release:
 
 - public display name;
-- tenant GSM number;
-- address;
-- restaurant capacity;
-- restaurant sector classification;
 - service delivery tracking setting.
 
-TenantApp cannot edit immutable tenant name or tenant subdomain. Editing restaurant sector after tenant creation does not re-run starter data.
+TenantApp cannot edit immutable tenant name, tenant subdomain, or tenant identity GSM. Platform-owned profile fields such as GSM, address, capacity, and sector are changed from PlatformApp.
 
 ### Configure Stations
 
@@ -196,7 +192,7 @@ Starter data must not be recreated automatically after the tenant edits or delet
 | Concept | Visibility | Notes |
 | --- | --- | --- |
 | Tenant | Summary | Tenant identity resolved from subdomain |
-| Tenant editable profile | Full | Fields allowed to change after creation |
+| Tenant identity/profile | Read-only | Tenant identity resolved from subdomain; GSM is platform-owned identity GSM |
 | Hall | Full | Tenant-owned physical/operational area |
 | Table | Full | Managed inside hall context |
 | Station | Full | Fulfillment location for products/services |
@@ -213,14 +209,14 @@ Starter data must not be recreated automatically after the tenant edits or delet
 
 | Context / Module | Expected Use |
 | --- | --- |
-| Platform / Tenant Registry | Read tenant identity and update allowed tenant profile fields such as GSM, address, capacity, sector classification, and public display metadata |
+| Platform / Tenant Registry | Read tenant identity and platform-owned profile fields. TenantApp does not update identity GSM |
 | Access / Identity and Access | Tenant admin authentication and first-login password setup |
 | Access / Staff Access | Manage staff roles, station assignments, and hall-based service permissions |
 | Tenant Setup / Venue Layout | Manage halls and tables |
 | Tenant Setup / Station Setup | Manage fulfillment station definitions |
 | Tenant Setup / Menu Catalog | Manage categories, products, services, variants/portions, prices, availability overrides, and station assignments |
 | Platform / Sector Starter Templates | Read whether initial tenant data came from a starter template |
-| Access / OTP Messaging | Verify first password setup with SMS |
+| Access / OTP Messaging | Verify password reset flows with OTP sent to tenant identity GSM |
 | Governance / Audit | Record tenant admin configuration changes |
 
 ## Audit Rules
@@ -229,7 +225,7 @@ TenantApp must audit tenant-admin configuration changes that affect access, orde
 
 Minimum current release TenantApp audit actions:
 
-- tenant GSM changed;
+- platform-owned tenant identity/profile changes visible to TenantApp;
 - public display name changed;
 - address, sector, or capacity changed;
 - service delivery tracking enabled or disabled;
@@ -247,14 +243,13 @@ Minimum current release TenantApp audit actions:
 - Tenant admin routes require authentication.
 - Public root page must not expose admin data or operational internals.
 - First tenant admin password must be changed on first login.
-- First password setup requires OTP SMS verification.
+- First password setup does not require OTP in the current release.
 - Tenant name and tenant subdomain are not editable in TenantApp.
 - Configuration changes should be audited.
 - Starter data is normal tenant-owned data after creation.
 - Starter data must not be recreated after Tenant Admin edits, disables, or deletes it.
 - Starter staff users must change bootstrap passwords on first login.
-- Starter cashier first password setup requires OTP SMS verification.
-- Starter station and service staff first password setup does not require OTP.
+- Starter staff first password setup does not require OTP in the current release.
 - Service staff must be authorized per hall.
 - Service delivery tracking can be disabled only as an explicit tenant setting.
 - Fiscal/e-Adisyon/ÖKC, printer, hardware, stock/recipe, package service, courier, pickup, counter sale, and multi-location features are out of the current release scope.

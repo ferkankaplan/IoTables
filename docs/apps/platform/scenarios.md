@@ -29,14 +29,16 @@ Ownership:
 Happy path:
 
 1. Platform Owner enters tenant name, subdomain, GSM number, and optional profile fields.
-2. PlatformApp validates required fields and subdomain uniqueness.
-3. PlatformApp submits the create-tenant command to Provisioning.
-4. Provisioning registers Tenant in `provisioning`.
-5. Provisioning creates tenant admin and starter staff users through Access.
-6. Provisioning applies `cafe.v1` through Sector Starter Templates once.
-7. Starter data creates halls, tables, stations, products, staff, and default service delivery tracking.
-8. Governance records `starter_template.applied`.
-9. Provisioning activates tenant after required setup records commit.
+2. PlatformApp sends tenant-creation OTP to the tenant identity GSM.
+3. Platform Owner enters the OTP code.
+4. PlatformApp validates required fields, subdomain uniqueness, GSM uniqueness, and OTP proof.
+5. PlatformApp submits the create-tenant command to Provisioning.
+6. Provisioning registers Tenant in `provisioning`.
+7. Provisioning creates tenant admin and starter staff users through Access.
+8. Provisioning applies `cafe.v1` through Sector Starter Templates once.
+9. Starter data creates halls, tables, stations, products, staff, and default service delivery tracking.
+10. Governance records `starter_template.applied`.
+11. Provisioning activates tenant after required setup records commit.
 
 Branches:
 
@@ -46,6 +48,8 @@ Branches:
 | Required subdomain missing | Reject before provisioning starts |
 | Required GSM missing | Reject before provisioning starts |
 | Subdomain already exists | Reject before provisioning starts |
+| GSM already belongs to another tenant | Reject before provisioning starts |
+| Tenant-creation OTP missing, expired, invalid, or for a different GSM | Reject before provisioning starts |
 | Tenant name duplicates an existing tenant | Allowed only if subdomain is unique; name is not trusted identifier |
 | Optional sector omitted | Create tenant without starter data unless PlatformApp requires sector selection later |
 | Starter application already exists for tenant/template | Do not reapply starter data |

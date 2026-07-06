@@ -26,7 +26,7 @@ Source context:
 | Component | Responsibility | Main Sources |
 | --- | --- | --- |
 | `TenantPublicPage` | Safe public tenant identity. | Tenant context, operational settings public display |
-| `TenantLogin` | Tenant admin login, first-password setup, OTP state. | Identity and Access, OTP Messaging |
+| `TenantLogin` | Tenant admin login and first-password setup. | Identity and Access |
 | `TenantAdminShell` | Protected admin route frame and tenant context. | Session check, tenant profile |
 | `SetupDashboard` | Setup readiness, starter data summary, navigation to workspaces. | Tenant profile, starter state, setup APIs |
 | `HallWorkspace` | Hall list, selected hall, ordered table grid. | Venue Layout |
@@ -55,8 +55,7 @@ It must not show admin actions, tenant GSM, setup state, staff, orders, payments
 
 - login form;
 - first-password flow;
-- OTP challenge state;
-- OTP resend/verify state;
+- password reset OTP entry point when that flow is introduced;
 - invalid credentials and tenant unavailable states.
 
 `TenantAdminShell` owns:
@@ -168,10 +167,10 @@ Staff role/scope UI must be treated as setup visibility. Runtime app access rema
 
 | Section | Owner | Editable Fields |
 | --- | --- | --- |
-| Tenant profile | Tenant Registry | GSM, address, capacity, sector |
+| Tenant profile | Tenant Registry | read-only name, subdomain, identity GSM, address, capacity, sector |
 | Operational settings | Tenant Operational Settings | public display name, service delivery tracking |
 
-It displays tenant name and subdomain as immutable.
+It displays tenant name, subdomain, and identity GSM as immutable to TenantApp. Identity GSM is changed only from PlatformApp.
 
 `TenantAuditPanel` owns tenant setup/security audit display inside settings. It must show redacted records only and no runtime order/payment/session detail.
 

@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENVIRONMENTS = {"local", "test", "staging", "production"}
 LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+OTP_DELIVERY_MODES = {"fixed"}
 
 
 class Settings(BaseSettings):
@@ -33,6 +34,8 @@ class Settings(BaseSettings):
         default_factory=lambda: ["iotables.net"],
         alias="IOTABLES_TENANT_ROOT_DOMAINS",
     )
+    otp_delivery_mode: str = Field(default="fixed", alias="IOTABLES_OTP_DELIVERY_MODE")
+    otp_fixed_code: str = Field(default="000000", alias="IOTABLES_OTP_FIXED_CODE")
 
     @field_validator("environment")
     @classmethod
@@ -79,6 +82,23 @@ class Settings(BaseSettings):
                 normalized.append(root_domain)
         if not normalized:
             raise ValueError("tenant_root_domains must not be empty")
+        return normalized
+
+    @field_validator("otp_delivery_mode")
+    @classmethod
+    def validate_otp_delivery_mode(cls, value: str) -> str:
+        normalized = value.lower()
+        if normalized not in OTP_DELIVERY_MODES:
+            expected = ", ".join(sorted(OTP_DELIVERY_MODES))
+            raise ValueError(f"otp_delivery_mode must be one of: {expected}")
+        return normalized
+
+    @field_validator("otp_fixed_code")
+    @classmethod
+    def validate_otp_fixed_code(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized.isdigit() or len(normalized) != 6:
+            raise ValueError("otp_fixed_code must be exactly 6 digits")
         return normalized
 
 

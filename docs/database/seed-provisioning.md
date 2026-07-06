@@ -120,13 +120,14 @@ External side effects are processed after the database decision commits.
 
 Examples:
 
-- OTP SMS for tenant admin first password setup, triggered by first login/password setup.
-- OTP SMS for cashier first password setup, triggered by first login/password setup.
+- OTP SMS for tenant creation, triggered and verified before provisioning starts.
+- OTP SMS for staff password reset, triggered only by an explicit password reset flow.
 
 Rules:
 
-- First-login SMS failure must not rollback the committed tenant setup.
-- First-login SMS failure must be visible as delivery failure/retry state.
+- Tenant creation SMS failure prevents tenant creation from starting; no tenant/starter data is created without a verified challenge.
+- Password reset SMS failure must not mutate credentials.
+- SMS failure must be visible as delivery failure/retry state.
 - Provider responses must be redacted.
 - DNS is an environment wildcard namespace prerequisite and must not be represented as tenant provisioning state or an automated side effect.
 
@@ -181,16 +182,17 @@ After creation, TenantApp treats these records as normal editable tenant data. T
 
 All starter staff use temporary password `admin` and must change it at first login.
 
-| Staff User | Username | Role | Assignment | OTP |
+| Staff User | Username | Role | Assignment | First password OTP |
 | --- | --- | --- | --- | --- |
-| Tenant Admin | tenant subdomain | `tenant_admin` | Tenant-wide admin | Required, sent to tenant GSM |
-| Kasiyer | `kasiyer` | `cashier` | CashierApp | Required, sent to tenant GSM |
+| Tenant Admin | tenant subdomain | `tenant_admin` | Tenant-wide admin | Not required in the current release |
+| Kasiyer | `kasiyer` | `cashier` | CashierApp | Not required in the current release |
 | Aşçı | `asci` | `station_staff` | `Mutfak` station | Not required |
 | Barista | `barista` | `station_staff` | `Kahve` station | Not required |
 | Garson | `garson` | `service_staff` | All starter halls | Not required |
 | Komi | `komi` | `service_staff` | All starter halls | Not required |
 
 Temporary credentials must not allow continued access after first login without password change.
+OTP is required before PlatformApp creates the tenant, and later for password reset flows. Staff password reset OTP is sent to the platform-owned tenant identity GSM number.
 
 ## Idempotency Guards
 
@@ -217,7 +219,7 @@ The starter application row is the durable proof. Existence of some starter reco
 | Starter template missing | Tenant remains or becomes `provisioning_failed`; no active tenant. |
 | Staff user creation fails | Starter transaction rolls back; tenant marked failed. |
 | Menu/table/station creation fails | Starter transaction rolls back; tenant marked failed. |
-| Commit succeeds but first-login SMS later fails | Tenant remains active; SMS delivery retries or shows failure in the OTP/password setup flow. |
+| Tenant-creation OTP verification fails | Provisioning does not start and no tenant records are created. |
 | Worker crashes after enqueue | Outbox retry resumes. |
 | Retry called after success | Return existing applied state; do not create records. |
 

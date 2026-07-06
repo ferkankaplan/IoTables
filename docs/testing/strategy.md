@@ -96,7 +96,7 @@ Required tests:
 - Tenant staff session cannot cross tenant host or tenant-owned IDs.
 - Wrong app scope returns safe failure.
 - Disabled user/role/station/hall assignment fails at mutation time.
-- Tenant admin and cashier first password setup require OTP; station and service staff do not in the current release.
+- Tenant creation requires OTP to the platform-owned tenant identity GSM; tenant admin, cashier, station, and service first-password setup do not require OTP in the current release.
 - Platform Owner does not require OTP/TOTP before PlatformApp dashboard access in the current release.
 
 ### QR Presence and Customer Ordering

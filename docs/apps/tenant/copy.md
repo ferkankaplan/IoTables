@@ -41,8 +41,8 @@ Source context:
 | --- | --- |
 | Login | `Giriş yap` |
 | Complete first password | `Şifreyi değiştir` |
-| Send OTP | `Kod gönder` |
-| Verify OTP | `Doğrula` |
+| Send password reset OTP | `Kod gönder` |
+| Verify password reset OTP | `Doğrula` |
 | Create hall | `Salon ekle` |
 | Create table | `Masa ekle` |
 | Create station | `İstasyon ekle` |
@@ -65,14 +65,14 @@ Source context:
 
 Public page copy must not mention setup checklist, staff users, orders, payments, table sessions, or platform internals.
 
-## Login and OTP Copy
+## Login and Password Reset OTP Copy
 
 | State | Copy |
 | --- | --- |
 | Login loading | `Giriş durumu kontrol ediliyor...` |
 | Invalid credentials | `Giriş bilgileri hatalı.` |
 | First password change required | `Devam etmek için geçici şifreyi değiştirin.` |
-| OTP required | `GSM numarasına gönderilen kodu girin.` |
+| Password reset OTP required | `GSM numarasına gönderilen kodu girin.` |
 | OTP expired | `Kodun süresi doldu. Yeni kod gönderin.` |
 | OTP failed | `Kod hatalı.` |
 | OTP locked | `Çok fazla deneme yapıldı. Daha sonra tekrar deneyin.` |
@@ -152,8 +152,8 @@ Do not show raw credential secrets after the one-time response is dismissed.
 | Station scope | `İstasyon yetkisi` |
 | Hall scope | `Salon yetkisi` |
 | First password required | `İlk girişte şifre değiştirilecek.` |
-| Cashier OTP helper | `Kasiyer ilk şifre kurulumu tenant GSM numarasıyla doğrulanır.` |
-| Staff OTP not required | `İstasyon ve servis personeli için V1'de OTP gerekmez.` |
+| Staff first password helper | `Personel ilk girişte geçici şifresini değiştirir.` |
+| Password reset OTP helper | `Şifre sıfırlama kodları tenant kimlik GSM numarasına gönderilir.` |
 | Missing role/scope | `Bu rol için gerekli yetki alanı eksik.` |
 | Disabled user | `Personel devre dışı.` |
 | Permission changed | `Yetki değişti. Bir sonraki işlemde yeni yetki uygulanır.` |
@@ -165,7 +165,7 @@ Do not show raw credential secrets after the one-time response is dismissed.
 | Tenant name immutable | `Tenant adı değiştirilemez.` |
 | Subdomain immutable | `Subdomain değiştirilemez.` |
 | Public display name | `Görünen işletme adı` |
-| GSM number | `GSM numarası` |
+| GSM number | `Kimlik GSM numarası` |
 | Address | `Adres` |
 | Capacity | `Kapasite` |
 | Sector | `Sektör` |
@@ -173,7 +173,7 @@ Do not show raw credential secrets after the one-time response is dismissed.
 | Service tracking | `Servis takibi` |
 | Service tracking enabled | `Servis personeli teslim sürecini takip eder.` |
 | Service tracking disabled | `Hazır durumundaki ürün müşteri için teslim edildi kabul edilir.` |
-| GSM changed | `GSM güncellendi. Sonraki OTP akışlarında yeni numara kullanılır.` |
+| GSM read-only | `Kimlik GSM numarası yalnızca Platform üzerinden değiştirilebilir.` |
 | Settings saved | `Ayarlar kaydedildi.` |
 
 ## Audit Copy

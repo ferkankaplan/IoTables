@@ -2,7 +2,7 @@
 TenantApp is accepted for the current release when:
 
 - public tenant page exposes only safe public tenant fields;
-- tenant admin login requires first password change and OTP through tenant GSM;
+- tenant admin login requires first password change without OTP in the current release;
 - tenant name and subdomain are not editable;
 - halls and tables are managed in one workspace with contextual table panels;
 - current release table layout is an ordered grid, not floor-plan coordinates;

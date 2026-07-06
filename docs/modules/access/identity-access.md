@@ -52,12 +52,11 @@ It decides who a person is, which tenant they belong to, which app they may ente
 - Platform Owner is a platform-scoped user with `tenantId = null` and role `platform_owner`.
 - The first Platform Owner must be created by an explicit one-time bootstrap command, not automatically on every server startup.
 - PlatformApp login uses username/password only in the current release.
-- Tenant admin first password setup requires OTP.
-- Cashier first password setup requires OTP to tenant GSM during bootstrap.
-- Station and service staff first password setup does not require OTP in the current release.
+- Tenant admin, cashier, station, and service first-password setup does not require OTP in the current release.
+- Password reset flows require OTP sent to the platform-owned tenant identity GSM.
 - Users can access only their tenant unless explicitly platform scoped.
 - Current release password policy: minimum 12 characters for user-chosen passwords, reject known bootstrap/default passwords, and store only strong password hashes.
-- Tenant admin and cashier use OTP only for first password setup in the current release.
+- Tenant creation and password reset use OTP in the current release.
 
 ## Operational Safety
 

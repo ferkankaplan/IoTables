@@ -4,7 +4,7 @@
 
 OTP / Messaging owns one-time password creation, delivery, verification, expiry, retry, and provider integration.
 
-It supports sensitive first-login password setup flows for tenant admin and cashier.
+It supports sensitive tenant creation and password reset verification flows.
 
 ## Ownership
 
@@ -26,9 +26,9 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 
 | App / Actor | Access | Limits |
 | --- | --- | --- |
-| TenantApp / Tenant Admin | request/verify first setup OTP | Own tenant |
-| CashierApp / Cashier | request/verify first setup OTP | Sent to tenant GSM during bootstrap |
-| PlatformApp | trigger provisioning flows that require OTP later | Cannot bypass verification |
+| PlatformApp / Platform Owner | request/verify tenant creation OTP | Sent to the tenant identity GSM before Provisioning starts |
+| TenantApp / Tenant Admin | request/verify password reset OTP | Own tenant; target is platform-owned tenant identity GSM |
+| CashierApp / Cashier | request/verify password reset OTP | Own tenant; target is platform-owned tenant identity GSM |
 
 ## Public Interface
 
@@ -43,9 +43,10 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 
 - OTPs are short-lived.
 - OTP values must be stored hashed or otherwise non-recoverable.
-- OTP verification is required for tenant admin first password setup.
-- OTP verification is required for cashier first password setup and is sent to tenant GSM in the current release.
-- Station and service staff do not require OTP in the current release.
+- OTP verification is required before PlatformApp creates a tenant.
+- OTP verification is required for staff password reset flows.
+- First password setup does not require OTP in the current release; temporary starter passwords must still be changed on first login.
+- Staff password reset OTP is sent to the platform-owned tenant identity GSM number, which only PlatformApp may change.
 - OTP retries must be rate-limited.
 - Current release OTP lifetime is 5 minutes.
 - The current release allows at most 5 verification attempts per tenant/challenge.
@@ -64,16 +65,17 @@ It supports sensitive first-login password setup flows for tenant admin and cash
 
 | Model / Table | Lifecycle | Key Fields | Invariants / Constraints | History / Deletion |
 | --- | --- | --- | --- | --- |
-| OtpChallenge | created -> sent -> verified / expired / locked | tenant, user, purpose, targetGsm, codeHash, expiresAt, verifiedAt | Code stored hashed/non-recoverable; 5 minute lifetime in the current release; verification idempotent after success; existing challenge target must not silently change if tenant GSM changes | Retain safe challenge metadata for audit/rate-limit review; never retain plaintext code |
-| OtpAttempt | recorded per verification attempt | tenant, challenge, attemptNo, result, createdAt | At most 5 verification attempts per tenant/challenge in the current release; attempt numbers unique per tenant/challenge | Append-only security record |
-| MessageDelivery | queued -> sent / failed | tenant, challenge, deliveryNo, provider, providerMessageRef, status, redacted errorSummary | At most 3 send attempts per tenant/challenge in the current release; provider response must not store OTP code/secrets/raw sensitive payload | Preserve attempts for troubleshooting and abuse review according to retention policy |
+| OtpChallenge | created -> sent -> verified / expired / locked | tenant when tenant-scoped, user when user-scoped, purpose, targetGsm, codeHash, expiresAt, verifiedAt | Code stored hashed/non-recoverable; 5 minute lifetime in the current release; verification idempotent after success; platform-scoped tenant creation challenges have no tenant; existing challenge target must not silently change if tenant GSM changes | Retain safe challenge metadata for audit/rate-limit review; never retain plaintext code |
+| OtpAttempt | recorded per verification attempt | tenant when tenant-scoped, challenge, attemptNo, result, createdAt | At most 5 verification attempts per challenge in the current release; attempt numbers unique per challenge | Append-only security record |
+| MessageDelivery | queued -> sent / failed | tenant when tenant-scoped, challenge, deliveryNo, provider, providerMessageRef, status, redacted errorSummary | At most 3 send attempts per challenge in the current release; provider response must not store OTP code/secrets/raw sensitive payload | Preserve attempts for troubleshooting and abuse review according to retention policy |
 
 ## App Surfaces
 
 | App | Usage |
 | --- | --- |
-| TenantApp | Tenant admin first password setup |
-| CashierApp | Cashier first password setup |
+| PlatformApp | Tenant creation GSM verification |
+| TenantApp | Staff password reset flows for tenant staff |
+| CashierApp | Cashier password reset flow |
 
 ## Future Service Boundary
 

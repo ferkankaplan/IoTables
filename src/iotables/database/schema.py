@@ -56,6 +56,7 @@ tenants = Table(
     ),
 )
 Index("uq_tenants__subdomain_lower", func.lower(tenants.c.subdomain), unique=True)
+Index("uq_tenants__gsm_number", tenants.c.gsm_number, unique=True)
 Index("ix_tenants__status_created", tenants.c.status, tenants.c.created_at.desc())
 
 tenant_operational_settings = Table(
@@ -1869,9 +1870,14 @@ otp_challenges = Table(
         "tenant_id",
         uuid_type,
         ForeignKey("tenants.id", name="fk_otp_challenges__tenants"),
+        nullable=True,
+    ),
+    Column(
+        "user_id",
+        uuid_type,
+        ForeignKey("users.id", name="fk_otp_challenges__users"),
         nullable=False,
     ),
-    Column("user_id", uuid_type, nullable=False),
     Column("purpose", Text, nullable=False),
     Column("target_gsm", Text, nullable=False),
     Column("code_hash", Text, nullable=False),
@@ -1885,8 +1891,16 @@ otp_challenges = Table(
         name="fk_otp_challenges__tenant_users",
     ),
     CheckConstraint(
-        "purpose in ('tenant_admin_first_password', 'cashier_first_password')",
+        "purpose in ("
+        "'tenant_creation', 'staff_password_reset', "
+        "'tenant_admin_first_password', 'cashier_first_password'"
+        ")",
         name="purpose",
+    ),
+    CheckConstraint(
+        "(purpose = 'tenant_creation' and tenant_id is null) or "
+        "(purpose <> 'tenant_creation' and tenant_id is not null)",
+        name="tenant_scope",
     ),
     CheckConstraint("target_gsm <> ''", name="target_gsm_required"),
     CheckConstraint("code_hash <> ''", name="code_hash_required"),
@@ -1911,9 +1925,14 @@ otp_attempts = Table(
         "tenant_id",
         uuid_type,
         ForeignKey("tenants.id", name="fk_otp_attempts__tenants"),
+        nullable=True,
+    ),
+    Column(
+        "otp_challenge_id",
+        uuid_type,
+        ForeignKey("otp_challenges.id", name="fk_otp_attempts__otp_challenges"),
         nullable=False,
     ),
-    Column("otp_challenge_id", uuid_type, nullable=False),
     Column("attempt_no", Integer, nullable=False),
     Column("result", Text, nullable=False),
     Column("created_at", timestamp_tz, nullable=False),
@@ -1950,9 +1969,14 @@ message_deliveries = Table(
         "tenant_id",
         uuid_type,
         ForeignKey("tenants.id", name="fk_message_deliveries__tenants"),
+        nullable=True,
+    ),
+    Column(
+        "otp_challenge_id",
+        uuid_type,
+        ForeignKey("otp_challenges.id", name="fk_message_deliveries__otp_challenges"),
         nullable=False,
     ),
-    Column("otp_challenge_id", uuid_type, nullable=False),
     Column("delivery_no", Integer, nullable=False),
     Column("provider", Text, nullable=False),
     Column("provider_message_ref", Text),

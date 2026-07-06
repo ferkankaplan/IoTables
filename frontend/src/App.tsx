@@ -462,6 +462,13 @@ type CreateTenantForm = {
   address: string;
 };
 
+type TenantCreationOtpState = {
+  otpChallengeId: string;
+  targetHint: string;
+  expiresAt: string;
+  remainingAttempts: number;
+};
+
 type TenantProfileForm = {
   gsmNumber: string;
   sector: "cafe" | "";
@@ -4095,11 +4102,50 @@ function CreateTenantDrawer({
   onCreated: (result: ProvisioningResult) => void;
 }) {
   const [form, setForm] = useState<CreateTenantForm>(initialForm);
-  const [state, setState] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [state, setState] = useState<"idle" | "otp" | "submitting" | "success" | "error">("idle");
+  const [otpState, setOtpState] = useState<TenantCreationOtpState | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpGsm, setOtpGsm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ProvisioningResult | null>(null);
 
-  const canSubmit = form.name.trim() && form.subdomain.trim() && form.gsmNumber.trim();
+  const gsm = form.gsmNumber.trim();
+  const otpMatchesGsm = otpState !== null && otpGsm === gsm;
+  const canRequestOtp = Boolean(gsm) && state !== "submitting";
+  const canSubmit =
+    form.name.trim() &&
+    form.subdomain.trim() &&
+    gsm &&
+    otpMatchesGsm &&
+    otpCode.trim().length === 6;
+
+  async function requestOtp() {
+    if (!canRequestOtp) {
+      return;
+    }
+    setState("submitting");
+    setError(null);
+    try {
+      const payload = await apiRequest<TenantCreationOtpState>(
+        "/api/platform/tenant-creation-otp/begin",
+        {
+          body: JSON.stringify({ gsmNumber: gsm }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setOtpState(payload);
+      setOtpGsm(gsm);
+      setOtpCode("");
+      setState("otp");
+    } catch (otpError) {
+      setError(errorMessageFrom(otpError));
+      setState("error");
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -4114,10 +4160,12 @@ function CreateTenantDrawer({
         body: JSON.stringify({
           name: form.name.trim(),
           subdomain: form.subdomain.trim(),
-          gsmNumber: form.gsmNumber.trim(),
+          gsmNumber: gsm,
           sector: form.sector || undefined,
           capacity: form.capacity ? Number(form.capacity) : undefined,
-          address: form.address.trim() || undefined
+          address: form.address.trim() || undefined,
+          otpChallengeId: otpState?.otpChallengeId,
+          otpCode: otpCode.trim()
         }),
         headers: {
           "Content-Type": "application/json",
@@ -4164,10 +4212,42 @@ function CreateTenantDrawer({
             />
             <FieldText
               label="GSM"
-              onChange={(value) => setForm((current) => ({ ...current, gsmNumber: value }))}
+              onChange={(value) => {
+                setForm((current) => ({ ...current, gsmNumber: value }));
+                if (value.trim() !== otpGsm) {
+                  setOtpState(null);
+                  setOtpCode("");
+                }
+              }}
               required
               value={form.gsmNumber}
             />
+            <div className="border border-zinc-200 bg-zinc-50 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">GSM doğrulaması</p>
+                  <p className="mt-1 text-xs text-zinc-600">
+                    Tenant oluşturma bu numaraya ait OTP doğrulanmadan başlamaz.
+                  </p>
+                </div>
+                <button
+                  className="h-9 shrink-0 border border-zinc-300 bg-white px-3 text-sm font-medium hover:bg-zinc-100 disabled:cursor-not-allowed disabled:text-zinc-400"
+                  disabled={!canRequestOtp}
+                  onClick={requestOtp}
+                  type="button"
+                >
+                  Kod iste
+                </button>
+              </div>
+              {otpState ? (
+                <div className="mt-3 grid gap-2">
+                  <p className="text-xs text-zinc-600">
+                    Kod gönderildi: {otpState.targetHint}
+                  </p>
+                  <FieldText label="SMS kodu" onChange={setOtpCode} required value={otpCode} />
+                </div>
+              ) : null}
+            </div>
             <label className="block">
               <span className="text-sm font-medium">Sektör</span>
               <select

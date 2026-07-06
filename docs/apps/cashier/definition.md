@@ -20,7 +20,7 @@ CashierApp is not a tenant setup interface. It does not manage halls, tables, st
 
 The initial cashier user is created automatically by PlatformApp during tenant provisioning when the selected sector starter template includes a cashier staff user. For the initial `cafe` template, the cashier username is `kasiyer` and the temporary password is `admin`.
 
-The cashier must change the temporary password on first login and verify the password setup with OTP SMS sent to the tenant GSM number during bootstrap. After creation, the cashier is a normal tenant-owned staff user.
+The cashier must change the temporary password on first login. First-password setup does not require OTP in the current release; later password reset flows use OTP sent to the platform-owned tenant identity GSM. After creation, the cashier is a normal tenant-owned staff user.
 
 ## App Authority
 
@@ -75,8 +75,7 @@ Table and session details should open inside the cashier workspace. A separate f
 1. Cashier opens `https://[tenant].iotables.net/cashier/login`.
 2. CashierApp authenticates against the current tenant.
 3. If the cashier is using the temporary bootstrap password, CashierApp forces password change.
-4. CashierApp verifies the first password setup with OTP SMS sent to the tenant GSM number.
-5. CashierApp opens the cashier workspace after successful login, password change, and OTP verification.
+4. CashierApp opens the cashier workspace after successful login and password change.
 
 ### Monitor Active Sessions
 
@@ -226,7 +225,8 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 - Cashier routes require authentication.
 - Cashier actions require cashier permission.
 - Starter cashier password is temporary and must be changed on first login.
-- Starter cashier first password setup requires OTP SMS verification through the tenant GSM number during bootstrap.
+- Starter cashier first-password setup requires password change without OTP in the current release.
+- Cashier password reset uses OTP sent to the platform-owned tenant identity GSM.
 - Payments and corrections must be audited.
 - CashierApp must not trust frontend-calculated totals.
 - CashierApp must not expose PlatformApp or TenantApp configuration capabilities.

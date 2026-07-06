@@ -12,9 +12,9 @@ CustomerApp does not use these endpoints.
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/auth/login-requirements` | Login surfaces | `identity_access.get_login_requirements` | Public safe read | Query: `appScope`, `username` | `LoginRequirements` | `tenant_unavailable` |
-| `POST` | `/api/auth/login` | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | `identity_access.authenticate` | Public + CSRF if browser form uses cookie preflight | Body: `LoginRequest` | `LoginResult` | `invalid_credentials`, `first_password_change_required`, `otp_required`, `wrong_app_scope` |
-| `POST` | `/api/auth/first-password/begin` | TenantApp, CashierApp, staff apps | `identity_access.begin_first_password_setup` | Setup token | Body: `setupToken` | `FirstPasswordSetupState` | `invalid_credentials`, `otp_required`, `setup_token_invalid` |
-| `POST` | `/api/auth/first-password/complete` | TenantApp, CashierApp, staff apps | `identity_access.complete_first_password_setup` | Setup token + OTP proof when required | Body: `CompleteFirstPasswordRequest` | `LoginResult` or `CredentialSetupResult` | `otp_required`, `otp_invalid`, `password_policy_failed` |
+| `POST` | `/api/auth/login` | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | `identity_access.authenticate` | Public + CSRF if browser form uses cookie preflight | Body: `LoginRequest` | `LoginResult` | `invalid_credentials`, `first_password_change_required`, `wrong_app_scope` |
+| `POST` | `/api/auth/first-password/begin` | TenantApp, CashierApp, staff apps | `identity_access.begin_first_password_setup` | Setup token | Body: `setupToken` | `FirstPasswordSetupState` | `invalid_credentials`, `setup_token_invalid` |
+| `POST` | `/api/auth/first-password/complete` | TenantApp, CashierApp, staff apps | `identity_access.complete_first_password_setup` | Setup token | Body: `CompleteFirstPasswordRequest` | `LoginResult` or `CredentialSetupResult` | `password_policy_failed` |
 | `POST` | `/api/auth/change-password` | Authenticated human apps | `identity_access.change_password` | App session + CSRF | Body: `currentPassword`, `newPassword` | `PasswordChangedResult` | `invalid_credentials`, `password_policy_failed` |
 | `POST` | `/api/auth/totp/enroll` | PlatformApp | `identity_access.enroll_totp` | Reserved for future PlatformApp hardening; not required by current release login | Body: `TotpEnrollRequest` | `LoginResult` | `totp_invalid`, `invalid_credentials`, `totp_already_enrolled` |
 | `POST` | `/api/auth/logout` | Authenticated human apps | `identity_access.logout_or_revoke_session` | App session + CSRF | Body optional: `sessionId` for own session | `LogoutResult` | `not_authorized` |
@@ -69,21 +69,21 @@ In v1, valid Platform Owner username/password creates a PlatformApp session dire
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `status` | string enum | `otp_required` when OTP proof is required before completion. |
+| `status` | string enum | `password_change_required` in the current release. |
 | `setupToken` | string | Existing setup token; no authenticated app session exists yet. |
-| `otpRequired` | boolean | True for Tenant Admin and Cashier first-password setup in the current release. |
-| `otpChallengeId` | string/null | Challenge identifier to submit during completion. |
-| `targetHint` | string/null | Masked tenant GSM display only. |
-| `expiresAt` | timestamp/null | OTP challenge expiry. |
-| `remainingAttempts` | integer/null | Remaining verification attempts; does not reveal the code. |
+| `otpRequired` | boolean | False for all current release first-password setup flows. |
+| `otpChallengeId` | string/null | Null for current release first-password setup. |
+| `targetHint` | string/null | Null for current release first-password setup. |
+| `expiresAt` | timestamp/null | Null for current release first-password setup. |
+| `remainingAttempts` | integer/null | Null for current release first-password setup. |
 
-The OTP code is never returned, logged, or stored in recoverable form. `/api/auth/first-password/begin` creates the OTP challenge and records a redacted SMS delivery attempt; actual provider delivery is handled as a side effect. Repeated begin calls with the same still-valid setup context return the active unverified challenge state instead of creating duplicate OTP challenges.
+The OTP code is never returned, logged, or stored in recoverable form. Current release first-password setup does not create OTP challenges. OTP challenge creation is used by tenant creation and password reset flows.
 
 `LoginResult`:
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `status` | string enum | `authenticated`, `first_password_required`, `otp_required`. |
+| `status` | string enum | `authenticated`, `first_password_required`. |
 | `actor` | `AuthenticatedActor`/null | Present after successful authentication. |
 | `setupToken` | string/null | Returned only for first-password setup. |
 | `expiresAt` | timestamp/null | Login session expiry when authenticated. |
@@ -97,4 +97,4 @@ Successful login sets a Secure, HttpOnly, SameSite cookie scoped for the app/hos
 
 ## Idempotency
 
-Login, logout, password change, and first-password setup do not require `Idempotency-Key`. They rely on credential/session state, setup tokens, OTP challenge guards, and audit records.
+Login, logout, password change, and first-password setup do not require `Idempotency-Key`. They rely on credential/session state, setup tokens, and audit records.

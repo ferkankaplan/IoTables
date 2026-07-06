@@ -13,12 +13,11 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/platform/tenants` | PlatformApp | `tenant_registry.get_health` | Platform Owner session | Query: `status`, `sector`, `q`, `cursor`, `limit` | `TenantHealthList` | `not_authorized` |
 | `GET` | `/api/platform/tenants/{tenantId}` | PlatformApp | `tenant_registry.get_profile` | Platform Owner session | Path: `tenantId` | `TenantProfile` | `not_authorized`, `not_found_or_hidden` |
-| `PATCH` | `/api/platform/tenants/{tenantId}/profile` | PlatformApp | `tenant_registry.update_profile` | Platform Owner session + CSRF | Body: `gsmNumber?`, `sector?`, `capacity?`, `address?` | `TenantProfile` | `immutable_identity`, `validation_failed` |
+| `PATCH` | `/api/platform/tenants/{tenantId}/profile` | PlatformApp | `tenant_registry.update_profile` | Platform Owner session + CSRF | Body: `gsmNumber?`, `sector?`, `capacity?`, `address?` | `TenantProfile` | `immutable_identity`, `duplicate_tenant_gsm`, `validation_failed` |
 | `POST` | `/api/platform/tenants/{tenantId}/status` | PlatformApp | `tenant_registry.change_status` | Platform Owner session + CSRF | Body: `nextStatus`, `reason` | `TenantProfile` | `invalid_lifecycle_transition`, `reason_required` |
 | `GET` | `/api/platform/tenants/{tenantId}/lifecycle-events` | PlatformApp | `tenant_registry.get_lifecycle_events` | Platform Owner session | Query: `cursor`, `limit` | `TenantLifecycleEventList` | `not_authorized` |
 | `GET` | `/api/tenant/context` | TenantApp, runtime apps | `tenant_registry.resolve_by_subdomain` | Public safe read | Host-derived subdomain | `TenantContext` | `tenant_unavailable` |
 | `GET` | `/api/tenant/profile` | TenantApp | `tenant_registry.get_profile` | Tenant Admin session | Host-derived tenant | `TenantProfile` | `not_authorized`, `tenant_unavailable` |
-| `PATCH` | `/api/tenant/profile` | TenantApp | `tenant_registry.update_profile` | Tenant Admin session + CSRF | Body: editable profile fields except `name`, `subdomain`, `status` | `TenantProfile` | `immutable_identity`, `not_authorized` |
 
 ## Request Schemas
 
@@ -26,12 +25,12 @@ Tenant-scoped apps resolve tenant context from host/subdomain. They must not tru
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `gsmNumber` | string | no | Tenant GSM. Changing it is audited. |
+| `gsmNumber` | string | no | Platform-owned tenant identity GSM. Only PlatformApp can change it. Changing it is audited and must remain unique. |
 | `sector` | string enum | no | Must be supported by Sector Starter Templates. Does not rerun starter data. |
 | `capacity` | integer | no | Optional restaurant capacity. |
 | `address` | object/string | no | Optional address shape can be refined before implementation. |
 
-`PATCH` semantics are partial: omitted fields are unchanged, while explicit `null` clears nullable fields. `gsmNumber` cannot be cleared.
+`PATCH` semantics are partial: omitted fields are unchanged, while explicit `null` clears nullable fields. `gsmNumber` cannot be cleared and cannot be changed by TenantApp.
 
 `TenantStatusChangeRequest`:
 
