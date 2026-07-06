@@ -51,7 +51,7 @@ class FakeIdentityAccessService:
         self.login_tenant_subdomain = tenant_subdomain
         return LoginResult(
             status="authenticated",
-            actor=platform_actor() if app_scope == AppScope.PLATFORM else tenant_actor(),
+            actor=actor_for_scope(app_scope),
             session_token="raw-session-token",
             expires_at=datetime(2026, 7, 2, 12, 0, tzinfo=UTC),
         )
@@ -114,6 +114,29 @@ def tenant_actor() -> ActorContext:
         user_id=USER_ID,
         tenant_id=UUID("44444444-4444-4444-4444-444444444444"),
         roles=frozenset({StaffRole.TENANT_ADMIN}),
+        session_id=SESSION_ID,
+    )
+
+
+def actor_for_scope(app_scope: AppScope) -> ActorContext:
+    if app_scope == AppScope.PLATFORM:
+        return platform_actor()
+    if app_scope == AppScope.CASHIER:
+        return tenant_actor_for_scope(app_scope, StaffRole.CASHIER)
+    if app_scope == AppScope.STATION:
+        return tenant_actor_for_scope(app_scope, StaffRole.STATION_STAFF)
+    if app_scope == AppScope.SERVICE:
+        return tenant_actor_for_scope(app_scope, StaffRole.SERVICE_STAFF)
+    return tenant_actor()
+
+
+def tenant_actor_for_scope(app_scope: AppScope, role: StaffRole) -> ActorContext:
+    return ActorContext(
+        actor_type=ActorType.TENANT_USER,
+        app_scope=app_scope,
+        user_id=USER_ID,
+        tenant_id=UUID("44444444-4444-4444-4444-444444444444"),
+        roles=frozenset({role}),
         session_id=SESSION_ID,
     )
 
@@ -185,6 +208,30 @@ def test_tenant_login_passes_header_tenant_context_to_identity_service() -> None
     assert service.login_app_scope == AppScope.TENANT
     assert service.login_username == "demo"
     assert service.login_password == "secret"
+    assert service.login_tenant_subdomain == "demo-cafe"
+
+
+def test_staff_app_login_passes_app_scope_and_tenant_context_to_identity_service() -> None:
+    service = FakeIdentityAccessService()
+    client = make_client(service)
+
+    response = client.post(
+        "/api/auth/login",
+        headers={"X-Tenant-Subdomain": "demo-cafe"},
+        json={
+            "appScope": "station",
+            "username": "asci",
+            "password": "admin",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "authenticated"
+    assert response.json()["actor"]["appScope"] == "station"
+    assert response.json()["actor"]["roles"] == ["station_staff"]
+    assert service.login_app_scope == AppScope.STATION
+    assert service.login_username == "asci"
+    assert service.login_password == "admin"
     assert service.login_tenant_subdomain == "demo-cafe"
 
 

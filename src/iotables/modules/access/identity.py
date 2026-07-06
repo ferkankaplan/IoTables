@@ -33,6 +33,17 @@ SESSION_TTL = timedelta(hours=8)
 FIRST_PASSWORD_SETUP_TTL = timedelta(minutes=15)
 FIRST_PASSWORD_PURPOSE = "first_password"
 TENANT_ADMIN_OTP_PURPOSE = "tenant_admin_first_password"
+CASHIER_OTP_PURPOSE = "cashier_first_password"
+APP_SCOPE_REQUIRED_ROLES = {
+    AppScope.TENANT: StaffRole.TENANT_ADMIN,
+    AppScope.CASHIER: StaffRole.CASHIER,
+    AppScope.STATION: StaffRole.STATION_STAFF,
+    AppScope.SERVICE: StaffRole.SERVICE_STAFF,
+}
+FIRST_PASSWORD_OTP_PURPOSES = {
+    AppScope.TENANT: TENANT_ADMIN_OTP_PURPOSE,
+    AppScope.CASHIER: CASHIER_OTP_PURPOSE,
+}
 
 
 @dataclass(frozen=True)
@@ -177,11 +188,12 @@ class IdentityAccessService:
     async def get_login_requirements(
         self, *, app_scope: AppScope, username: str, tenant_subdomain: str | None = None
     ) -> dict[str, object]:
-        if app_scope == AppScope.TENANT:
+        required_role = APP_SCOPE_REQUIRED_ROLES.get(app_scope)
+        if required_role is not None:
             user_row = await self._load_tenant_user(
                 username=normalize_username(username),
                 tenant_subdomain=tenant_subdomain,
-                required_role="tenant_admin",
+                required_role=required_role.value,
             )
             return {
                 "status": "password_required",
@@ -228,16 +240,23 @@ class IdentityAccessService:
                 totp_code=totp_code,
             )
         if app_scope == AppScope.TENANT:
-            return await self.authenticate_tenant(
+            return await self.authenticate_tenant_user(
                 username=username,
                 password=password,
                 tenant_subdomain=tenant_subdomain,
+                app_scope=app_scope,
+                required_role=StaffRole.TENANT_ADMIN,
             )
-        raise ApiError(
-            status_code=403,
-            code="wrong_app_scope",
-            message="This session cannot access this app.",
-        )
+        required_role = APP_SCOPE_REQUIRED_ROLES.get(app_scope)
+        if required_role is not None:
+            return await self.authenticate_tenant_user(
+                username=username,
+                password=password,
+                tenant_subdomain=tenant_subdomain,
+                app_scope=app_scope,
+                required_role=required_role,
+            )
+        raise wrong_app_scope()
 
     async def authenticate_platform(
         self,
@@ -261,17 +280,19 @@ class IdentityAccessService:
 
         return await self._create_platform_session(user_id=user_row["id"])
 
-    async def authenticate_tenant(
+    async def authenticate_tenant_user(
         self,
         *,
         username: str,
         password: str,
         tenant_subdomain: str | None,
+        app_scope: AppScope,
+        required_role: StaffRole,
     ) -> LoginResult:
         user_row = await self._load_tenant_user(
             username=normalize_username(username),
             tenant_subdomain=tenant_subdomain,
-            required_role="tenant_admin",
+            required_role=required_role.value,
         )
         if user_row is None:
             raise invalid_credentials()
@@ -297,24 +318,28 @@ class IdentityAccessService:
                 setup_token=self._issue_first_password_setup_token(
                     user_id=user_row["id"],
                     tenant_id=user_row["tenant_id"],
-                    app_scope=AppScope.TENANT,
+                    app_scope=app_scope,
                 ),
             )
 
         return await self._create_tenant_session(
             user_id=user_row["id"],
             tenant_id=user_row["tenant_id"],
+            app_scope=app_scope,
+            role=required_role,
         )
 
     async def begin_first_password_setup(self, *, setup_token: str) -> FirstPasswordSetupState:
         token_payload = self._parse_first_password_setup_token(setup_token)
-        if token_payload["app_scope"] != AppScope.TENANT:
+        app_scope = token_payload["app_scope"]
+        required_role = APP_SCOPE_REQUIRED_ROLES.get(app_scope)
+        if required_role is None:
             raise setup_token_invalid()
 
         user_row = await self._load_tenant_setup_user(
             user_id=token_payload["user_id"],
             tenant_id=token_payload["tenant_id"],
-            required_role=StaffRole.TENANT_ADMIN.value,
+            required_role=required_role.value,
         )
         if user_row is None or not user_row["first_password_change_required"]:
             raise setup_token_invalid()
@@ -322,11 +347,23 @@ class IdentityAccessService:
             raise setup_token_invalid()
 
         now = utc_now()
+        otp_purpose = FIRST_PASSWORD_OTP_PURPOSES.get(app_scope)
+        if otp_purpose is None:
+            return FirstPasswordSetupState(
+                status="password_change_required",
+                setup_token=setup_token,
+                otp_required=False,
+                otp_challenge_id=None,
+                target_hint=None,
+                expires_at=None,
+                remaining_attempts=None,
+            )
+
         otp = OtpMessagingService(self.session, self.settings.security_secret_key)
         challenge = await otp.create_challenge(
             tenant_id=user_row["tenant_id"],
             user_id=user_row["id"],
-            purpose=TENANT_ADMIN_OTP_PURPOSE,
+            purpose=otp_purpose,
             target_gsm=user_row["tenant_gsm"],
             now=now,
         )
@@ -357,35 +394,39 @@ class IdentityAccessService:
             )
 
         token_payload = self._parse_first_password_setup_token(setup_token)
-        if token_payload["app_scope"] != AppScope.TENANT:
+        app_scope = token_payload["app_scope"]
+        required_role = APP_SCOPE_REQUIRED_ROLES.get(app_scope)
+        if required_role is None:
             raise setup_token_invalid()
 
         user_row = await self._load_tenant_setup_user(
             user_id=token_payload["user_id"],
             tenant_id=token_payload["tenant_id"],
-            required_role=StaffRole.TENANT_ADMIN.value,
+            required_role=required_role.value,
         )
         if user_row is None or not user_row["first_password_change_required"]:
             raise setup_token_invalid()
         if not user_row["bootstrap_credential"]:
             raise setup_token_invalid()
-        if otp_challenge_id is None or not otp_code:
-            raise ApiError(
-                status_code=403,
-                code="otp_required",
-                message="OTP proof is required.",
-            )
 
         now = utc_now()
-        otp = OtpMessagingService(self.session, self.settings.security_secret_key)
-        await otp.verify(
-            tenant_id=user_row["tenant_id"],
-            user_id=user_row["id"],
-            challenge_id=otp_challenge_id,
-            purpose=TENANT_ADMIN_OTP_PURPOSE,
-            code=otp_code,
-            now=now,
-        )
+        otp_purpose = FIRST_PASSWORD_OTP_PURPOSES.get(app_scope)
+        if otp_purpose is not None:
+            if otp_challenge_id is None or not otp_code:
+                raise ApiError(
+                    status_code=403,
+                    code="otp_required",
+                    message="OTP proof is required.",
+                )
+            otp = OtpMessagingService(self.session, self.settings.security_secret_key)
+            await otp.verify(
+                tenant_id=user_row["tenant_id"],
+                user_id=user_row["id"],
+                challenge_id=otp_challenge_id,
+                purpose=otp_purpose,
+                code=otp_code,
+                now=now,
+            )
         await self.session.execute(
             update(credentials)
             .where(credentials.c.user_id == user_row["id"])
@@ -403,15 +444,16 @@ class IdentityAccessService:
             )
             .values(first_password_change_required=False, updated_at=now)
         )
-        await self._insert_audit_event(
-            tenant_id=user_row["tenant_id"],
-            actor_user_id=user_row["id"],
-            action="otp.verified",
-            target_type="otp_challenge",
-            target_id=str(otp_challenge_id),
-            metadata={"purpose": TENANT_ADMIN_OTP_PURPOSE},
-            created_at=now,
-        )
+        if otp_purpose is not None and otp_challenge_id is not None:
+            await self._insert_audit_event(
+                tenant_id=user_row["tenant_id"],
+                actor_user_id=user_row["id"],
+                action="otp.verified",
+                target_type="otp_challenge",
+                target_id=str(otp_challenge_id),
+                metadata={"purpose": otp_purpose},
+                created_at=now,
+            )
         await self._insert_audit_event(
             tenant_id=user_row["tenant_id"],
             actor_user_id=user_row["id"],
@@ -425,6 +467,8 @@ class IdentityAccessService:
         return await self._create_tenant_session(
             user_id=user_row["id"],
             tenant_id=user_row["tenant_id"],
+            app_scope=app_scope,
+            role=required_role,
         )
 
     async def enroll_platform_totp(
@@ -472,7 +516,14 @@ class IdentityAccessService:
 
         return await self._create_platform_session(user_id=user_row["id"])
 
-    async def _create_tenant_session(self, *, user_id: UUID, tenant_id: UUID) -> LoginResult:
+    async def _create_tenant_session(
+        self,
+        *,
+        user_id: UUID,
+        tenant_id: UUID,
+        app_scope: AppScope,
+        role: StaffRole,
+    ) -> LoginResult:
         now = utc_now()
         expires_at = now + SESSION_TTL
         session_token = generate_session_token()
@@ -482,7 +533,7 @@ class IdentityAccessService:
                 id=session_id,
                 tenant_id=tenant_id,
                 user_id=user_id,
-                app_scope=AppScope.TENANT.value,
+                app_scope=app_scope.value,
                 session_token_hash=hash_session_token(session_token),
                 issued_at=now,
                 expires_at=expires_at,
@@ -492,10 +543,10 @@ class IdentityAccessService:
 
         actor = ActorContext(
             actor_type=ActorType.TENANT_USER,
-            app_scope=AppScope.TENANT,
+            app_scope=app_scope,
             user_id=user_id,
             tenant_id=tenant_id,
-            roles=frozenset({StaffRole.TENANT_ADMIN}),
+            roles=frozenset({role}),
             session_id=session_id,
         )
         return LoginResult(
@@ -770,6 +821,14 @@ def invalid_credentials() -> ApiError:
         status_code=401,
         code="invalid_credentials",
         message="Invalid username or password.",
+    )
+
+
+def wrong_app_scope() -> ApiError:
+    return ApiError(
+        status_code=403,
+        code="wrong_app_scope",
+        message="This session cannot access this app.",
     )
 
 
