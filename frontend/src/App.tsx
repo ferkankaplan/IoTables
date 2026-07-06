@@ -480,9 +480,6 @@ const initialForm: CreateTenantForm = {
 
 export function App() {
   const appSurface = detectAppSurface();
-  if (appSurface === "customer") {
-    return <CustomerMenuApp />;
-  }
 
   const [authState, setAuthState] = useState<"checking" | "authenticated" | "anonymous">(
     "checking"
@@ -695,25 +692,46 @@ export function App() {
     return <TenantUnavailableScreen />;
   }
 
+  if (appSurface === "customer") {
+    return <CustomerMenuApp />;
+  }
+
+  if (appSurface === "tenant-public") {
+    return <TenantPublicScreen tenant={tenantContext} />;
+  }
+
   if (authState === "anonymous") {
     const handleAuthenticated = (nextActor: AuthenticatedActor) => {
       setActor(nextActor);
       setAuthState("authenticated");
     };
-    return appSurface === "tenant" || appSurface === "service" || appSurface === "cashier" ? (
+    return appSurface === "tenant" ||
+      appSurface === "service" ||
+      appSurface === "cashier" ||
+      appSurface === "station" ? (
       <TenantLoginScreen
         appScope={
-          appSurface === "service" ? "service" : appSurface === "cashier" ? "cashier" : "tenant"
+          appSurface === "service"
+            ? "service"
+            : appSurface === "cashier"
+              ? "cashier"
+              : appSurface === "station"
+                ? "station"
+                : "tenant"
         }
         defaultUsername={
-          appSurface === "service" || appSurface === "cashier" ? "" : tenantSubdomainFromLocation()
+          appSurface === "service" || appSurface === "cashier" || appSurface === "station"
+            ? ""
+            : tenantSubdomainFromLocation()
         }
         heading={
           appSurface === "service"
             ? "Servis girişi"
             : appSurface === "cashier"
               ? "Kasa girişi"
-              : "Tenant girişi"
+              : appSurface === "station"
+                ? "İstasyon girişi"
+                : "Tenant girişi"
         }
         tenantName={tenantContext?.name ?? tenantSubdomainFromLocation()}
         onAuthenticated={handleAuthenticated}
@@ -725,6 +743,10 @@ export function App() {
 
   if (appSurface === "service") {
     return <ServiceStaffSignedInScreen actor={actor} onLogout={() => void logout()} />;
+  }
+
+  if (appSurface === "station") {
+    return <StationStaffSignedInScreen actor={actor} onLogout={() => void logout()} />;
   }
 
   if (appSurface === "cashier") {
@@ -986,7 +1008,7 @@ function TenantLoginScreen({
   tenantName,
   onAuthenticated
 }: {
-  appScope: "cashier" | "service" | "tenant";
+  appScope: "cashier" | "service" | "station" | "tenant";
   defaultUsername: string;
   heading: string;
   tenantName: string;
@@ -1172,6 +1194,62 @@ function TenantUnavailableScreen() {
   );
 }
 
+function TenantPublicScreen({ tenant }: { tenant: TenantContext | null }) {
+  return (
+    <main className="min-h-screen bg-stone-100 text-zinc-950">
+      <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center px-5 py-10">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          {tenant?.subdomain
+            ? tenantHost(tenant.subdomain)
+            : tenantHost(tenantSubdomainFromLocation())}
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold">{tenant?.name ?? "İşletme bilgileri"}</h1>
+        <div className="mt-6 grid gap-3 text-sm sm:grid-cols-3">
+          <div className="border border-zinc-200 bg-white px-4 py-3">
+            <p className="text-zinc-500">Sektör</p>
+            <p className="mt-1 font-medium">
+              {tenant?.sector === "cafe" ? "Kafe" : "Belirtilmedi"}
+            </p>
+          </div>
+          <div className="border border-zinc-200 bg-white px-4 py-3">
+            <p className="text-zinc-500">Kapasite</p>
+            <p className="mt-1 font-medium">{tenant?.capacity ?? "Belirtilmedi"}</p>
+          </div>
+          <div className="border border-zinc-200 bg-white px-4 py-3">
+            <p className="text-zinc-500">Durum</p>
+            <p className="mt-1 font-medium">Siparişe hazır</p>
+          </div>
+        </div>
+        {tenant?.address ? (
+          <div className="mt-3 border border-zinc-200 bg-white px-4 py-3 text-sm">
+            <p className="text-zinc-500">Adres</p>
+            <p className="mt-1 font-medium">{tenant.address}</p>
+          </div>
+        ) : null}
+      </section>
+    </main>
+  );
+}
+
+function ForbiddenScreen({ appName, onLogout }: { appName: string; onLogout: () => void }) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-stone-100 px-4 text-zinc-950">
+      <section className="w-full max-w-sm border border-zinc-200 bg-white px-5 py-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{appName}</p>
+        <h1 className="mt-2 text-2xl font-semibold">Yetkisiz oturum</h1>
+        <p className="mt-3 text-sm text-zinc-600">Bu oturum bu uygulama yüzeyine erişemez.</p>
+        <button
+          className="mt-5 h-10 border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white"
+          onClick={onLogout}
+          type="button"
+        >
+          Çıkış yap
+        </button>
+      </section>
+    </main>
+  );
+}
+
 function TenantSignedInScreen({
   actor,
   onLogout
@@ -1299,6 +1377,43 @@ function TenantSignedInScreen({
             )}
           </div>
         </section>
+      </section>
+    </main>
+  );
+}
+
+function StationStaffSignedInScreen({
+  actor,
+  onLogout
+}: {
+  actor: AuthenticatedActor | null;
+  onLogout: () => void;
+}) {
+  if (actor?.appScope !== "station" || !actor.roles.includes("station_staff")) {
+    return <ForbiddenScreen appName="StationStaffApp" onLogout={onLogout} />;
+  }
+
+  return (
+    <main className="min-h-screen bg-stone-100 text-zinc-950">
+      <header className="border-b border-zinc-200 bg-white px-5 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+              StationStaffApp
+            </p>
+            <h1 className="text-2xl font-semibold">İstasyon kuyruğu</h1>
+          </div>
+          <button
+            className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+            onClick={onLogout}
+            type="button"
+          >
+            Çıkış yap
+          </button>
+        </div>
+      </header>
+      <section className="px-5 py-5">
+        <StateBlock title="Yetkili istasyon seçimi ve kuyruk verisi yüklenmeyi bekliyor." />
       </section>
     </main>
   );
@@ -4286,7 +4401,16 @@ function tenantHost(subdomain: string): string {
   return `${subdomain}.${tenantRootDomainFromLocation()}`;
 }
 
-function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "tenant" {
+type AppSurface =
+  | "cashier"
+  | "customer"
+  | "platform"
+  | "service"
+  | "station"
+  | "tenant"
+  | "tenant-public";
+
+function detectAppSurface(): AppSurface {
   const params = new URLSearchParams(window.location.search);
   if (params.get("app") === "cashier") {
     return "cashier";
@@ -4297,8 +4421,14 @@ function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "
   if (params.get("app") === "service") {
     return "service";
   }
+  if (params.get("app") === "station") {
+    return "station";
+  }
   if (params.get("app") === "tenant") {
     return "tenant";
+  }
+  if (params.get("app") === "tenant-public") {
+    return "tenant-public";
   }
   if (window.location.pathname.startsWith("/order")) {
     return "customer";
@@ -4306,14 +4436,29 @@ function detectAppSurface(): "cashier" | "customer" | "platform" | "service" | "
   if (window.location.pathname.startsWith("/cashier")) {
     return "cashier";
   }
+  if (window.location.pathname.startsWith("/station")) {
+    return "station";
+  }
   if (window.location.pathname.startsWith("/service")) {
     return "service";
   }
-  return tenantSubdomainFromHostname(window.location.hostname.toLowerCase()) ? "tenant" : "platform";
+  if (window.location.pathname.startsWith("/login") || window.location.pathname.startsWith("/admin")) {
+    return tenantSubdomainFromHostname(window.location.hostname.toLowerCase()) ? "tenant" : "platform";
+  }
+  return tenantSubdomainFromHostname(window.location.hostname.toLowerCase())
+    ? "tenant-public"
+    : "platform";
 }
 
-function requiresTenantContext(appSurface: ReturnType<typeof detectAppSurface>): boolean {
-  return appSurface === "tenant" || appSurface === "service" || appSurface === "cashier";
+function requiresTenantContext(appSurface: AppSurface): boolean {
+  return (
+    appSurface === "tenant" ||
+    appSurface === "tenant-public" ||
+    appSurface === "service" ||
+    appSurface === "station" ||
+    appSurface === "cashier" ||
+    appSurface === "customer"
+  );
 }
 
 function tenantSubdomainFromLocation(): string {
