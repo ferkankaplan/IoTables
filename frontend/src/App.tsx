@@ -449,9 +449,26 @@ type ApiErrorEnvelope = {
   error?: {
     code?: string;
     message?: string;
+    requestId?: string;
     fieldErrors?: { path: string; message: string }[];
   };
 };
+
+class ApiRequestError extends Error {
+  code: string;
+  requestId: string | null;
+  fieldErrors: { path: string; message: string }[];
+
+  constructor(envelope: ApiErrorEnvelope) {
+    const error = envelope.error ?? {};
+    const code = error.code ?? "request_failed";
+    super(error.message ?? "Request failed.");
+    this.name = "ApiRequestError";
+    this.code = code;
+    this.requestId = error.requestId ?? null;
+    this.fieldErrors = error.fieldErrors ?? [];
+  }
+}
 
 type CreateTenantForm = {
   name: string;
@@ -4391,15 +4408,72 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       payload = {};
     }
-    throw new Error(payload.error?.message ?? "İstek tamamlanamadı.");
+    throw new ApiRequestError(payload);
   }
 
   return (await response.json()) as T;
 }
 
 function errorMessageFrom(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    const baseMessage = apiErrorMessages[error.code] ?? "İşlem tamamlanamadı.";
+    const fieldMessage =
+      error.fieldErrors.length > 0
+        ? ` ${error.fieldErrors.map((field) => field.message).join(" ")}`
+        : "";
+    const requestMessage = error.requestId ? ` Hata kodu: ${error.requestId}` : "";
+    return `${baseMessage}${fieldMessage}${requestMessage}`;
+  }
   return error instanceof Error ? error.message : "İstek tamamlanamadı.";
 }
+
+const apiErrorMessages: Record<string, string> = {
+  active_session_blocks_disable: "Aktif oturum varken bu kayıt devre dışı bırakılamaz.",
+  bad_request: "İstek biçimi geçersiz.",
+  check_closed: "Adisyon kapalı olduğu için bu işlem yapılamaz.",
+  csrf_required: "Güvenlik doğrulaması eksik. Sayfayı yenileyip tekrar deneyin.",
+  display_not_authenticated: "Masa ekranı doğrulanamadı.",
+  duplicate_category: "Aynı ad veya sıra ile kategori zaten var.",
+  duplicate_hall: "Bu salon zaten var.",
+  duplicate_menu_item: "Aynı adla ürün, varyant veya seçenek zaten var.",
+  duplicate_station: "Bu istasyon zaten var.",
+  duplicate_subdomain: "Bu subdomain zaten kullanılıyor.",
+  duplicate_table: "Bu masa zaten var.",
+  duplicate_tenant_gsm: "Bu GSM numarasıyla kayıtlı bir tenant zaten var.",
+  duplicate_username: "Bu kullanıcı adı zaten kullanılıyor.",
+  fresh_presence_required: "Devam etmek için masadaki güncel QR kodu tekrar okutun.",
+  idempotency_conflict: "Bu işlem anahtarı farklı bir istek için kullanılmış.",
+  idempotency_key_required: "Bu işlem için tekrar önleme anahtarı eksik.",
+  invalid_credentials: "Kullanıcı adı veya şifre hatalı.",
+  invalid_lifecycle_transition: "Bu tenant durumu için istenen geçiş yapılamaz.",
+  invalid_preparation_transition: "Bu hazırlık durumunda istenen işlem yapılamaz.",
+  invalid_session_state: "Oturumun mevcut durumu bu işleme izin vermiyor.",
+  invalid_state: "Mevcut durum bu işleme izin vermiyor.",
+  item_not_orderable: "Bu ürün şu anda sipariş edilemiyor.",
+  menu_item_requires_default_variant: "Ürünün sipariş edilebilir bir varsayılan varyantı olmalı.",
+  not_authorized: "Bu işlemi yapma yetkiniz yok.",
+  not_found_or_hidden: "Kayıt bulunamadı veya bu oturum için görünür değil.",
+  otp_expired: "Doğrulama kodunun süresi doldu. Yeni kod isteyin.",
+  otp_invalid: "Doğrulama kodu hatalı.",
+  otp_locked: "Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.",
+  overpayment_not_allowed: "Ödeme tutarı kalan bakiyeyi aşamaz.",
+  payment_cannot_be_voided: "Bu ödeme iptal edilemez.",
+  product_variant_mismatch: "Seçilen varyant bu ürüne ait değil.",
+  rate_limit_exceeded: "Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.",
+  reason_required: "Bu işlem için açıklama girmek zorunlu.",
+  setup_token_invalid: "Şifre kurulum bağlantısı geçersiz veya süresi dolmuş.",
+  session_expired: "Oturum süresi doldu. Tekrar giriş yapın.",
+  station_has_active_menu_items: "Bu istasyona bağlı aktif menü ürünleri var.",
+  station_has_active_work: "Bu istasyonda aktif hazırlık işi var.",
+  station_unavailable: "Seçilen istasyon kullanılamıyor.",
+  tenant_unavailable: "Bu işletme şu anda erişilebilir değil.",
+  token_consumed: "Bu QR kod daha önce kullanılmış. Masadaki yeni kodu okutun.",
+  token_expired: "QR kodun süresi doldu. Masadaki yeni kodu okutun.",
+  unauthenticated: "Devam etmek için giriş yapın.",
+  validation_failed: "Bazı alanlar hatalı veya eksik.",
+  wrong_app_scope: "Bu oturum bu uygulamaya erişemez.",
+  wrong_scope: "Bu oturum bu işlem için uygun değil."
+};
 
 function auditMetadataSummary(metadata: Record<string, unknown>): string {
   const changedFields = metadata.changedFields;
