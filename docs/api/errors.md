@@ -30,6 +30,11 @@ All API errors use:
 
 Do not expose stack traces, SQL messages, provider raw payloads, secrets, token values, or internal implementation paths.
 
+Frontend surfaces must not show backend fallback text directly when a stable `error.code`
+exists. User-facing apps translate known error codes into short Turkish action messages
+and may append the `requestId` for support/debugging. Backend messages remain safe
+fallbacks and API diagnostics, not the primary UX copy source.
+
 ## Field Errors
 
 Use `fieldErrors` for request validation problems:
