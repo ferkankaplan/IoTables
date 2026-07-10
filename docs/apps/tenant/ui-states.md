@@ -39,7 +39,7 @@
 ### Success and Confirmation States
 
 - Halls/tables save in context without leaving Hall Management.
-- Table display provisioning shows claim created, waiting for device, provisioned, revoked/re-provisioned states.
+- Table display provisioning shows firmware generation, one-time download, provisioned, revoked/re-provisioned states.
 - Menu save shows product availability/orderability state.
 - Service delivery tracking change shows immediate impact on ServiceStaffApp and customer-visible status semantics.
 - Staff scope changes show which apps the user can access.

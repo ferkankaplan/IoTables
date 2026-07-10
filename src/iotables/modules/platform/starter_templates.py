@@ -26,7 +26,6 @@ class StarterTemplate:
     template_version: int
     service_delivery_tracking_enabled: bool
     halls: tuple[str, ...]
-    tables_per_hall: tuple[str, ...]
     stations: tuple[str, ...]
     products: tuple[StarterProduct, ...]
     staff: tuple[StarterStaff, ...]
@@ -38,7 +37,6 @@ CAFE_V1_TEMPLATE = StarterTemplate(
     template_version=1,
     service_delivery_tracking_enabled=True,
     halls=("Salon 1", "Salon 2"),
-    tables_per_hall=("Masa 000", "Masa 001", "Masa 999"),
     stations=("Mutfak", "Kahve"),
     products=(
         StarterProduct("Mutfak", "Yiyecekler", "Sandviç", "Standart", 18000),

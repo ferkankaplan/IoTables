@@ -144,10 +144,9 @@ Frontend visibility is never authorization proof.
 | `menu_catalog.manage_variant` | TenantApp, Provisioning | Tenant Admin own tenant or Provisioning | Non-negative price; one default variant |
 | `menu_catalog.manage_modifiers` | TenantApp, Provisioning | Tenant Admin own tenant or Provisioning | Selection bounds valid |
 | `menu_catalog.set_availability` | TenantApp | Tenant Admin own tenant | Target product/variant belongs to tenant |
-| `table_display.create_claim` | TenantApp | Tenant Admin own tenant | Table belongs to tenant and is enabled |
-| `table_display.consume_claim` | ESP32 setup flow | Valid raw claim secret | Claim unexpired/unconsumed |
+| `table_display.generate_firmware` | TenantApp | Tenant Admin own tenant | Table belongs to tenant and is enabled; WiFi fields supplied |
 | `table_display.revoke_credential` | TenantApp | Tenant Admin own tenant | Credential belongs to table/tenant |
-| `table_display.rotate_credential` | TenantApp, claim consumption flow | Tenant Admin or valid claim flow | Old active credential revoked before new active credential |
+| `table_display.rotate_credential` | TenantApp firmware generation flow | Tenant Admin | Old active credential revoked before new active credential |
 | `tenant_operational_settings.update_settings` | TenantApp, Provisioning | Tenant Admin own tenant or Provisioning | Own tenant settings only; service tracking change audited |
 
 ## Tenant Setup Queries
@@ -166,7 +165,7 @@ Frontend visibility is never authorization proof.
 | `menu_catalog.price_cart_item` | Customer Ordering | Internal server-side pricing | Price snapshot inputs; ignores client price |
 | `menu_catalog.read_order_item_routing` | Ordering, Fulfillment | Internal module scope | Routing and label snapshot inputs |
 | `table_display.authenticate_credential` | ESP32 QR fetch flow, Table Presence | Raw display credential hash match | Trusted tenant/table display context |
-| `table_display.get_display_state` | TenantApp | Tenant Admin own tenant | Claim/credential status without raw secrets |
+| `table_display.get_display_state` | TenantApp | Tenant Admin own tenant | Credential/firmware status without raw secrets |
 | `tenant_operational_settings.get_settings` | TenantApp | Tenant Admin own tenant | Full tenant operational settings |
 | `tenant_operational_settings.get_public_display_context` | TenantApp public page, Tenant Registry composition | Public-safe tenant route | Public display name fallback context |
 | `tenant_operational_settings.is_service_delivery_tracking_enabled` | Fulfillment, ServiceStaffApp guards, CustomerApp/CashierApp visibility mapping | Internal or authenticated tenant-scoped caller | Boolean tracking mode |
@@ -286,7 +285,7 @@ The ESP32 table display is not a user.
 
 | Action | Required Guard |
 | --- | --- |
-| Consume setup claim | Valid unexpired one-time claim |
+| Generate setup firmware | Tenant Admin session; one-time firmware download; raw WiFi and credential secrets never logged |
 | Fetch current QR | Active TableDisplayCredential |
 | Identify table | Backend resolves tenant/table from credential |
 | Submit orders or mutate tenant data | Never allowed |

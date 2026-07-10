@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from iotables.api.cashier import (
     get_customer_ordering_service,
     get_payment_service,
+    get_table_presence_service,
     get_table_session_billing_service,
 )
 from iotables.main import create_app
@@ -14,6 +15,7 @@ from iotables.modules.ordering.customer_ordering import (
     CashierOrderItem,
     CashierOrderList,
 )
+from iotables.modules.ordering.table_presence import QrTokenPayload
 from iotables.modules.settlement.payments import (
     Payment,
     PaymentList,
@@ -51,9 +53,15 @@ class FakeSessionResolver:
 class FakeBillingService:
     def __init__(self) -> None:
         self.close_args: dict[str, object] | None = None
+        self.venue_board_args: dict[str, object] | None = None
 
-    async def venue_board(self, *, actor: ActorContext) -> CashierVenueBoard:
-        _ = actor
+    async def venue_board(
+        self, *, actor: ActorContext, include_virtual_test_tables: bool = False
+    ) -> CashierVenueBoard:
+        self.venue_board_args = {
+            "actor": actor,
+            "include_virtual_test_tables": include_virtual_test_tables,
+        }
         return CashierVenueBoard(
             tables=(
                 CashierTableState(
@@ -61,6 +69,7 @@ class FakeBillingService:
                     hall_id=HALL_ID,
                     table_label="Masa 001",
                     hall_label="Salon 1",
+                    mode="physical",
                     table_session_id=TABLE_SESSION_ID,
                     check_id=CHECK_ID,
                     status="occupied",
@@ -186,6 +195,21 @@ class FakePaymentService:
         )
 
 
+class FakeTablePresenceService:
+    def __init__(self) -> None:
+        self.preview_args: dict[str, object] | None = None
+
+    async def issue_virtual_table_qr_preview(
+        self, *, actor: ActorContext, table_id: UUID
+    ) -> QrTokenPayload:
+        self.preview_args = {"actor": actor, "table_id": table_id}
+        return QrTokenPayload(
+            qr_token="preview-token",
+            expires_at=datetime(2026, 7, 3, 12, 11, tzinfo=UTC),
+            refresh_after_seconds=60,
+        )
+
+
 class FakeCustomerOrderingService:
     def __init__(self) -> None:
         self.args: dict[str, object] | None = None
@@ -262,6 +286,43 @@ def test_cashier_board_and_bill_summary_use_cashier_scope() -> None:
     assert active.json()["checkId"] == str(CHECK_ID)
     assert summary.status_code == 200
     assert summary.json()["currency"] == "TRY"
+
+
+def test_cashier_board_can_include_virtual_test_tables_explicitly() -> None:
+    service = FakeBillingService()
+    app = create_app()
+    app.state.session_resolver = FakeSessionResolver(make_actor())
+    app.dependency_overrides[get_table_session_billing_service] = lambda: service
+    client = TestClient(app)
+    client.cookies.set("iotables_session", "cashier-token")
+
+    response = client.get("/api/cashier/venue/board?includeVirtualTestTables=true")
+
+    assert response.status_code == 200
+    assert service.venue_board_args is not None
+    assert service.venue_board_args["include_virtual_test_tables"] is True
+
+
+def test_cashier_virtual_table_qr_preview_requires_csrf_and_binds_actor() -> None:
+    service = FakeTablePresenceService()
+    app = create_app()
+    app.state.session_resolver = FakeSessionResolver(make_actor())
+    app.dependency_overrides[get_table_presence_service] = lambda: service
+    client = TestClient(app)
+    client.cookies.set("iotables_session", "cashier-token")
+
+    missing_csrf = client.post(f"/api/cashier/virtual-tables/{TABLE_ID}/qr-preview")
+    preview = client.post(
+        f"/api/cashier/virtual-tables/{TABLE_ID}/qr-preview",
+        headers={"X-CSRF-Token": "csrf"},
+    )
+
+    assert missing_csrf.status_code == 403
+    assert preview.status_code == 200
+    assert preview.json()["qrToken"] == "preview-token"
+    assert service.preview_args is not None
+    assert service.preview_args["table_id"] == TABLE_ID
+    assert service.preview_args["actor"] == make_actor()
 
 
 def test_cashier_table_session_orders_use_ordering_contract() -> None:

@@ -1111,29 +1111,39 @@ class TenantProvisioningService:
         for hall_order, hall_name in enumerate(template.halls, start=1):
             hall_id = uuid4()
             hall_ids[hall_name] = hall_id
+            table_number_base = hall_order * 100
             await self.session.execute(
                 insert(halls).values(
                     id=hall_id,
                     tenant_id=tenant_id,
                     name=hall_name,
                     display_order=hall_order,
+                    table_number_base=table_number_base,
                     enabled=True,
                     created_at=created_at,
                     updated_at=created_at,
                 )
             )
-            for table_order, table_name in enumerate(template.tables_per_hall, start=1):
+            table_rows = []
+            for offset in range(100):
+                table_number = table_number_base + offset
+                table_rows.append(
+                    {
+                        "id": uuid4(),
+                        "tenant_id": tenant_id,
+                        "hall_id": hall_id,
+                        "table_number": table_number,
+                        "name": f"Masa {table_number}",
+                        "display_order": offset + 1,
+                        "mode": "virtual_test",
+                        "enabled": True,
+                        "created_at": created_at,
+                        "updated_at": created_at,
+                    }
+                )
+            if table_rows:
                 await self.session.execute(
-                    insert(venue_tables).values(
-                        id=uuid4(),
-                        tenant_id=tenant_id,
-                        hall_id=hall_id,
-                        name=table_name,
-                        display_order=table_order,
-                        enabled=True,
-                        created_at=created_at,
-                        updated_at=created_at,
-                    )
+                    insert(venue_tables).values(table_rows)
                 )
 
         station_ids: dict[str, UUID] = {}

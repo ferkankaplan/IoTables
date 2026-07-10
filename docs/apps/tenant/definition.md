@@ -122,12 +122,12 @@ The public page must not expose tenant GSM number, platform status internals, st
 2. Tenant Admin reviews existing starter halls if a starter template was applied.
 3. Tenant Admin creates or edits halls.
 4. Tenant Admin selects a hall.
-5. TenantApp shows the hall's tables inside the same workspace.
-6. Tenant Admin creates, edits, reorders, disables, provisions the table display, or inspects tables from contextual panels.
+5. TenantApp shows the hall's 100 table slots inside the same workspace.
+6. Tenant Admin promotes eligible virtual slots to physical tables, edits, reorders, disables, provisions the table display, or inspects tables from contextual panels.
 
 Tables are part of the hall management context. A table detail should open as a right-side panel, not as a separate primary page.
 
-Current release table layout is an ordered grid inside each hall. It does not include visual floor-plan coordinates. A later floor-plan editor must be introduced as a separate explicit layout capability, not by overloading the current release table order field.
+Current release table layout is an ordered 100-slot grid inside each hall. It does not include visual floor-plan coordinates. Slots `x00` and `x99` are permanent virtual test/system boundary slots and cannot become physical tables. A later floor-plan editor must be introduced as a separate explicit layout capability, not by overloading the current release table order field.
 
 ### Configure Service Delivery Tracking
 

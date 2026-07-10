@@ -11,21 +11,30 @@ from iotables.api.errors import ApiError
 from iotables.database.schema import audit_events, halls, table_sessions, venue_tables
 from iotables.security.context import ActorContext
 
+TABLES_PER_HALL = 100
+TABLE_MODE_VIRTUAL_TEST = "virtual_test"
+TABLE_MODE_PHYSICAL = "physical"
+
 
 @dataclass(frozen=True)
 class VenueTable:
     table_id: UUID
     hall_id: UUID
+    table_number: int
     name: str
     display_order: int
+    mode: str
     enabled: bool
 
     def as_api_payload(self) -> dict[str, Any]:
         return {
             "tableId": str(self.table_id),
             "hallId": str(self.hall_id),
+            "tableNumber": self.table_number,
             "name": self.name,
             "displayOrder": self.display_order,
+            "mode": self.mode,
+            "systemBoundarySlot": is_system_boundary_slot(self.table_number),
             "enabled": self.enabled,
         }
 
@@ -35,6 +44,7 @@ class HallWithTables:
     hall_id: UUID
     name: str
     display_order: int
+    table_number_base: int
     enabled: bool
     tables: tuple[VenueTable, ...]
 
@@ -43,6 +53,7 @@ class HallWithTables:
             "hallId": str(self.hall_id),
             "name": self.name,
             "displayOrder": self.display_order,
+            "tableNumberBase": self.table_number_base,
             "enabled": self.enabled,
             "tables": [table.as_api_payload() for table in self.tables],
         }
@@ -102,6 +113,7 @@ class VenueLayoutQueryService:
                     hall_id=row["id"],
                     name=row["name"],
                     display_order=row["display_order"],
+                    table_number_base=row["table_number_base"],
                     enabled=row["enabled"],
                     tables=tuple(tables_by_hall.get(row["id"], ())),
                 )
@@ -123,6 +135,7 @@ class TableWriteCommand:
     display_order: int
     hall_id: UUID | None = None
     enabled: bool | None = None
+    mode: str | None = None
 
 
 class VenueLayoutMutationService:
@@ -138,6 +151,22 @@ class VenueLayoutMutationService:
         tenant_id = require_tenant_id(actor)
         hall_id = uuid4()
         now = utc_now()
+        table_number_base = table_number_base_for_display_order(command.display_order)
+        table_rows = [
+            {
+                "id": uuid4(),
+                "tenant_id": tenant_id,
+                "hall_id": hall_id,
+                "table_number": table_number_base + offset,
+                "name": f"Masa {table_number_base + offset}",
+                "display_order": offset + 1,
+                "mode": TABLE_MODE_VIRTUAL_TEST,
+                "enabled": True,
+                "created_at": now,
+                "updated_at": now,
+            }
+            for offset in range(TABLES_PER_HALL)
+        ]
         try:
             await self.session.execute(
                 insert(halls).values(
@@ -145,18 +174,25 @@ class VenueLayoutMutationService:
                     tenant_id=tenant_id,
                     name=command.name,
                     display_order=command.display_order,
+                    table_number_base=table_number_base,
                     enabled=True,
                     created_at=now,
                     updated_at=now,
                 )
             )
+            await self.session.execute(insert(venue_tables).values(table_rows))
             await self._audit(
                 tenant_id=tenant_id,
                 actor=actor,
                 action="venue_layout.changed",
                 target_type="hall",
                 target_id=hall_id,
-                metadata={"operation": "hall.created", "name": command.name},
+                metadata={
+                    "operation": "hall.created",
+                    "name": command.name,
+                    "tableNumberBase": table_number_base,
+                    "tableSlotCount": TABLES_PER_HALL,
+                },
                 now=now,
             )
             await self.session.commit()
@@ -168,8 +204,9 @@ class VenueLayoutMutationService:
             hall_id=hall_id,
             name=command.name,
             display_order=command.display_order,
+            table_number_base=table_number_base,
             enabled=True,
-            tables=(),
+            tables=tuple(table_from_row(row) for row in table_rows),
         )
 
     async def update_hall(
@@ -260,19 +297,30 @@ class VenueLayoutMutationService:
         command: TableWriteCommand,
     ) -> VenueTable:
         tenant_id = require_tenant_id(actor)
-        if await self._load_hall(tenant_id=tenant_id, hall_id=hall_id) is None:
+        hall_row = await self._load_hall(tenant_id=tenant_id, hall_id=hall_id)
+        if hall_row is None:
             raise not_found()
+        table_number = hall_row["table_number_base"] + command.display_order - 1
+        if not table_number_in_hall_range(
+            table_number=table_number,
+            table_number_base=hall_row["table_number_base"],
+        ):
+            raise validation_failed("Table order is outside the hall's 100-slot range.")
 
         table_id = uuid4()
         now = utc_now()
+        mode = command.mode or TABLE_MODE_VIRTUAL_TEST
+        validate_table_mode(table_number=table_number, mode=mode)
         try:
             await self.session.execute(
                 insert(venue_tables).values(
                     id=table_id,
                     tenant_id=tenant_id,
                     hall_id=hall_id,
+                    table_number=table_number,
                     name=command.name,
                     display_order=command.display_order,
+                    mode=mode,
                     enabled=True,
                     created_at=now,
                     updated_at=now,
@@ -295,8 +343,10 @@ class VenueLayoutMutationService:
         return VenueTable(
             table_id=table_id,
             hall_id=hall_id,
+            table_number=table_number,
             name=command.name,
             display_order=command.display_order,
+            mode=mode,
             enabled=True,
         )
 
@@ -312,8 +362,16 @@ class VenueLayoutMutationService:
         if existing is None:
             raise not_found()
         next_hall_id = command.hall_id or existing["hall_id"]
-        if await self._load_hall(tenant_id=tenant_id, hall_id=next_hall_id) is None:
+        next_hall = await self._load_hall(tenant_id=tenant_id, hall_id=next_hall_id)
+        if next_hall is None:
             raise not_found()
+        if not table_number_in_hall_range(
+            table_number=existing["table_number"],
+            table_number_base=next_hall["table_number_base"],
+        ):
+            raise validation_failed("Table number is outside the target hall's range.")
+        next_mode = command.mode or existing["mode"]
+        validate_table_mode(table_number=existing["table_number"], mode=next_mode)
 
         now = utc_now()
         try:
@@ -324,6 +382,7 @@ class VenueLayoutMutationService:
                     hall_id=next_hall_id,
                     name=command.name,
                     display_order=command.display_order,
+                    mode=next_mode,
                     enabled=existing["enabled"] if command.enabled is None else command.enabled,
                     updated_at=now,
                 )
@@ -468,10 +527,31 @@ def table_from_row(row) -> VenueTable:
     return VenueTable(
         table_id=row["id"],
         hall_id=row["hall_id"],
+        table_number=row["table_number"],
         name=row["name"],
         display_order=row["display_order"],
+        mode=row["mode"],
         enabled=row["enabled"],
     )
+
+
+def table_number_base_for_display_order(display_order: int) -> int:
+    return display_order * TABLES_PER_HALL
+
+
+def table_number_in_hall_range(*, table_number: int, table_number_base: int) -> bool:
+    return table_number_base <= table_number < table_number_base + TABLES_PER_HALL
+
+
+def is_system_boundary_slot(table_number: int) -> bool:
+    return table_number % TABLES_PER_HALL in (0, TABLES_PER_HALL - 1)
+
+
+def validate_table_mode(*, table_number: int, mode: str) -> None:
+    if mode not in {TABLE_MODE_VIRTUAL_TEST, TABLE_MODE_PHYSICAL}:
+        raise validation_failed("Unsupported table mode.")
+    if mode == TABLE_MODE_PHYSICAL and is_system_boundary_slot(table_number):
+        raise validation_failed("Boundary table slots cannot become physical.")
 
 
 def require_tenant_id(actor: ActorContext) -> UUID:
@@ -514,3 +594,7 @@ def active_session_blocks_disable() -> ApiError:
         code="active_session_blocks_disable",
         message="An active table session blocks this action.",
     )
+
+
+def validation_failed(message: str) -> ApiError:
+    return ApiError(status_code=422, code="validation_failed", message=message)

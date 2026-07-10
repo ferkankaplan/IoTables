@@ -6,11 +6,11 @@ Source module: [venue-layout.md](venue-layout.md)
 
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
-| `venue_layout.create_hall` | TenantApp, Provisioning | tenantId, name, displayOrder | Tenant Admin/Provisioning; unique hall name/order in tenant | Insert hall; audit for TenantApp changes | Hall |
+| `venue_layout.create_hall` | TenantApp, Provisioning | tenantId, name, displayOrder | Tenant Admin/Provisioning; unique hall name/order in tenant; next 100-number range available | Insert hall and exactly 100 `virtual_test` table slots atomically; audit for TenantApp changes | Hall with table slots |
 | `venue_layout.update_hall` | TenantApp | hallId, editable fields | Tenant Admin own tenant; cannot cross tenant | Update hall; audit | Updated hall |
 | `venue_layout.disable_hall` | TenantApp | hallId, reason | Tenant Admin; reject if active tables/sessions make disable unsafe | Set enabled false; do not delete history | Disabled hall |
-| `venue_layout.create_table` | TenantApp, Provisioning | tenantId, hallId, name, displayOrder | Tenant Admin/Provisioning; hall belongs to tenant; unique table name/order in hall | Insert table; audit for TenantApp changes | Table |
-| `venue_layout.update_table` | TenantApp | tableId, hall/order/name/enabled fields | Tenant Admin; table belongs to tenant; moving hall preserves runtime history | Update table; audit | Updated table |
+| `venue_layout.create_table` | TenantApp, Provisioning | tenantId, hallId, name, displayOrder | Tenant Admin/Provisioning; hall belongs to tenant; unique table name/order in hall | Current release uses hall-created slots; direct ad-hoc table insertion is reserved for recovery tooling | Table |
+| `venue_layout.update_table` | TenantApp | tableId, hall/order/name/enabled/mode fields | Tenant Admin; table belongs to tenant; moving hall preserves runtime history; `x00` and `x99` cannot become physical | Update table; audit | Updated table |
 | `venue_layout.disable_table` | TenantApp | tableId, reason | Tenant Admin; reject if active TableSession exists | Set enabled false; do not delete history | Disabled table |
 
 ## Queries
@@ -18,7 +18,7 @@ Source module: [venue-layout.md](venue-layout.md)
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
 | `venue_layout.get_table_context` | CustomerApp, CashierApp, Ordering, Fulfillment | tenantId, tableId | Caller must already satisfy app/session scope | Table label, hall, enabled state |
-| `venue_layout.get_hall_table_board` | TenantApp, CashierApp | tenantId | Tenant Admin or Cashier role | Halls, tables, and caller-specific derived table state references; CashierApp may receive operational `CashierTableState` composed from runtime contexts |
+| `venue_layout.get_hall_table_board` | TenantApp, CashierApp | tenantId, includeVirtualTestTables? | Tenant Admin or Cashier role; Cashier virtual reveal is request-scoped only | Halls, tables, and caller-specific derived table state references; CashierApp defaults to physical tables only and may receive operational `CashierTableState` composed from runtime contexts |
 | `venue_layout.list_halls` | TenantApp, Staff Access | tenantId | Tenant-scoped actor | Hall list for setup/assignment |
 
 ## Consumed Contracts

@@ -140,27 +140,31 @@ States:
 Table Detail Panel contains:
 
 - table name;
+- table number and mode (`virtual_test` or `physical`);
 - hall assignment/move when allowed;
 - display order;
 - enabled/disabled state;
 - active-session blocker state;
 - display provisioning state;
-- create display claim action;
+- promote eligible virtual slot to physical action;
+- WiFi SSID/password fields for firmware generation on physical tables only;
+- generate and download firmware action on physical tables only;
 - revoke/rotate display credential actions when available.
+
+Slots ending in `00` or `99` are permanent virtual test/system boundary slots. Their detail panel must not show promote-to-physical or display firmware actions.
 
 Display provisioning states:
 
 | State | Behavior |
 | --- | --- |
-| Not provisioned | Show create one-time claim action. |
-| Claim created | Show claim once with expiry and warning that it will not be shown again. |
-| Waiting for device | Show pending claim and expiry. |
-| Claim expired | Allow new claim. |
-| Claim consumed/provisioned | Show provisioned display state, no raw credential. |
+| Not provisioned | Show WiFi fields and generate firmware action. |
+| Firmware generated | Show one-time `masa[no].ino` download with expiry and warning that it will not be shown again. |
+| Firmware download expired | Allow new firmware generation; explain that regeneration rotates the credential. |
+| Firmware downloaded/provisioned | Show provisioned display state, no raw credential or WiFi password. |
 | Re-provisioning | Explain previous credential will be revoked. |
 | Revoked | Show no active display credential. |
 
-Raw claim or credential secrets must never be shown after their one-time response is dismissed.
+Raw WiFi passwords and credential secrets must never be shown after their one-time response is dismissed.
 
 ## Station Management
 
