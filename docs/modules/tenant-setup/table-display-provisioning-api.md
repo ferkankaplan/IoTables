@@ -9,8 +9,7 @@ Table Display Provisioning owns ESP32 firmware generation, display credentials, 
 
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `POST` | `/api/tenant-setup/tables/{tableId}/display-firmware` | TenantApp | `table_display.generate_firmware` | Tenant Admin session + CSRF | Body: `wifiSsid`, `wifiPassword` | `DisplayFirmwareCreated` | `not_authorized`, `not_found_or_hidden`, `wifi_required` |
-| `GET` | `/api/tenant-setup/tables/{tableId}/display-firmware/{firmwareId}/download` | TenantApp | `table_display.download_firmware` | Tenant Admin session + one-time download token | Query: `downloadToken` | `text/x-arduino` attachment | `firmware_download_expired`, `firmware_download_consumed`, `not_authorized` |
+| `POST` | `/api/tenant-setup/tables/{tableId}/display-firmware` | TenantApp | `table_display.generate_firmware` | Tenant Admin session + CSRF | Body: `wifiSsid`, `wifiPassword` | `DisplayFirmwareCreated` with one-time `firmwareContent` | `not_authorized`, `not_found_or_hidden`, `wifi_required` |
 | `GET` | `/api/tenant-setup/tables/{tableId}/display-state` | TenantApp | `table_display.get_display_state` | Tenant Admin session | Path: `tableId` | `DisplayState` | `not_authorized`, `not_found_or_hidden` |
 | `POST` | `/api/tenant-setup/tables/{tableId}/display-credential/revoke` | TenantApp | `table_display.revoke_credential` | Tenant Admin session + CSRF | Body: `reason` | `DisplayState` | `reason_required`, `not_found_or_hidden` |
 | `POST` | `/api/tenant-setup/tables/{tableId}/display-credential/rotate` | TenantApp | `table_display.rotate_credential` | Tenant Admin session + CSRF | Body: `reason` | `DisplayState` | `reason_required`, `not_found_or_hidden` |
@@ -38,14 +37,13 @@ Table Display Provisioning owns ESP32 firmware generation, display credentials, 
 | --- | --- | --- |
 | `firmwareId` | string | One-time artifact identifier. |
 | `fileName` | string | Generated file name, for example `masa000.ino`. |
-| `downloadUrl` | string | One-time download URL scoped to the current Tenant Admin session. |
-| `downloadToken` | string | Returned once; required by the download URL; stored hashed server-side. |
 | `credentialId` | string | Credential identifier. |
 | `tableId` | string | Bound table. |
 | `expiresAt` | timestamp | Short-lived download expiry. |
+| `firmwareContent` | string | One-time `.ino` file content. Contains raw WiFi and display credential secrets and must not be logged or recoverable later. |
 
 `DisplayState` includes `tableId`, `activeCredentialId?`, `credentialStatus`, `lastIssuedAt?`, `lastRevokedAt?`, `pendingFirmwareId?`, `pendingFirmwareExpiresAt?`, and `lastFirmwareDownloadedAt?`. It never includes raw WiFi passwords, raw credentials, or generated firmware content.
 
 ## Idempotency
 
-Firmware generation is state-guarded by table credential locking: generating a new firmware package rotates the display credential and revokes the previous active credential in the same transaction. One-time firmware download is consume-once. Credential revocation and rotation are state-guarded and audited; no `Idempotency-Key` is required in the current release.
+Firmware generation is state-guarded by table credential locking: generating a new firmware package rotates the display credential and revokes the previous active credential in the same transaction. The generated `.ino` content is returned once in the response and is not persisted as recoverable raw content. Credential revocation and rotation are state-guarded and audited; no `Idempotency-Key` is required in the current release.

@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     )
     otp_delivery_mode: str = Field(default="fixed", alias="IOTABLES_OTP_DELIVERY_MODE")
     otp_fixed_code: str = Field(default="000000", alias="IOTABLES_OTP_FIXED_CODE")
+    table_display_root_ca_pem: str = Field(
+        default="",
+        alias="IOTABLES_TABLE_DISPLAY_ROOT_CA_PEM",
+    )
 
     @field_validator("environment")
     @classmethod
