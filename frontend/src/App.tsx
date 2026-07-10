@@ -393,6 +393,15 @@ type QrTokenPreview = {
   refreshAfterSeconds: number;
 };
 
+type DisplayFirmwareCreated = {
+  firmwareId: string;
+  fileName: string;
+  credentialId: string;
+  tableId: string;
+  expiresAt: string;
+  firmwareContent: string;
+};
+
 type BillSummary = {
   checkId: string;
   tableSessionId: string;
@@ -741,39 +750,34 @@ export function App() {
       setActor(nextActor);
       setAuthState("authenticated");
     };
-    return appSurface === "tenant" ||
-      appSurface === "service" ||
-      appSurface === "cashier" ||
-      appSurface === "station" ? (
+    return isTenantLoginSurface(appSurface) ? (
       <TenantLoginScreen
-        appScope={
-          appSurface === "service"
-            ? "service"
-            : appSurface === "cashier"
-              ? "cashier"
-              : appSurface === "station"
-                ? "station"
-                : "tenant"
-        }
-        defaultUsername={
-          appSurface === "service" || appSurface === "cashier" || appSurface === "station"
-            ? ""
-            : tenantSubdomainFromLocation()
-        }
-        heading={
-          appSurface === "service"
-            ? "Servis girişi"
-            : appSurface === "cashier"
-              ? "Kasa girişi"
-              : appSurface === "station"
-                ? "İstasyon girişi"
-                : "Tenant girişi"
-        }
+        appScope={tenantLoginScopeForSurface(appSurface)}
+        defaultUsername={tenantLoginDefaultUsername(appSurface)}
+        heading={tenantLoginHeading(appSurface)}
         tenantName={tenantContext?.name ?? tenantSubdomainFromLocation()}
         onAuthenticated={handleAuthenticated}
       />
     ) : (
       <PlatformLoginScreen onAuthenticated={handleAuthenticated} />
+    );
+  }
+
+  if (
+    isTenantLoginSurface(appSurface) &&
+    actor?.appScope !== tenantLoginScopeForSurface(appSurface)
+  ) {
+    return (
+      <TenantLoginScreen
+        appScope={tenantLoginScopeForSurface(appSurface)}
+        defaultUsername={tenantLoginDefaultUsername(appSurface)}
+        heading={tenantLoginHeading(appSurface)}
+        tenantName={tenantContext?.name ?? tenantSubdomainFromLocation()}
+        onAuthenticated={(nextActor) => {
+          setActor(nextActor);
+          setAuthState("authenticated");
+        }}
+      />
     );
   }
 
@@ -2740,7 +2744,14 @@ function HallManagementWorkspace() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [newHallName, setNewHallName] = useState("");
   const [newHallOrder, setNewHallOrder] = useState("");
+  const [hallEditName, setHallEditName] = useState("");
+  const [hallEditOrder, setHallEditOrder] = useState("");
+  const [hallDisableReason, setHallDisableReason] = useState("");
   const [disableReason, setDisableReason] = useState("");
+  const [tablePickerOpen, setTablePickerOpen] = useState(false);
+  const [displayWifiSsid, setDisplayWifiSsid] = useState("");
+  const [displayWifiPassword, setDisplayWifiPassword] = useState("");
+  const [displayFirmware, setDisplayFirmware] = useState<DisplayFirmwareCreated | null>(null);
 
   async function loadBoard() {
     setState("loading");
@@ -2771,6 +2782,27 @@ function HallManagementWorkspace() {
   const selectedHall = board?.halls.find((hall) => hall.hallId === selectedHallId) ?? null;
   const selectedTable =
     selectedHall?.tables.find((table) => table.tableId === selectedTableId) ?? null;
+  const physicalTables =
+    selectedHall?.tables.filter((table) => table.mode === "physical" && table.enabled) ?? [];
+  const availableVirtualTables =
+    selectedHall?.tables.filter(
+      (table) =>
+        table.mode === "virtual_test" &&
+        table.enabled &&
+        !table.systemBoundarySlot
+    ) ?? [];
+
+  useEffect(() => {
+    setHallEditName(selectedHall?.name ?? "");
+    setHallEditOrder(selectedHall?.displayOrder.toString() ?? "");
+    setHallDisableReason("");
+  }, [selectedHall?.hallId, selectedHall?.name, selectedHall?.displayOrder]);
+
+  useEffect(() => {
+    setDisplayWifiSsid("");
+    setDisplayWifiPassword("");
+    setDisplayFirmware(null);
+  }, [selectedTable?.tableId]);
 
   if (state === "loading") {
     return <StateBlock title="Salon ve masa düzeni yükleniyor" />;
@@ -2809,17 +2841,17 @@ function HallManagementWorkspace() {
     }
   }
 
-  async function promoteSelectedTable() {
-    if (!selectedTable || selectedTable.systemBoundarySlot || actionState === "submitting") {
+  async function promoteTable(table: VenueTable) {
+    if (table.systemBoundarySlot || actionState === "submitting") {
       return;
     }
     setActionState("submitting");
     setActionError(null);
     try {
-      await apiRequest<VenueTable>(`/api/tenant-setup/tables/${selectedTable.tableId}`, {
+      await apiRequest<VenueTable>(`/api/tenant-setup/tables/${table.tableId}`, {
         body: JSON.stringify({
-          name: selectedTable.name,
-          displayOrder: selectedTable.displayOrder,
+          name: table.name,
+          displayOrder: table.displayOrder,
           mode: "physical"
         }),
         headers: {
@@ -2829,7 +2861,60 @@ function HallManagementWorkspace() {
         method: "PATCH"
       });
       await loadBoard();
-      setSelectedTableId(selectedTable.tableId);
+      setSelectedTableId(table.tableId);
+      setTablePickerOpen(false);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function updateSelectedHall(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedHall || !hallEditName.trim() || !hallEditOrder || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<HallWithTables>(`/api/tenant-setup/halls/${selectedHall.hallId}`, {
+        body: JSON.stringify({
+          name: hallEditName.trim(),
+          displayOrder: Number(hallEditOrder)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "PATCH"
+      });
+      await loadBoard();
+      setSelectedHallId(selectedHall.hallId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function disableSelectedHall() {
+    if (!selectedHall || !hallDisableReason.trim() || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<HallWithTables>(`/api/tenant-setup/halls/${selectedHall.hallId}/disable`, {
+        body: JSON.stringify({reason: hallDisableReason.trim()}),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      await loadBoard();
+      setSelectedHallId(selectedHall.hallId);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -2861,6 +2946,45 @@ function HallManagementWorkspace() {
       setActionState("error");
     }
   }
+
+  async function generateDisplayFirmware(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedTable ||
+      selectedTable.mode !== "physical" ||
+      !displayWifiSsid.trim() ||
+      !displayWifiPassword ||
+      actionState === "submitting"
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      const created = await apiRequest<DisplayFirmwareCreated>(
+        `/api/tenant-setup/tables/${selectedTable.tableId}/display-firmware`,
+        {
+          body: JSON.stringify({
+            wifiSsid: displayWifiSsid.trim(),
+            wifiPassword: displayWifiPassword
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setDisplayFirmware(created);
+      downloadTextFile(created.fileName, created.firmwareContent, "text/x-arduino");
+      setDisplayWifiPassword("");
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
 
   return (
     <section className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)_340px]">
@@ -2938,18 +3062,31 @@ function HallManagementWorkspace() {
             </p>
           </div>
           <span className="text-xs text-zinc-500">
-            {board.derivedAt ? formatDate(board.derivedAt) : ""}
+              {board.derivedAt ? formatDate(board.derivedAt) : ""}
           </span>
         </div>
         {selectedHall === null ? (
           <StateBlock title="Salon seçin" />
         ) : (
           <>
-            {selectedHall.tables.length === 0 ? (
-              <StateBlock title="Bu salonda masa yok" />
+            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+              <span className="text-sm text-zinc-500">
+                {physicalTables.length} fiziksel masa
+              </span>
+              <button
+                className="h-9 border border-zinc-950 px-3 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={!selectedHall.enabled}
+                onClick={() => setTablePickerOpen(true)}
+                type="button"
+              >
+                Masa ekle
+              </button>
+            </div>
+            {physicalTables.length === 0 ? (
+              <StateBlock title="Bu salonda fiziksel masa yok" />
             ) : (
               <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
-                {selectedHall.tables.map((table) => (
+                {physicalTables.map((table) => (
                   <button
                     className={`aspect-[4/3] border px-3 py-3 text-left hover:bg-zinc-50 ${
                       selectedTableId === table.tableId
@@ -2963,7 +3100,6 @@ function HallManagementWorkspace() {
                     <p className="truncate text-sm font-semibold">{table.name}</p>
                     <p className="mt-1 text-xs text-zinc-500">No {table.tableNumber}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <StatusBadge value={table.mode} />
                       <StatusBadge value={table.enabled ? "enabled" : "disabled"} />
                     </div>
                   </button>
@@ -2975,7 +3111,56 @@ function HallManagementWorkspace() {
       </section>
 
       <aside className="border border-zinc-200 bg-white px-4 py-4">
-        <h3 className="text-sm font-semibold">Masa detayı</h3>
+        <h3 className="text-sm font-semibold">Salon ve masa detayı</h3>
+        {selectedHall ? (
+          <div className="mt-4 space-y-3 border-b border-zinc-200 pb-4">
+            <form className="grid gap-2" onSubmit={updateSelectedHall}>
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Salon düzenle
+              </p>
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setHallEditName(event.target.value)}
+                placeholder="Salon adı"
+                value={hallEditName}
+              />
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setHallEditOrder(event.target.value)}
+                placeholder="Liste sırası"
+                type="number"
+                value={hallEditOrder}
+              />
+              <button
+                className="h-10 border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={!hallEditName.trim() || !hallEditOrder || actionState === "submitting"}
+                type="submit"
+              >
+                Salonu kaydet
+              </button>
+            </form>
+            <div className="grid gap-2">
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setHallDisableReason(event.target.value)}
+                placeholder="Salon pasifleştirme nedeni"
+                value={hallDisableReason}
+              />
+              <button
+                className="h-10 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={
+                  !selectedHall.enabled ||
+                  !hallDisableReason.trim() ||
+                  actionState === "submitting"
+                }
+                onClick={() => void disableSelectedHall()}
+                type="button"
+              >
+                Salonu pasifleştir
+              </button>
+            </div>
+          </div>
+        ) : null}
         {selectedTable === null ? (
           <StateBlock title="Bir masa seçin" />
         ) : (
@@ -3008,13 +3193,51 @@ function HallManagementWorkspace() {
                 <button
                   className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
                   disabled={selectedTable.systemBoundarySlot || actionState === "submitting"}
-                  onClick={() => void promoteSelectedTable()}
+                  onClick={() => void promoteTable(selectedTable)}
                   type="button"
                 >
                   Fiziksel masaya çevir
                 </button>
               </div>
-            ) : null}
+            ) : (
+              <form className="space-y-2 border-t border-zinc-200 pt-4" onSubmit={generateDisplayFirmware}>
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  ESP32 ekran
+                </p>
+                <p className="text-sm text-zinc-600">
+                  WiFi bilgileri ve ekran credential yalnızca oluşturulan .ino dosyasında yer alır.
+                </p>
+                <input
+                  className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setDisplayWifiSsid(event.target.value)}
+                  placeholder="WiFi SSID"
+                  value={displayWifiSsid}
+                />
+                <input
+                  className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                  onChange={(event) => setDisplayWifiPassword(event.target.value)}
+                  placeholder="WiFi şifresi"
+                  type="password"
+                  value={displayWifiPassword}
+                />
+                <button
+                  className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                  disabled={
+                    !displayWifiSsid.trim() ||
+                    !displayWifiPassword ||
+                    actionState === "submitting"
+                  }
+                  type="submit"
+                >
+                  Ekran yazılımını oluştur
+                </button>
+                {displayFirmware?.tableId === selectedTable.tableId ? (
+                  <p className="text-xs text-zinc-500">
+                    {displayFirmware.fileName} oluşturuldu. Credential rotate edildi.
+                  </p>
+                ) : null}
+              </form>
+            )}
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Operasyonlar
@@ -3040,37 +3263,87 @@ function HallManagementWorkspace() {
         )}
         {actionError ? <StateBlock title={actionError} tone="error" /> : null}
       </aside>
+      {tablePickerOpen && selectedHall ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 px-4">
+          <div className="max-h-[85vh] w-full max-w-3xl overflow-hidden border border-zinc-200 bg-white">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
+              <div>
+                <h3 className="text-sm font-semibold">Masa ekle</h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {selectedHall.name} içindeki uygun sanal slotlardan birini fiziksel masaya çevir.
+                </p>
+              </div>
+              <button
+                className="h-9 border border-zinc-300 px-3 text-xs font-medium hover:bg-zinc-50"
+                onClick={() => setTablePickerOpen(false)}
+                type="button"
+              >
+                Kapat
+              </button>
+            </div>
+            {availableVirtualTables.length === 0 ? (
+              <StateBlock title="Uygun sanal slot yok" />
+            ) : (
+              <div className="grid max-h-[65vh] gap-3 overflow-auto p-4 sm:grid-cols-3 md:grid-cols-4">
+                {availableVirtualTables.map((table) => (
+                  <button
+                    className="border border-zinc-200 px-3 py-3 text-left hover:border-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                    disabled={actionState === "submitting"}
+                    key={table.tableId}
+                    onClick={() => void promoteTable(table)}
+                    type="button"
+                  >
+                    <p className="text-sm font-semibold">{table.name}</p>
+                    <p className="mt-1 text-xs text-zinc-500">No {table.tableNumber}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
 
 function StationManagementWorkspace() {
   const [stations, setStations] = useState<Station[]>([]);
+  const [catalog, setCatalog] = useState<MenuSetupCatalog | null>(null);
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
   const [actionError, setActionError] = useState<string | null>(null);
   const [newStationName, setNewStationName] = useState("");
   const [newStationOrder, setNewStationOrder] = useState("");
+  const [stationEditName, setStationEditName] = useState("");
+  const [stationEditOrder, setStationEditOrder] = useState("");
   const [disableReason, setDisableReason] = useState("");
+  const [stationProductName, setStationProductName] = useState("");
+  const [stationProductCategoryId, setStationProductCategoryId] = useState("");
+  const [stationProductVariantName, setStationProductVariantName] = useState("Standart");
+  const [stationProductPrice, setStationProductPrice] = useState("");
 
   async function loadStations(nextSelectedStationId?: string) {
     setState("loading");
     try {
-      const payload = await apiRequest<StationList>(
-        "/api/tenant-setup/stations?include_disabled=true"
-      );
-      setStations(payload.items);
+      const [stationPayload, menuPayload] = await Promise.all([
+        apiRequest<StationList>("/api/tenant-setup/stations?include_disabled=true"),
+        apiRequest<MenuSetupCatalog>("/api/tenant-setup/menu?include_disabled=true")
+      ]);
+      setStations(stationPayload.items);
+      setCatalog(menuPayload);
       const selectedCandidate =
-        nextSelectedStationId ?? selectedStationId ?? payload.items[0]?.stationId ?? null;
+        nextSelectedStationId ?? selectedStationId ?? stationPayload.items[0]?.stationId ?? null;
       setSelectedStationId(
-        payload.items.some((station) => station.stationId === selectedCandidate)
+        stationPayload.items.some((station) => station.stationId === selectedCandidate)
           ? selectedCandidate
-          : payload.items[0]?.stationId ?? null
+          : stationPayload.items[0]?.stationId ?? null
       );
+      setStationProductCategoryId((current) => current || menuPayload.categories[0]?.categoryId || "");
       setState("ready");
     } catch {
       setStations([]);
+      setCatalog(null);
       setState("error");
     }
   }
@@ -3081,6 +3354,18 @@ function StationManagementWorkspace() {
 
   const selectedStation =
     stations.find((station) => station.stationId === selectedStationId) ?? null;
+  const stationProducts =
+    catalog?.categories.flatMap((category) =>
+      category.products
+        .filter((product) => product.stationId === selectedStationId)
+        .map((product) => ({category, product}))
+    ) ?? [];
+
+  useEffect(() => {
+    setStationEditName(selectedStation?.name ?? "");
+    setStationEditOrder(selectedStation?.displayOrder.toString() ?? "");
+    setDisableReason("");
+  }, [selectedStation?.stationId, selectedStation?.name, selectedStation?.displayOrder]);
 
   async function createStation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -3135,6 +3420,82 @@ function StationManagementWorkspace() {
     }
   }
 
+  async function updateSelectedStation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedStation ||
+      !stationEditName.trim() ||
+      !stationEditOrder ||
+      actionState === "submitting"
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<Station>(`/api/tenant-setup/stations/${selectedStation.stationId}`, {
+        body: JSON.stringify({
+          name: stationEditName.trim(),
+          displayOrder: Number(stationEditOrder)
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "PATCH"
+      });
+      await loadStations(selectedStation.stationId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
+  async function createStationProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selectedStation ||
+      !stationProductCategoryId ||
+      !stationProductName.trim() ||
+      !stationProductVariantName.trim() ||
+      !stationProductPrice ||
+      actionState === "submitting"
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setActionError(null);
+    try {
+      await apiRequest<ProductService>("/api/tenant-setup/menu/products", {
+        body: JSON.stringify({
+          categoryId: stationProductCategoryId,
+          stationId: selectedStation.stationId,
+          name: stationProductName.trim(),
+          variants: [
+            {
+              name: stationProductVariantName.trim(),
+              priceMinor: Number(stationProductPrice)
+            }
+          ]
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setStationProductName("");
+      setStationProductVariantName("Standart");
+      setStationProductPrice("");
+      await loadStations(selectedStation.stationId);
+      setActionState("idle");
+    } catch (error) {
+      setActionError(errorMessageFrom(error));
+      setActionState("error");
+    }
+  }
+
   if (state === "loading") {
     return <StateBlock title="İstasyonlar yükleniyor" />;
   }
@@ -3148,7 +3509,9 @@ function StationManagementWorkspace() {
         <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
           <div>
             <h3 className="text-sm font-semibold">İstasyonlar</h3>
-            <p className="mt-1 text-xs text-zinc-500">Hazırlık kuyruğu kontrolleri burada yoktur</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              İstasyon sırası listelerdeki görüntüleme sırasıdır
+            </p>
           </div>
           <button
             className="text-sm font-medium text-emerald-700 hover:text-emerald-900"
@@ -3174,7 +3537,7 @@ function StationManagementWorkspace() {
                 type="button"
               >
                 <p className="truncate text-sm font-semibold">{station.name}</p>
-                <p className="mt-1 text-xs text-zinc-500">Sıra {station.displayOrder}</p>
+                <p className="mt-1 text-xs text-zinc-500">Liste sırası {station.displayOrder}</p>
                 <div className="mt-3">
                   <StatusBadge value={station.enabled ? "enabled" : "disabled"} />
                 </div>
@@ -3195,7 +3558,7 @@ function StationManagementWorkspace() {
           <input
             className="h-10 border border-zinc-300 px-3 text-sm"
             onChange={(event) => setNewStationOrder(event.target.value)}
-            placeholder="Sıra"
+            placeholder="Liste sırası"
             type="number"
             value={newStationOrder}
           />
@@ -3218,11 +3581,113 @@ function StationManagementWorkspace() {
             <DetailRows
               rows={[
                 ["İstasyon", selectedStation.name],
-                ["Sıra", selectedStation.displayOrder.toString()],
+                ["Liste sırası", selectedStation.displayOrder.toString()],
                 ["Durum", selectedStation.enabled ? "enabled" : "disabled"],
                 ["Güncelleme", formatDate(selectedStation.updatedAt)]
               ]}
             />
+            <form className="grid gap-2 border-t border-zinc-200 pt-4" onSubmit={updateSelectedStation}>
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                İstasyon düzenle
+              </p>
+              <input
+                className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setStationEditName(event.target.value)}
+                placeholder="İstasyon adı"
+                value={stationEditName}
+              />
+              <input
+                className="h-10 w-full border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setStationEditOrder(event.target.value)}
+                placeholder="Liste sırası"
+                type="number"
+                value={stationEditOrder}
+              />
+              <button
+                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={
+                  !stationEditName.trim() ||
+                  !stationEditOrder ||
+                  actionState === "submitting"
+                }
+                type="submit"
+              >
+                İstasyonu kaydet
+              </button>
+            </form>
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Bu istasyondaki ürünler
+              </p>
+              {stationProducts.length === 0 ? (
+                <p className="text-sm text-zinc-500">Ürün yok</p>
+              ) : (
+                <div className="space-y-2">
+                  {stationProducts.map(({category, product}) => (
+                    <div className="border border-zinc-200 px-3 py-2" key={product.productId}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-medium">{product.name}</span>
+                        <StatusBadge value={product.enabled ? "enabled" : "disabled"} />
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {category.name} / {product.variants[0]?.priceMinor ?? 0} minor
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <form className="grid gap-2 border-t border-zinc-200 pt-4" onSubmit={createStationProduct}>
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Bu istasyona ürün ekle
+              </p>
+              <select
+                className="h-10 border border-zinc-300 bg-white px-3 text-sm"
+                onChange={(event) => setStationProductCategoryId(event.target.value)}
+                value={stationProductCategoryId}
+              >
+                <option value="">Kategori seç</option>
+                {catalog?.categories
+                  .filter((category) => category.enabled)
+                  .map((category) => (
+                    <option key={category.categoryId} value={category.categoryId}>
+                      {category.name}
+                    </option>
+                  ))}
+              </select>
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setStationProductName(event.target.value)}
+                placeholder="Ürün adı"
+                value={stationProductName}
+              />
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setStationProductVariantName(event.target.value)}
+                placeholder="Varyant"
+                value={stationProductVariantName}
+              />
+              <input
+                className="h-10 border border-zinc-300 px-3 text-sm"
+                onChange={(event) => setStationProductPrice(event.target.value)}
+                placeholder="Fiyat minor"
+                type="number"
+                value={stationProductPrice}
+              />
+              <button
+                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={
+                  !stationProductCategoryId ||
+                  !stationProductName.trim() ||
+                  !stationProductVariantName.trim() ||
+                  !stationProductPrice ||
+                  actionState === "submitting"
+                }
+                type="submit"
+              >
+                Ürün ekle
+              </button>
+            </form>
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Operasyonlar
@@ -4696,6 +5161,40 @@ function requiresTenantContext(appSurface: AppSurface): boolean {
   );
 }
 
+function isTenantLoginSurface(
+  appSurface: AppSurface
+): appSurface is "cashier" | "service" | "station" | "tenant" {
+  return (
+    appSurface === "tenant" ||
+    appSurface === "service" ||
+    appSurface === "cashier" ||
+    appSurface === "station"
+  );
+}
+
+function tenantLoginScopeForSurface(
+  appSurface: "cashier" | "service" | "station" | "tenant"
+): "cashier" | "service" | "station" | "tenant" {
+  return appSurface;
+}
+
+function tenantLoginDefaultUsername(appSurface: "cashier" | "service" | "station" | "tenant") {
+  return appSurface === "tenant" ? tenantSubdomainFromLocation() : "";
+}
+
+function tenantLoginHeading(appSurface: "cashier" | "service" | "station" | "tenant"): string {
+  if (appSurface === "service") {
+    return "Servis girişi";
+  }
+  if (appSurface === "cashier") {
+    return "Kasa girişi";
+  }
+  if (appSurface === "station") {
+    return "İstasyon girişi";
+  }
+  return "Tenant owner girişi";
+}
+
 function tenantSubdomainFromLocation(): string {
   const params = new URLSearchParams(window.location.search);
   const explicitTenant = params.get("tenant")?.trim().toLowerCase();
@@ -4737,4 +5236,16 @@ function formatDate(value: string): string {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(value));
+}
+
+function downloadTextFile(fileName: string, content: string, mimeType: string) {
+  const blob = new Blob([content], {type: mimeType});
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
