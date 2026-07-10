@@ -75,13 +75,16 @@ class FakeVenueLayoutQueryService:
                     hall_id=HALL_ID,
                     name="Salon 1",
                     display_order=1,
+                    table_number_base=100,
                     enabled=True,
                     tables=(
                         VenueTable(
                             table_id=TABLE_ID,
                             hall_id=HALL_ID,
-                            name="Masa 000",
+                            table_number=101,
+                            name="Masa 101",
                             display_order=1,
+                            mode="physical",
                             enabled=True,
                         ),
                     ),
@@ -105,6 +108,7 @@ class FakeVenueLayoutMutationService:
             hall_id=HALL_ID,
             name=command.name,
             display_order=command.display_order,
+            table_number_base=command.display_order * 100,
             enabled=True,
             tables=(),
         )
@@ -120,8 +124,10 @@ class FakeVenueLayoutMutationService:
         return VenueTable(
             table_id=TABLE_ID,
             hall_id=hall_id,
+            table_number=100 + command.display_order - 1,
             name=command.name,
             display_order=command.display_order,
+            mode=command.mode or "virtual_test",
             enabled=True,
         )
 
@@ -136,8 +142,10 @@ class FakeVenueLayoutMutationService:
         return VenueTable(
             table_id=table_id,
             hall_id=HALL_ID,
-            name="Masa 000",
+            table_number=101,
+            name="Masa 101",
             display_order=1,
+            mode="physical",
             enabled=False,
         )
 
@@ -557,20 +565,24 @@ def test_venue_board_uses_actor_tenant_scope() -> None:
     assert response.status_code == 200
     assert response.json() == {
         "halls": [
-            {
-                "hallId": str(HALL_ID),
-                "name": "Salon 1",
-                "displayOrder": 1,
-                "enabled": True,
-                "tables": [
-                    {
-                        "tableId": str(TABLE_ID),
-                        "hallId": str(HALL_ID),
-                        "name": "Masa 000",
-                        "displayOrder": 1,
-                        "enabled": True,
-                    }
-                ],
+                {
+                    "hallId": str(HALL_ID),
+                    "name": "Salon 1",
+                    "displayOrder": 1,
+                    "tableNumberBase": 100,
+                    "enabled": True,
+                    "tables": [
+                        {
+                            "tableId": str(TABLE_ID),
+                            "hallId": str(HALL_ID),
+                            "tableNumber": 101,
+                            "name": "Masa 101",
+                            "displayOrder": 1,
+                            "mode": "physical",
+                            "systemBoundarySlot": False,
+                            "enabled": True,
+                        }
+                    ],
             }
         ],
         "derivedAt": "2026-07-03T12:00:00+00:00",

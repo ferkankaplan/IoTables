@@ -27,6 +27,7 @@ class CashierTableState:
     hall_id: UUID
     table_label: str
     hall_label: str
+    mode: str
     table_session_id: UUID | None
     check_id: UUID | None
     status: str
@@ -41,6 +42,7 @@ class CashierTableState:
             "hallId": str(self.hall_id),
             "tableLabel": self.table_label,
             "hallLabel": self.hall_label,
+            "mode": self.mode,
             "tableSessionId": str(self.table_session_id) if self.table_session_id else None,
             "checkId": str(self.check_id) if self.check_id else None,
             "status": self.status,
@@ -131,16 +133,27 @@ class TableSessionBillingService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def venue_board(self, *, actor: ActorContext) -> CashierVenueBoard:
+    async def venue_board(
+        self, *, actor: ActorContext, include_virtual_test_tables: bool = False
+    ) -> CashierVenueBoard:
         require_cashier(actor)
         if actor.tenant_id is None:
             raise not_authorized()
+        filters = [
+            venue_tables.c.tenant_id == actor.tenant_id,
+            venue_tables.c.enabled.is_(True),
+            halls.c.enabled.is_(True),
+        ]
+        if not include_virtual_test_tables:
+            filters.append(venue_tables.c.mode == "physical")
+
         table_rows = (
             (
                 await self.session.execute(
                     select(
                         venue_tables.c.id.label("table_id"),
                         venue_tables.c.name.label("table_label"),
+                        venue_tables.c.mode.label("mode"),
                         halls.c.id.label("hall_id"),
                         halls.c.name.label("hall_label"),
                     )
@@ -151,11 +164,7 @@ class TableSessionBillingService:
                             & (halls.c.id == venue_tables.c.hall_id),
                         )
                     )
-                    .where(
-                        venue_tables.c.tenant_id == actor.tenant_id,
-                        venue_tables.c.enabled.is_(True),
-                        halls.c.enabled.is_(True),
-                    )
+                    .where(*filters)
                     .order_by(halls.c.display_order, venue_tables.c.display_order)
                 )
             )
@@ -175,6 +184,7 @@ class TableSessionBillingService:
                         hall_id=row["hall_id"],
                         table_label=row["table_label"],
                         hall_label=row["hall_label"],
+                        mode=row["mode"],
                         table_session_id=None,
                         check_id=None,
                         status="empty",
@@ -195,6 +205,7 @@ class TableSessionBillingService:
                     hall_id=row["hall_id"],
                     table_label=row["table_label"],
                     hall_label=row["hall_label"],
+                    mode=row["mode"],
                     table_session_id=active["table_session_id"],
                     check_id=active["check_id"],
                     status="occupied",

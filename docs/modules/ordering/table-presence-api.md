@@ -10,6 +10,7 @@ Table Presence owns short-lived QR token issuance, one-time redemption, and fres
 | Method | Path | App / Caller | Module Contract | Auth | Request | Success | Failure Codes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/table-display/qr-token` | ESP32 display | `table_presence.issue_current_qr_token` | `Authorization: DisplayCredential ...` | none | `QrTokenPayload` | `display_not_authenticated`, `credential_revoked`, `wrong_table_or_tenant` |
+| `POST` | `/api/cashier/virtual-tables/{tableId}/qr-preview` | CashierApp | `table_presence.issue_virtual_table_qr_preview` | Cashier session + CSRF | Path: `tableId` | `QrTokenPayload` | `not_authorized`, `not_virtual_test_table`, `table_disabled` |
 | `POST` | `/api/customer/table-presence/redeem` | CustomerApp | `table_presence.redeem_token` | Raw QR token + optional customer session cookie | Body: `qrToken` | `PresenceRedeemResult` | `token_expired`, `token_consumed`, `tenant_unavailable` |
 | `GET` | `/api/customer/table-presence` | CustomerApp | `table_presence.get_presence_state` | Customer session cookie | none | `PresenceState` | `session_expired`, `fresh_presence_required` |
 

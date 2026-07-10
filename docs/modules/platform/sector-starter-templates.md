@@ -64,10 +64,18 @@ The active current release cafe template is immutable after implementation begin
 
 Starter venue:
 
-| Hall | Tables |
-| --- | --- |
-| `Salon 1` | `Masa 000`, `Masa 001`, `Masa 999` |
-| `Salon 2` | `Masa 000`, `Masa 001`, `Masa 999` |
+| Hall | Table Number Range | Initial Table Slots |
+| --- | --- | --- |
+| `Salon 1` | `100-199` | 100 `virtual_test` slots; `100` and `199` are permanent virtual/system boundary slots |
+| `Salon 2` | `200-299` | 100 `virtual_test` slots; `200` and `299` are permanent virtual/system boundary slots |
+
+Starter venue rules:
+
+- Creating any hall creates exactly 100 table slots in that hall's range.
+- Starter halls therefore create `Masa 100` through `Masa 199` and `Masa 200` through `Masa 299`.
+- Starter slots begin as `virtual_test` tables and are hidden from normal CashierApp boards.
+- Tenant Admin may promote eligible interior slots such as `101-198` or `201-298` to `physical`.
+- Boundary slots `x00` and `x99` must never be promoted to `physical`.
 
 Starter stations:
 

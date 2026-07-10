@@ -41,7 +41,7 @@ Out of scope for this test plan:
 | T-01 Public Tenant Page | Public page shows safe tenant fields only. |
 | T-02 Tenant Admin First Login | Tenant Admin changes bootstrap password without OTP in the current release. |
 | T-03 Configure Halls and Tables | Tenant Admin manages halls/tables in one workspace with contextual table panel. |
-| T-04 Provision Table Display | Tenant Admin creates one-time display claim; device consumes it; panel shows provisioned state. |
+| T-04 Provision Table Display | Tenant Admin enters WiFi data, generates one-time firmware, downloads it, and panel shows provisioned state. |
 | T-05 Configure Service Delivery Tracking | Tenant Admin enables/disables tracking and UI explains staff/customer impact. |
 | T-06 Configure Menu and Station Routing | Tenant Admin configures categories/products/variants/modifiers/prices/availability/one station assignment. |
 | T-07 Configure Stations | Tenant Admin creates/updates/disables stations safely. |
@@ -75,9 +75,9 @@ Out of scope for this test plan:
 | Table has historical sessions/orders | Hard delete absent; disable/preserve history. |
 | Table has active TableSession | Normal disable blocked. |
 | Standalone table management attempted | Not a primary current release page; hall workspace used. |
-| Display claim expires | Claim rejected; new claim can be created. |
-| Display claim reused | Rejected safely. |
-| Display claim wrong table | Rejected safely. |
+| Display firmware download expires | Download rejected; new firmware can be generated. |
+| Display firmware download reused | Rejected safely. |
+| Display firmware wrong table context | Rejected safely. |
 | Disabled table provisioning | Rejected unless explicit recovery later exists. |
 | Re-provision active display | Previous credential revoked; new active credential created. |
 
@@ -123,7 +123,7 @@ Out of scope for this test plan:
 | Tenant name/subdomain not editable | UI blocked state and API rejection. |
 | Halls/tables one workspace with contextual table panels | Browser E2E and forbidden route/control checks. |
 | Current release table layout ordered grid, not floor-plan coordinates | UI absence and copy checks. |
-| Table display provisioning from table detail | Browser/API tests for claim lifecycle. |
+| Table display provisioning from table detail | Browser/API tests for firmware generation and one-time download lifecycle. |
 | Stations can be created/disabled | UI/API tests with disable blockers. |
 | Menu setup supports variants/modifiers/prices/availability/one station | Component/API tests. |
 | Each product/service has exactly one station | Validation tests. |
@@ -169,7 +169,7 @@ TenantApp executable tests must cover the app-visible behavior of these endpoint
 | `/api/tenant-setup/tables...` | Table create/update/disable/context blockers. |
 | `/api/tenant-setup/stations...` | Station create/update/disable blockers. |
 | `/api/tenant-setup/menu...` | Menu/category/product/variant/modifier/availability/routing validation. |
-| `/api/tenant-setup/tables/{tableId}/display...` | Claim create, display state, revoke, rotate. |
+| `/api/tenant-setup/tables/{tableId}/display...` | Firmware generation/download, display state, revoke, rotate. |
 | `GET /api/tenant/audit-events` | Tenant setup/security audit only. |
 
 ## Security and Abuse Coverage
@@ -180,8 +180,8 @@ Required tests:
 - tenant admin cannot cross tenants;
 - tenant users cannot access PlatformApp or other tenant hosts;
 - unsafe TenantApp requests require CSRF;
-- raw OTP codes, display claim secrets, and display credentials are never logged or returned after one-time reveal;
-- table display claim consumption is atomic and one-time;
+- raw OTP codes, WiFi passwords, generated firmware content, and display credentials are never logged or returned after one-time reveal;
+- table display firmware generation and download are atomic and one-time;
 - credential rotation revokes the previous active credential;
 - staff role/scope changes are enforced server-side on next action;
 - disabled users cannot keep using existing sessions beyond allowed enforcement window;

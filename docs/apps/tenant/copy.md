@@ -52,7 +52,8 @@ Source context:
 | Save | `Kaydet` |
 | Disable | `Devre dışı bırak` |
 | Re-provision display | `Ekranı yeniden kur` |
-| Create display claim | `Ekran kurulum kodu oluştur` |
+| Generate display firmware | `Ekran yazılımını oluştur` |
+| Download display firmware | `Masa yazılımını indir` |
 
 ## Public Page Copy
 
@@ -99,15 +100,15 @@ Do not use copy that implies a separate primary `Masa Yönetimi` page.
 | State | Copy |
 | --- | --- |
 | Not provisioned | `Bu masa ekranı kurulmamış.` |
-| Claim created | `Kurulum kodu oluşturuldu.` |
-| Claim one-time warning | `Bu kod bir kez gösterilir ve süresi dolunca geçersiz olur.` |
-| Waiting for device | `Cihazın kurulum kodunu kullanması bekleniyor.` |
-| Claim expired | `Kurulum kodunun süresi doldu.` |
-| Claim consumed | `Masa ekranı kuruldu.` |
+| Firmware generated | `Masa ekranı yazılımı oluşturuldu.` |
+| Firmware one-time warning | `Bu dosya bir kez indirilebilir ve süresi dolunca geçersiz olur.` |
+| Waiting for flash | `Cihazın oluşturulan yazılımla kurulması bekleniyor.` |
+| Firmware download expired | `Masa ekranı yazılımının indirme süresi doldu.` |
+| Firmware downloaded | `Masa ekranı kuruldu.` |
 | Credential revoked | `Masa ekranı yetkisi iptal edildi.` |
 | Re-provision warning | `Yeni kurulum eski ekran yetkisini iptal eder.` |
 
-Do not show raw credential secrets after the one-time response is dismissed.
+Do not show raw WiFi passwords or credential secrets after the one-time response is dismissed.
 
 ## Station Copy
 
@@ -205,8 +206,8 @@ Do not show raw credential secrets after the one-time response is dismissed.
 | `station_unavailable` | `Seçilen istasyon kullanılamıyor.` |
 | `duplicate_category` | `Bu kategori adı veya sırası zaten kullanılıyor.` |
 | `reason_required` | `Sebep gerekli.` |
-| `claim_expired` | `Kurulum kodunun süresi doldu.` |
-| `claim_consumed` | `Kurulum kodu daha önce kullanılmış.` |
+| `firmware_download_expired` | `Masa ekranı yazılımının indirme süresi doldu.` |
+| `firmware_download_consumed` | `Masa ekranı yazılımı daha önce indirilmiş.` |
 | `otp_expired` | `Doğrulama kodunun süresi doldu.` |
 | `otp_invalid` | `Doğrulama kodu hatalı.` |
 | `otp_locked` | `Çok fazla deneme yapıldı. Daha sonra tekrar deneyin.` |

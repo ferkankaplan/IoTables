@@ -35,7 +35,7 @@ Use explicit row locks where concurrent mutation can corrupt state. Acquire lock
 
 | Order | Lock Group | Examples |
 | --- | --- | --- |
-| 1 | Idempotency or one-time secret guard | `tenant_provisioning_idempotency`, `order_submit_idempotency`, `payment_idempotency`, consumed QR/claim row |
+| 1 | Idempotency or one-time secret guard | `tenant_provisioning_idempotency`, `order_submit_idempotency`, `payment_idempotency`, consumed QR/firmware row |
 | 2 | Tenant/provisioning aggregate when provisioning or lifecycle is being changed | `tenants`, `starter_template_applications` |
 | 3 | Parent runtime aggregate | `table_sessions`, `checks` |
 | 4 | Target business records in deterministic ID order | `orders`, `order_items`, `payments`, `preparation_items`, `delivery_states` |
@@ -75,19 +75,19 @@ For multi-row item operations, sort target IDs before locking. Never lock the sa
 | Concurrency response | Already applied starter returns `starter_already_applied` or existing applied state; unsafe retry returns `recovery_required`. |
 | Test requirement | Concurrent retry cannot apply starter records twice. Active tenant with applied starter is never reseeded. |
 
-### Table Display Claim Consumption
+### Table Display Firmware Generation
 
 | Field | Decision |
 | --- | --- |
-| Apps | TenantApp setup surface, ESP32 setup flow |
+| Apps | TenantApp setup surface |
 | Owner modules | Table Display Provisioning |
-| Public command/API | `table_display.consume_claim`, `POST /api/table-displays/claims/consume` |
-| Idempotency | One-time claim secret is the idempotency guard; no `Idempotency-Key`. |
-| Lock order | Atomic consume claim row; lock table credential rows; revoke previous active credential; insert new credential. |
-| Transaction boundary | Claim consume, previous credential revocation, new credential creation, and audit commit together. |
-| Rollback | If credential creation fails, claim remains unconsumed because the transaction rolls back. |
-| Concurrency response | Only one consumer wins. Losers receive `claim_consumed` or `claim_expired`. |
-| Test requirement | Two concurrent consume attempts return one credential and one terminal failure. Previous active credential is revoked atomically. |
+| Public command/API | `table_display.generate_firmware`, `POST /api/tenant-setup/tables/{tableId}/display-firmware` |
+| Idempotency | State-guarded by table credential lock and one-time firmware artifact; no `Idempotency-Key`. |
+| Lock order | Lock tenant/table credential rows; revoke previous active credential; insert new credential; insert one-time firmware metadata. |
+| Transaction boundary | Previous credential revocation, new credential creation, firmware metadata, and audit commit together. |
+| Rollback | If firmware metadata or credential creation fails, previous credential remains active because the transaction rolls back. |
+| Concurrency response | Concurrent generations serialize on the table credential lock; the final committed generation owns the only active credential. |
+| Test requirement | Concurrent generation attempts leave one active credential and one valid one-time firmware download. Raw WiFi password is never persisted. |
 
 ### Table Display Credential Rotation or Revocation
 

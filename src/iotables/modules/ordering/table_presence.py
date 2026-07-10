@@ -16,6 +16,7 @@ from iotables.database.schema import (
     table_sessions,
     venue_tables,
 )
+from iotables.security.context import ActorContext, StaffRole
 
 TABLE_ACCESS_TOKEN_TTL = timedelta(seconds=60)
 FRESH_PRESENCE_TTL = timedelta(minutes=2)
@@ -93,19 +94,13 @@ class TablePresenceService:
         )
         if table_row is None:
             raise wrong_table_or_tenant()
+        if table_row["mode"] != "physical":
+            raise physical_display_required()
 
-        raw_token = generate_table_access_token()
-        expires_at = now + TABLE_ACCESS_TOKEN_TTL
-        await self.session.execute(
-            insert(table_access_tokens).values(
-                id=uuid4(),
-                tenant_id=credential_row["tenant_id"],
-                table_id=credential_row["table_id"],
-                token_hash=hash_table_access_token(raw_token),
-                expires_at=expires_at,
-                consumed_at=None,
-                created_at=now,
-            )
+        payload = await self._issue_token_for_table(
+            tenant_id=credential_row["tenant_id"],
+            table_id=credential_row["table_id"],
+            now=now,
         )
         await self.session.execute(
             update(table_display_credentials)
@@ -113,11 +108,29 @@ class TablePresenceService:
             .values(last_seen_at=now)
         )
         await self.session.commit()
-        return QrTokenPayload(
-            qr_token=raw_token,
-            expires_at=expires_at,
-            refresh_after_seconds=int(TABLE_ACCESS_TOKEN_TTL.total_seconds()),
+        return payload
+
+    async def issue_virtual_table_qr_preview(
+        self, *, actor: ActorContext, table_id: UUID
+    ) -> QrTokenPayload:
+        if StaffRole.CASHIER not in actor.roles or actor.tenant_id is None:
+            raise not_authorized()
+        now = utc_now()
+        table_row = await self._load_enabled_table(
+            tenant_id=actor.tenant_id,
+            table_id=table_id,
         )
+        if table_row is None:
+            raise table_disabled()
+        if table_row["mode"] != "virtual_test":
+            raise not_virtual_test_table()
+        payload = await self._issue_token_for_table(
+            tenant_id=actor.tenant_id,
+            table_id=table_id,
+            now=now,
+        )
+        await self.session.commit()
+        return payload
 
     async def redeem_token(
         self,
@@ -291,6 +304,28 @@ class TablePresenceService:
             .first()
         )
 
+    async def _issue_token_for_table(
+        self, *, tenant_id: UUID, table_id: UUID, now: datetime
+    ) -> QrTokenPayload:
+        raw_token = generate_table_access_token()
+        expires_at = now + TABLE_ACCESS_TOKEN_TTL
+        await self.session.execute(
+            insert(table_access_tokens).values(
+                id=uuid4(),
+                tenant_id=tenant_id,
+                table_id=table_id,
+                token_hash=hash_table_access_token(raw_token),
+                expires_at=expires_at,
+                consumed_at=None,
+                created_at=now,
+            )
+        )
+        return QrTokenPayload(
+            qr_token=raw_token,
+            expires_at=expires_at,
+            refresh_after_seconds=int(TABLE_ACCESS_TOKEN_TTL.total_seconds()),
+        )
+
     async def _load_enabled_table(self, *, tenant_id: UUID, table_id: UUID):
         return (
             (
@@ -409,3 +444,27 @@ def display_not_authenticated() -> ApiError:
         code="display_not_authenticated",
         message="Display credential is invalid.",
     )
+
+
+def not_authorized() -> ApiError:
+    return ApiError(status_code=403, code="not_authorized", message="Not authorized.")
+
+
+def not_virtual_test_table() -> ApiError:
+    return ApiError(
+        status_code=409,
+        code="not_virtual_test_table",
+        message="QR preview is only available for virtual test tables.",
+    )
+
+
+def physical_display_required() -> ApiError:
+    return ApiError(
+        status_code=409,
+        code="physical_display_required",
+        message="Display QR issuance is only available for physical tables.",
+    )
+
+
+def table_disabled() -> ApiError:
+    return ApiError(status_code=409, code="table_disabled", message="Table is disabled.")

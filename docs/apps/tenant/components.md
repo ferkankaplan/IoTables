@@ -31,7 +31,7 @@ Source context:
 | `SetupDashboard` | Setup readiness, starter data summary, navigation to workspaces. | Tenant profile, starter state, setup APIs |
 | `HallWorkspace` | Hall list, selected hall, ordered table grid. | Venue Layout |
 | `TableDetailPanel` | Table edit, disable blockers, display provisioning state. | Venue Layout, Table Display Provisioning |
-| `DisplayProvisioningPanel` | One-time claim, waiting, provisioned, revoke/rotate states. | Table Display Provisioning |
+| `DisplayProvisioningPanel` | WiFi input, one-time firmware download, provisioned, revoke/rotate states. | Table Display Provisioning |
 | `StationWorkspace` | Station list/detail and disable blockers. | Station Setup |
 | `MenuWorkspace` | Categories, products/services, variants, modifiers, availability, station routing. | Menu Catalog |
 | `ProductDetailPanel` | Product/service setup and orderability validation. | Menu Catalog, Station Setup |
@@ -100,14 +100,14 @@ It must not create runtime data automatically and must not show live order/payme
 
 `DisplayProvisioningPanel` owns:
 
-- create claim;
-- one-time claim reveal;
-- claim expiry;
-- waiting for device;
+- WiFi SSID/password input for firmware generation;
+- one-time firmware download reveal;
+- firmware download expiry;
+- waiting for device flash;
 - provisioned display state;
 - revoke/rotate credential actions.
 
-Raw claim and credential secrets must be displayed only when the backend returns them and must not be recoverable from normal state reads.
+Raw WiFi passwords and credential secrets must be displayed only when the backend returns the generated firmware and must not be recoverable from normal state reads.
 
 ## Station Components
 

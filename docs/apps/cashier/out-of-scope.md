@@ -7,7 +7,7 @@ This document lists behaviors this app must not implement in the current release
 - It does not edit tenant identity or tenant setup data.
 - It does not create halls, tables, stations, products, or menu categories.
 - It does not prepare station tickets.
-- It does not create customer QR access tokens.
+- It does not create customer QR access tokens for physical tables; virtual test table QR preview is the only current-release exception.
 - It does not directly mutate station fulfillment state unless a specific correction workflow allows it.
 - It does not create customer payment links or pay-at-table flows in the current release.
 - It does not issue fiscal/e-Adisyon/ÖKC receipts or external fiscal documents in the current release.

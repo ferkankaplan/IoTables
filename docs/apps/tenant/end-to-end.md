@@ -24,14 +24,13 @@ Acceptance criteria:
 - TenantApp cannot edit tenant name or subdomain.
 
 ### 3. Table Display Shows Fresh QR
-1. Tenant Admin creates a one-time table display claim for a table.
-2. ESP32 setup submits the claim.
-3. Backend consumes the claim atomically.
-4. Backend returns a table display credential once.
-5. ESP32 stores the credential locally.
-6. ESP32 authenticates with the credential to fetch current QR payloads.
-7. Backend resolves tenant/table from the credential.
-8. QR token changes at least every 60 seconds and also rotates after redemption.
+1. Tenant Admin enters WiFi SSID/password while creating or provisioning a table display.
+2. Backend rotates the table display credential atomically.
+3. Backend renders a one-time table firmware file, for example `masa000.ino`.
+4. Tenant Admin downloads and flashes the generated firmware to the ESP32.
+5. ESP32 authenticates with the embedded display credential to fetch current QR payloads.
+6. Backend resolves tenant/table from the credential.
+7. QR token changes at least every 60 seconds and also rotates after redemption.
 
 Acceptance criteria:
 
@@ -39,4 +38,5 @@ Acceptance criteria:
 - Only one active display credential exists per tenant/table.
 - Re-provisioning revokes the previous active credential.
 - Raw display credentials are never embedded in customer QR payloads.
+- Raw WiFi password and raw display credential appear only in the one-time generated firmware response.
 - Client-sent table IDs are not trusted.
