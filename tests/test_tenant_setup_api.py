@@ -8,6 +8,7 @@ from iotables.api.tenant_setup import (
     get_menu_catalog_query_service,
     get_station_setup_mutation_service,
     get_station_setup_query_service,
+    get_table_display_provisioning_service,
     get_venue_layout_mutation_service,
     get_venue_layout_query_service,
 )
@@ -31,6 +32,10 @@ from iotables.modules.tenant_setup.menu_catalog import (
     product_to_customer_menu_product,
 )
 from iotables.modules.tenant_setup.station_setup import Station, StationList, StationWriteCommand
+from iotables.modules.tenant_setup.table_display_provisioning import (
+    DisplayFirmwareCommand,
+    DisplayFirmwareCreated,
+)
 from iotables.modules.tenant_setup.venue_layout import (
     HallTableBoard,
     HallWithTables,
@@ -182,6 +187,28 @@ class FakeStationSetupMutationService:
     ) -> Station:
         self.disable_args = {"actor": actor, "station_id": station_id, "reason": reason}
         return make_station(enabled=False)
+
+
+class FakeTableDisplayProvisioningService:
+    def __init__(self) -> None:
+        self.args: dict[str, object] | None = None
+
+    async def generate_firmware(
+        self,
+        *,
+        actor: ActorContext,
+        table_id: UUID,
+        command: DisplayFirmwareCommand,
+    ) -> DisplayFirmwareCreated:
+        self.args = {"actor": actor, "table_id": table_id, "command": command}
+        return DisplayFirmwareCreated(
+            firmware_id=UUID("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+            file_name="masa101.ino",
+            credential_id=UUID("ffffffff-ffff-ffff-ffff-ffffffffffff"),
+            table_id=table_id,
+            expires_at=datetime(2026, 7, 3, 12, 10, tzinfo=UTC),
+            firmware_content="firmware",
+        )
 
 
 class FakeMenuCatalogQueryService:
@@ -511,6 +538,7 @@ def make_client(
     mutation_service: FakeVenueLayoutMutationService | None = None,
     station_query_service: FakeStationSetupQueryService | None = None,
     station_mutation_service: FakeStationSetupMutationService | None = None,
+    table_display_service: FakeTableDisplayProvisioningService | None = None,
     menu_query_service: FakeMenuCatalogQueryService | None = None,
     menu_mutation_service: FakeMenuCatalogMutationService | None = None,
 ) -> TestClient:
@@ -525,6 +553,10 @@ def make_client(
     if station_mutation_service is not None:
         app.dependency_overrides[get_station_setup_mutation_service] = lambda: (
             station_mutation_service
+        )
+    if table_display_service is not None:
+        app.dependency_overrides[get_table_display_provisioning_service] = lambda: (
+            table_display_service
         )
     if menu_query_service is not None:
         app.dependency_overrides[get_menu_catalog_query_service] = lambda: menu_query_service
@@ -653,6 +685,33 @@ def test_disable_table_requires_reason_and_returns_disabled_table() -> None:
         "table_id": TABLE_ID,
         "reason": "closed area",
     }
+
+
+def test_create_display_firmware_requires_csrf_and_binds_actor_table_and_wifi() -> None:
+    service = FakeTableDisplayProvisioningService()
+    client = make_client(actor=make_actor(), table_display_service=service)
+
+    missing_csrf = client.post(
+        f"/api/tenant-setup/tables/{TABLE_ID}/display-firmware",
+        json={"wifiSsid": "CafeWifi", "wifiPassword": "secret"},
+    )
+    response = client.post(
+        f"/api/tenant-setup/tables/{TABLE_ID}/display-firmware",
+        headers={"X-CSRF-Token": "csrf"},
+        json={"wifiSsid": "CafeWifi", "wifiPassword": "secret"},
+    )
+
+    assert missing_csrf.status_code == 403
+    assert response.status_code == 200
+    assert response.json()["fileName"] == "masa101.ino"
+    assert response.json()["firmwareContent"] == "firmware"
+    assert service.args is not None
+    assert service.args["actor"] == make_actor()
+    assert service.args["table_id"] == TABLE_ID
+    command = service.args["command"]
+    assert isinstance(command, DisplayFirmwareCommand)
+    assert command.wifi_ssid == "CafeWifi"
+    assert command.wifi_password == "secret"
 
 
 def test_list_stations_uses_actor_tenant_scope() -> None:

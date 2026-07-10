@@ -25,6 +25,10 @@ from iotables.modules.tenant_setup.station_setup import (
     StationSetupQueryService,
     StationWriteCommand,
 )
+from iotables.modules.tenant_setup.table_display_provisioning import (
+    DisplayFirmwareCommand,
+    TableDisplayProvisioningService,
+)
 from iotables.modules.tenant_setup.venue_layout import (
     HallWriteCommand,
     TableWriteCommand,
@@ -183,6 +187,28 @@ class DisableRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     reason: str = Field(min_length=1)
+
+
+class DisplayFirmwareCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    wifi_ssid: str = Field(alias="wifiSsid", min_length=1)
+    wifi_password: str = Field(alias="wifiPassword", min_length=1)
+
+    def to_command(self) -> DisplayFirmwareCommand:
+        return DisplayFirmwareCommand(
+            wifi_ssid=self.wifi_ssid,
+            wifi_password=self.wifi_password,
+        )
+
+
+class DisplayFirmwareCreatedResponse(BaseModel):
+    firmware_id: str = Field(alias="firmwareId")
+    file_name: str = Field(alias="fileName")
+    credential_id: str = Field(alias="credentialId")
+    table_id: str = Field(alias="tableId")
+    expires_at: str = Field(alias="expiresAt")
+    firmware_content: str = Field(alias="firmwareContent")
 
 
 class StationWriteRequest(BaseModel):
@@ -369,6 +395,12 @@ def get_menu_catalog_mutation_service(
     return MenuCatalogMutationService(session)
 
 
+def get_table_display_provisioning_service(
+    session: Annotated[AsyncSession, Depends(get_database_session)],
+) -> TableDisplayProvisioningService:
+    return TableDisplayProvisioningService(session)
+
+
 def require_tenant_admin(actor: ActorContext) -> None:
     if StaffRole.TENANT_ADMIN not in actor.roles:
         raise ApiError(
@@ -489,6 +521,30 @@ async def disable_table(
     require_tenant_admin(actor)
     return (
         await service.disable_table(actor=actor, table_id=table_id, reason=payload.reason)
+    ).as_api_payload()
+
+
+@router.post(
+    "/tables/{table_id}/display-firmware",
+    response_model=DisplayFirmwareCreatedResponse,
+    dependencies=[CSRF_DEP],
+)
+async def create_display_firmware(
+    table_id: UUID,
+    payload: DisplayFirmwareCreateRequest,
+    actor: Annotated[ActorContext, TENANT_SCOPE_DEP],
+    service: Annotated[
+        TableDisplayProvisioningService,
+        Depends(get_table_display_provisioning_service),
+    ],
+) -> dict[str, Any]:
+    require_tenant_admin(actor)
+    return (
+        await service.generate_firmware(
+            actor=actor,
+            table_id=table_id,
+            command=payload.to_command(),
+        )
     ).as_api_payload()
 
 

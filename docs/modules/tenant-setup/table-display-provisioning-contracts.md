@@ -6,8 +6,7 @@ Source module: [table-display-provisioning.md](table-display-provisioning.md)
 
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
-| `table_display.generate_firmware` | TenantApp | tenantId, tableId, wifiSsid, wifiPassword | Tenant Admin; table belongs to tenant and is enabled; WiFi fields are present for generation | Lock table credentials; revoke previous active credential; create new credential hash; render one-time `.ino`; audit safe metadata | One-time firmware download payload returned once |
-| `table_display.download_firmware` | TenantApp | tenantId, tableId, firmwareId, rawDownloadToken | Tenant Admin; firmware belongs to tenant/table; token hash matches; not expired or downloaded | Atomic consume download token; stream encrypted firmware content as `.ino`; delete encrypted content after successful consume | `text/x-arduino` attachment |
+| `table_display.generate_firmware` | TenantApp | tenantId, tableId, wifiSsid, wifiPassword | Tenant Admin; table belongs to tenant and is enabled; WiFi fields are present for generation | Lock table credentials; revoke previous active credential; create new credential hash; render one-time `.ino`; store safe metadata only | One-time `.ino` firmware content returned once |
 | `table_display.revoke_credential` | TenantApp | tableId or credentialId, reason | Tenant Admin; credential belongs to tenant/table | Mark credential revoked; audit | Revoked credential state |
 | `table_display.rotate_credential` | TenantApp firmware generation flow | tableId | Tenant Admin | Lock table credentials; revoke old active before new active | New active credential |
 
