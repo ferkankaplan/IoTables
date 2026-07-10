@@ -304,6 +304,7 @@ Owned by: Venue Layout
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `name` | `text` | Hall name |
 | `display_order` | `integer` | Ordered hall list |
+| `table_number_base` | `integer` | First table number in the hall's 100-slot range, for example `100`, `200`, `300` |
 | `enabled` | `boolean` | Disabled halls cannot be active use targets |
 | `created_at` | `timestamptz` | Creation time |
 | `updated_at` | `timestamptz` | Last update |
@@ -319,8 +320,10 @@ Owned by: Venue Layout
 | `id` | `uuid` | Primary key |
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `hall_id` | `uuid` | FK to `halls.id` |
+| `table_number` | `integer` | Human table number inside the hall's allocated 100-slot range |
 | `name` | `text` | Table label |
 | `display_order` | `integer` | Ordered position inside hall |
+| `mode` | `text` | `virtual_test` or `physical`; `x00` and `x99` must remain `virtual_test` |
 | `enabled` | `boolean` | Disabled tables cannot accept new orders |
 | `created_at` | `timestamptz` | Creation time |
 | `updated_at` | `timestamptz` | Last update |
@@ -441,7 +444,7 @@ Owned by: Menu Catalog
 
 ## Table Display and Presence
 
-### `table_display_claims`
+### `table_display_firmware_packages`
 
 Owned by: Table Display Provisioning
 
@@ -450,10 +453,13 @@ Owned by: Table Display Provisioning
 | `id` | `uuid` | Primary key |
 | `tenant_id` | `uuid` | FK to `tenants.id` |
 | `table_id` | `uuid` | FK to `venue_tables.id` |
-| `claim_hash` | `text` | Unique one-time claim hash |
-| `created_by_user_id` | `uuid` | Tenant admin actor |
-| `expires_at` | `timestamptz` | Short claim lifetime |
-| `consumed_at` | `timestamptz` | Atomic consumption time |
+| `credential_id` | `uuid` | FK to `table_display_credentials.id` |
+| `file_name` | `text` | Generated filename, for example `masa000.ino` |
+| `encrypted_firmware_ref` | `text` | Short-lived encrypted artifact reference; deleted after download or expiry |
+| `download_token_hash` | `text` | One-time download token hash |
+| `generated_by_user_id` | `uuid` | Tenant admin actor |
+| `expires_at` | `timestamptz` | Short firmware download lifetime |
+| `downloaded_at` | `timestamptz` | Nullable consume-once download time |
 | `created_at` | `timestamptz` | Creation time |
 
 ### `table_display_credentials`

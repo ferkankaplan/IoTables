@@ -393,11 +393,17 @@ halls = Table(
     ),
     Column("name", Text, nullable=False),
     Column("display_order", Integer, nullable=False),
+    Column("table_number_base", Integer, nullable=False),
     Column("enabled", Boolean, nullable=False),
     Column("created_at", timestamp_tz, nullable=False),
     Column("updated_at", timestamp_tz, nullable=False),
     UniqueConstraint("tenant_id", "id", name="uq_halls__tenant_id_id"),
     UniqueConstraint("tenant_id", "display_order", name="uq_halls__tenant_display_order"),
+    UniqueConstraint("tenant_id", "table_number_base", name="uq_halls__tenant_table_number_base"),
+    CheckConstraint(
+        "table_number_base >= 100 and table_number_base % 100 = 0",
+        name="table_number_base_range",
+    ),
 )
 Index("uq_halls__tenant_name_lower", halls.c.tenant_id, func.lower(halls.c.name), unique=True)
 
@@ -412,12 +418,15 @@ venue_tables = Table(
         nullable=False,
     ),
     Column("hall_id", uuid_type, nullable=False),
+    Column("table_number", Integer, nullable=False),
     Column("name", Text, nullable=False),
     Column("display_order", Integer, nullable=False),
+    Column("mode", Text, nullable=False),
     Column("enabled", Boolean, nullable=False),
     Column("created_at", timestamp_tz, nullable=False),
     Column("updated_at", timestamp_tz, nullable=False),
     UniqueConstraint("tenant_id", "id", name="uq_venue_tables__tenant_id_id"),
+    UniqueConstraint("tenant_id", "table_number", name="uq_venue_tables__tenant_table_number"),
     UniqueConstraint(
         "tenant_id",
         "hall_id",
@@ -428,6 +437,11 @@ venue_tables = Table(
         ["tenant_id", "hall_id"],
         ["halls.tenant_id", "halls.id"],
         name="fk_venue_tables__tenant_halls",
+    ),
+    CheckConstraint("mode in ('virtual_test', 'physical')", name="mode"),
+    CheckConstraint(
+        "table_number % 100 not in (0, 99) or mode = 'virtual_test'",
+        name="boundary_slots_virtual",
     ),
 )
 Index(
@@ -841,44 +855,64 @@ Index(
     staff_hall_assignments.c.hall_id,
 )
 
-table_display_claims = Table(
-    "table_display_claims",
+table_display_firmware_packages = Table(
+    "table_display_firmware_packages",
     metadata,
     id_column(),
     Column(
         "tenant_id",
         uuid_type,
-        ForeignKey("tenants.id", name="fk_table_display_claims__tenants"),
+        ForeignKey("tenants.id", name="fk_table_display_firmware_packages__tenants"),
         nullable=False,
     ),
     Column("table_id", uuid_type, nullable=False),
-    Column("claim_hash", Text, nullable=False),
-    Column("created_by_user_id", uuid_type, nullable=False),
+    Column("credential_id", uuid_type, nullable=False),
+    Column("file_name", Text, nullable=False),
+    Column("encrypted_firmware_ref", Text, nullable=False),
+    Column("download_token_hash", Text, nullable=False),
+    Column("generated_by_user_id", uuid_type, nullable=False),
     Column("expires_at", timestamp_tz, nullable=False),
-    Column("consumed_at", timestamp_tz),
+    Column("downloaded_at", timestamp_tz),
     Column("created_at", timestamp_tz, nullable=False),
-    UniqueConstraint("tenant_id", "id", name="uq_table_display_claims__tenant_id_id"),
-    UniqueConstraint("claim_hash", name="uq_table_display_claims__claim_hash"),
+    UniqueConstraint(
+        "tenant_id",
+        "id",
+        name="uq_table_display_firmware_packages__tenant_id_id",
+    ),
+    UniqueConstraint(
+        "download_token_hash",
+        name="uq_table_display_firmware_packages__download_token_hash",
+    ),
     ForeignKeyConstraint(
         ["tenant_id", "table_id"],
         ["venue_tables.tenant_id", "venue_tables.id"],
-        name="fk_table_display_claims__tenant_venue_tables",
+        name="fk_table_display_firmware_packages__tenant_venue_tables",
     ),
     ForeignKeyConstraint(
-        ["tenant_id", "created_by_user_id"],
+        ["tenant_id", "credential_id"],
+        ["table_display_credentials.tenant_id", "table_display_credentials.id"],
+        name="fk_table_display_firmware_packages__tenant_credentials",
+    ),
+    ForeignKeyConstraint(
+        ["tenant_id", "generated_by_user_id"],
         ["users.tenant_id", "users.id"],
-        name="fk_table_display_claims__tenant_users",
+        name="fk_table_display_firmware_packages__tenant_users",
     ),
     CheckConstraint(
-        "consumed_at is null or consumed_at <= expires_at",
-        name="consumed_before_expiry",
+        "downloaded_at is null or downloaded_at <= expires_at",
+        name="downloaded_before_expiry",
     ),
 )
 Index(
-    "ix_table_display_claims__tenant_table_created",
-    table_display_claims.c.tenant_id,
-    table_display_claims.c.table_id,
-    table_display_claims.c.created_at.desc(),
+    "ix_table_display_firmware_packages__tenant_table_created",
+    table_display_firmware_packages.c.tenant_id,
+    table_display_firmware_packages.c.table_id,
+    table_display_firmware_packages.c.created_at.desc(),
+)
+Index(
+    "ix_table_display_firmware_packages__tenant_credential",
+    table_display_firmware_packages.c.tenant_id,
+    table_display_firmware_packages.c.credential_id,
 )
 
 table_display_credentials = Table(

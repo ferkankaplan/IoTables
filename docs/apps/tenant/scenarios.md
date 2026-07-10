@@ -83,18 +83,19 @@ Ownership:
 Happy path:
 
 1. Tenant Admin opens a table detail panel.
-2. TenantApp creates a short-lived one-time display claim.
-3. ESP32 setup consumes the claim.
-4. Backend returns display credential once.
-5. Table panel shows provisioned display state.
+2. Tenant Admin enters WiFi SSID and password.
+3. TenantApp requests one-time firmware generation.
+4. Backend rotates the display credential and renders `masa[no].ino`.
+5. Tenant Admin downloads the generated firmware once.
+6. Table panel shows provisioned display state.
 
 Branches:
 
 | Branch | Expected Result |
 | --- | --- |
-| Claim expires before use | Claim is rejected; Tenant Admin can create a new claim |
-| Claim is reused | Reject |
-| Claim belongs to another table | Reject |
+| Firmware download expires before use | Tenant Admin can generate a new firmware package; previous credential is revoked during regeneration |
+| Firmware download is reused | Reject |
+| WiFi SSID/password missing | Reject before credential rotation |
 | Table is disabled | Reject provisioning unless explicit recovery allows it |
 | Table already has active credential | Re-provisioning revokes previous credential and creates a new active one |
 | ESP32 loses credential | Tenant Admin re-provisions table display |

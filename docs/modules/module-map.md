@@ -69,7 +69,7 @@ These references are not copied as architecture. They are evidence used to avoid
 | Venue Layout | [tenant-setup/venue-layout.md](tenant-setup/venue-layout.md) | Halls, tables, ordered table grid, table state lookup | TenantApp, CustomerApp, CashierApp, ServiceStaffApp |
 | Station Setup | [tenant-setup/station-setup.md](tenant-setup/station-setup.md) | Fulfillment station definitions and lifecycle | TenantApp, Menu Catalog, Staff Access, staff/cashier apps |
 | Menu Catalog | [tenant-setup/menu-catalog.md](tenant-setup/menu-catalog.md) | Categories, products/services, variants/portions, modifiers, prices, availability overrides, product-to-station routing | TenantApp, CustomerApp, Ordering |
-| Table Display Provisioning | [tenant-setup/table-display-provisioning.md](tenant-setup/table-display-provisioning.md) | Table display claims and credentials for ESP32 QR screens | TenantApp, Ordering |
+| Table Display Provisioning | [tenant-setup/table-display-provisioning.md](tenant-setup/table-display-provisioning.md) | Table display firmware generation and credentials for ESP32 QR screens | TenantApp, Ordering |
 | Tenant Operational Settings | [tenant-setup/tenant-operational-settings.md](tenant-setup/tenant-operational-settings.md) | Public display name and service delivery tracking mode | TenantApp, Fulfillment read, public tenant context |
 
 ### Ordering

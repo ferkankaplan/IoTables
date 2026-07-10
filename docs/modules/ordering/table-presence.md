@@ -17,7 +17,7 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 
 ## Not Owned
 
-- TableDisplayClaim or TableDisplayCredential.
+- TableDisplayFirmwarePackage or TableDisplayCredential.
 - Hall/table setup data.
 - Customer cart contents.
 - Order creation.
@@ -29,6 +29,7 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 | App / Actor | Access | Limits |
 | --- | --- | --- |
 | ESP32 table display | fetch QR payload after display authentication | Table context comes from Table Display Provisioning |
+| CashierApp | request QR preview for virtual test tables | Only `virtual_test` tables; physical tables are forbidden |
 | CustomerApp | redeem table access token | Token must be valid, unexpired, unused, and table-matching |
 | Customer Ordering | require fresh presence for submit and table visibility | Server-side check only |
 
@@ -37,6 +38,7 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 | Interface | Purpose | Consumers |
 | --- | --- | --- |
 | Issue current QR token | Return current token payload for authenticated table display | ESP32 table display |
+| Issue virtual table QR preview | Return current token payload for cashier-visible virtual test table | CashierApp |
 | Redeem table access token | Create or refresh customer presence | CustomerApp |
 | Require fresh presence | Guard order submit and table orders/balance visibility | Customer Ordering |
 | Rotate token after redemption | Prevent replay after successful scan | QR display flow |
@@ -50,6 +52,7 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 - Redeeming a token refreshes an existing compatible CustomerOrderingSession when possible.
 - Fresh table presence is required for CustomerApp order submission and table-order/balance visibility.
 - Token rotation in the current release is poll-based: after redemption, the next ESP32 fetch returns a fresh token.
+- Cashier QR preview is allowed only for `virtual_test` tables. It must fail closed for physical tables, disabled tables, or tenant mismatch.
 - Push, SSE, or WebSocket display updates are out of scope for the current release.
 
 ## Operational Safety
@@ -60,6 +63,7 @@ It proves that a browser recently scanned the current QR displayed at a table. I
 - Wrong-table redemption must not change the current customer session.
 - Token rotation must not create duplicate or conflicting active tokens for the same table display.
 - The backend must recheck tenant status and table enabled state before granting presence.
+- Cashier QR preview must recheck that the table is `virtual_test`; it must never bypass ESP32 presence for physical tables.
 
 ## Data Model
 

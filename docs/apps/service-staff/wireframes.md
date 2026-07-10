@@ -69,7 +69,7 @@ Service Queue is the primary workspace when tracking is enabled.
 +------------------------------------------------+
 | Service header / workload / filters            |
 +------------------------------------------------+
-| Table group: Masa 001                          |
+| Table group: Masa 101                          |
 | [Ready item] [Picked-up item]                  |
 | [Bulk deliver selection bar]                   |
 +------------------------------------------------+

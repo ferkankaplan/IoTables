@@ -181,7 +181,7 @@ Initial `cafe` starter data:
 | Data Type | Created Records |
 | --- | --- |
 | Halls | `Salon 1`, `Salon 2` |
-| Tables per hall | `Masa 000`, `Masa 001`, `Masa 999` |
+| Table slots | `Salon 1`: `Masa 100-199`; `Salon 2`: `Masa 200-299`; all start as hidden `virtual_test` slots |
 | Stations | `Mutfak`, `Kahve` |
 | Mutfak products | `Sandviç`, `Tost`, `Kurabiye`, `Kek`, `Poğaça` |
 | Kahve products | `Kapuçino`, `Americano`, `Türk Kahvesi`, `Çay`, `Latte`, `Espresso` |

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
 
 type TenantHealthSummary = {
   tenantId: string;
@@ -142,8 +143,11 @@ type FirstPasswordSetupState = {
 type VenueTable = {
   tableId: string;
   hallId: string;
+  tableNumber: number;
   name: string;
   displayOrder: number;
+  mode: "virtual_test" | "physical" | string;
+  systemBoundarySlot: boolean;
   enabled: boolean;
 };
 
@@ -151,6 +155,7 @@ type HallWithTables = {
   hallId: string;
   name: string;
   displayOrder: number;
+  tableNumberBase: number;
   enabled: boolean;
   tables: VenueTable[];
 };
@@ -367,6 +372,7 @@ type CashierTableState = {
   hallId: string;
   tableLabel: string;
   hallLabel: string;
+  mode: "virtual_test" | "physical" | string;
   tableSessionId: string | null;
   checkId: string | null;
   status: "empty" | "occupied" | string;
@@ -379,6 +385,12 @@ type CashierTableState = {
 type CashierVenueBoard = {
   tables: CashierTableState[];
   derivedAt: string;
+};
+
+type QrTokenPreview = {
+  qrToken: string;
+  expiresAt: string;
+  refreshAfterSeconds: number;
 };
 
 type BillSummary = {
@@ -1726,6 +1738,12 @@ function CashierSignedInScreen({
   const [orders, setOrders] = useState<CashierOrder[]>([]);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cash" | "transfer">("cash");
+  const [showVirtualTables, setShowVirtualTables] = useState(false);
+  const [qrPreview, setQrPreview] = useState<{
+    tableId: string;
+    dataUrl: string;
+    expiresAt: string;
+  } | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error" | "forbidden">("loading");
   const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -1735,8 +1753,8 @@ function CashierSignedInScreen({
       setState("forbidden");
       return;
     }
-    void loadBoard();
-  }, [actor?.appScope, actor?.roles.join("|")]);
+    void loadBoard(showVirtualTables);
+  }, [actor?.appScope, actor?.roles.join("|"), showVirtualTables]);
 
   useEffect(() => {
     const selected = board?.tables.find((table) => table.tableId === selectedTableId) ?? null;
@@ -1749,11 +1767,12 @@ function CashierSignedInScreen({
     void loadTableDetail(selected);
   }, [selectedTableId, board?.derivedAt]);
 
-  async function loadBoard() {
+  async function loadBoard(includeVirtualTables = showVirtualTables) {
     setState("loading");
     setError(null);
     try {
-      const payload = await apiRequest<CashierVenueBoard>("/api/cashier/venue/board", {
+      const query = includeVirtualTables ? "?includeVirtualTestTables=true" : "";
+      const payload = await apiRequest<CashierVenueBoard>(`/api/cashier/venue/board${query}`, {
         headers: tenantHeaders()
       });
       setBoard(payload);
@@ -1762,6 +1781,36 @@ function CashierSignedInScreen({
     } catch (requestError) {
       setError(errorMessageFrom(requestError));
       setState("error");
+    }
+  }
+
+  async function createVirtualQrPreview(table: CashierTableState) {
+    if (table.mode !== "virtual_test" || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      const payload = await apiRequest<QrTokenPreview>(
+        `/api/cashier/virtual-tables/${table.tableId}/qr-preview`,
+        {
+          headers: {
+            "X-CSRF-Token": crypto.randomUUID(),
+            ...tenantHeaders()
+          },
+          method: "POST"
+        }
+      );
+      const dataUrl = await QRCode.toDataURL(payload.qrToken, {
+        errorCorrectionLevel: "M",
+        margin: 1,
+        scale: 8
+      });
+      setQrPreview({tableId: table.tableId, dataUrl, expiresAt: payload.expiresAt});
+      setActionState("idle");
+    } catch (requestError) {
+      setError(errorMessageFrom(requestError));
+      setActionState("error");
     }
   }
 
@@ -1928,6 +1977,18 @@ function CashierSignedInScreen({
             >
               Yenile
             </button>
+            <label className="flex h-10 items-center gap-2 border border-zinc-300 px-3 text-sm font-medium">
+              <input
+                checked={showVirtualTables}
+                onChange={(event) => {
+                  setShowVirtualTables(event.target.checked);
+                  setSelectedTableId(null);
+                  setQrPreview(null);
+                }}
+                type="checkbox"
+              />
+              Sanal masalar
+            </label>
             <button
               className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
               onClick={onLogout}
@@ -1959,7 +2020,9 @@ function CashierSignedInScreen({
             <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
               {board.tables.map((table) => (
                 <button
-                  className={`min-h-36 border bg-white px-4 py-4 text-left hover:bg-zinc-50 ${
+                  className={`min-h-36 border px-4 py-4 text-left hover:bg-zinc-50 ${
+                    table.mode === "virtual_test" ? "bg-slate-50" : "bg-white"
+                  } ${
                     selectedTableId === table.tableId ? "border-emerald-600" : "border-zinc-200"
                   }`}
                   key={table.tableId}
@@ -1970,6 +2033,9 @@ function CashierSignedInScreen({
                     <div className="min-w-0">
                       <h2 className="truncate text-base font-semibold">{table.tableLabel}</h2>
                       <p className="mt-1 truncate text-xs text-zinc-500">{table.hallLabel}</p>
+                      {table.mode === "virtual_test" ? (
+                        <p className="mt-2 text-xs font-medium text-slate-600">Sanal test masası</p>
+                      ) : null}
                     </div>
                     <StatusBadge value={table.status} />
                   </div>
@@ -2000,6 +2066,30 @@ function CashierSignedInScreen({
           </div>
           {selectedTable === null ? (
             <StateBlock title="İşlem için masa seçin" />
+          ) : selectedTable.mode === "virtual_test" ? (
+            <div className="space-y-4 px-4 py-4">
+              <StateBlock title="Sanal test masası" />
+              <button
+                className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={actionState === "submitting"}
+                onClick={() => void createVirtualQrPreview(selectedTable)}
+                type="button"
+              >
+                Fresh QR oluştur
+              </button>
+              {qrPreview?.tableId === selectedTable.tableId ? (
+                <div className="border border-zinc-200 px-4 py-4 text-center">
+                  <img
+                    alt={`${selectedTable.tableLabel} QR`}
+                    className="mx-auto h-56 w-56"
+                    src={qrPreview.dataUrl}
+                  />
+                  <p className="mt-3 text-xs text-zinc-500">
+                    Geçerlilik: {new Date(qrPreview.expiresAt).toLocaleTimeString("tr-TR")}
+                  </p>
+                </div>
+              ) : null}
+            </div>
           ) : selectedTable.status !== "occupied" || billSummary === null ? (
             <StateBlock title="Bu masada açık oturum yok" />
           ) : (
@@ -2650,8 +2740,6 @@ function HallManagementWorkspace() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [newHallName, setNewHallName] = useState("");
   const [newHallOrder, setNewHallOrder] = useState("");
-  const [newTableName, setNewTableName] = useState("");
-  const [newTableOrder, setNewTableOrder] = useState("");
   const [disableReason, setDisableReason] = useState("");
 
   async function loadBoard() {
@@ -2721,33 +2809,27 @@ function HallManagementWorkspace() {
     }
   }
 
-  async function createTable(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedHall || !newTableName.trim() || !newTableOrder || actionState === "submitting") {
+  async function promoteSelectedTable() {
+    if (!selectedTable || selectedTable.systemBoundarySlot || actionState === "submitting") {
       return;
     }
     setActionState("submitting");
     setActionError(null);
     try {
-      const created = await apiRequest<VenueTable>(
-        `/api/tenant-setup/halls/${selectedHall.hallId}/tables`,
-        {
-          body: JSON.stringify({
-            name: newTableName.trim(),
-            displayOrder: Number(newTableOrder)
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": crypto.randomUUID()
-          },
-          method: "POST"
-        }
-      );
-      setNewTableName("");
-      setNewTableOrder("");
+      await apiRequest<VenueTable>(`/api/tenant-setup/tables/${selectedTable.tableId}`, {
+        body: JSON.stringify({
+          name: selectedTable.name,
+          displayOrder: selectedTable.displayOrder,
+          mode: "physical"
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "PATCH"
+      });
       await loadBoard();
-      setSelectedHallId(created.hallId);
-      setSelectedTableId(created.tableId);
+      setSelectedTableId(selectedTable.tableId);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -2813,7 +2895,9 @@ function HallManagementWorkspace() {
                   <span className="font-medium">{hall.name}</span>
                   <StatusBadge value={hall.enabled ? "enabled" : "disabled"} />
                 </div>
-                <p className="mt-1 text-xs text-zinc-500">{hall.tables.length} masa</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {hall.tableNumberBase}-{hall.tableNumberBase + 99} / {hall.tables.length} slot
+                </p>
               </button>
             ))}
           </div>
@@ -2847,7 +2931,11 @@ function HallManagementWorkspace() {
         <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
           <div>
             <h3 className="text-sm font-semibold">{selectedHall?.name ?? "Salon seçilmedi"}</h3>
-            <p className="mt-1 text-xs text-zinc-500">Sıralı grid düzeni</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {selectedHall
+                ? `${selectedHall.tableNumberBase}-${selectedHall.tableNumberBase + 99} slot aralığı`
+                : "Sıralı slot düzeni"}
+            </p>
           </div>
           <span className="text-xs text-zinc-500">
             {board.derivedAt ? formatDate(board.derivedAt) : ""}
@@ -2873,41 +2961,15 @@ function HallManagementWorkspace() {
                     type="button"
                   >
                     <p className="truncate text-sm font-semibold">{table.name}</p>
-                    <p className="mt-1 text-xs text-zinc-500">Sıra {table.displayOrder}</p>
-                    <div className="mt-3">
+                    <p className="mt-1 text-xs text-zinc-500">No {table.tableNumber}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <StatusBadge value={table.mode} />
                       <StatusBadge value={table.enabled ? "enabled" : "disabled"} />
                     </div>
                   </button>
                 ))}
               </div>
             )}
-            <form
-              className="grid gap-2 border-t border-zinc-200 p-4 md:grid-cols-[minmax(0,1fr)_110px_auto]"
-              onSubmit={createTable}
-            >
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setNewTableName(event.target.value)}
-                placeholder="Masa adı"
-                value={newTableName}
-              />
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setNewTableOrder(event.target.value)}
-                placeholder="Sıra"
-                type="number"
-                value={newTableOrder}
-              />
-              <button
-                className="h-10 border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={
-                  !newTableName.trim() || !newTableOrder || actionState === "submitting"
-                }
-                type="submit"
-              >
-                Masa ekle
-              </button>
-            </form>
           </>
         )}
       </section>
@@ -2921,8 +2983,11 @@ function HallManagementWorkspace() {
             <DetailRows
               rows={[
                 ["Masa", selectedTable.name],
+                ["Numara", selectedTable.tableNumber.toString()],
                 ["Salon", selectedHall?.name ?? "-"],
                 ["Sıra", selectedTable.displayOrder.toString()],
+                ["Mod", selectedTable.mode],
+                ["Sistem slotu", selectedTable.systemBoundarySlot ? "evet" : "hayır"],
                 ["Durum", selectedTable.enabled ? "enabled" : "disabled"]
               ]}
             />
@@ -2931,9 +2996,25 @@ function HallManagementWorkspace() {
                 Display provisioning
               </p>
               <p className="mt-2 text-sm text-zinc-600">
-                QR ekran claim ve credential işlemleri bu panel içinde açılacak.
+                ESP32 firmware üretimi yalnızca fiziksel masalarda açılır. Sanal ve sınır
+                slotlarında fiziksel ekran kurulumu yapılamaz.
               </p>
             </div>
+            {selectedTable.mode === "virtual_test" ? (
+              <div className="space-y-2 border-t border-zinc-200 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  Fiziksel masa
+                </p>
+                <button
+                  className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                  disabled={selectedTable.systemBoundarySlot || actionState === "submitting"}
+                  onClick={() => void promoteSelectedTable()}
+                  type="button"
+                >
+                  Fiziksel masaya çevir
+                </button>
+              </div>
+            ) : null}
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Operasyonlar
