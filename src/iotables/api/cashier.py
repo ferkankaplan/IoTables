@@ -3,13 +3,14 @@ import json
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from iotables.api.errors import ApiError
 from iotables.database.session import get_database_session
 from iotables.modules.ordering.customer_ordering import CustomerOrderingService
+from iotables.modules.ordering.table_presence import TablePresenceService
 from iotables.modules.settlement.payments import PaymentService
 from iotables.modules.settlement.table_session_billing import TableSessionBillingService
 from iotables.security.context import ActorContext, AppScope
@@ -26,6 +27,7 @@ class CashierTableStateResponse(BaseModel):
     hall_id: str = Field(alias="hallId")
     table_label: str = Field(alias="tableLabel")
     hall_label: str = Field(alias="hallLabel")
+    mode: str
     table_session_id: str | None = Field(alias="tableSessionId")
     check_id: str | None = Field(alias="checkId")
     status: str
@@ -38,6 +40,12 @@ class CashierTableStateResponse(BaseModel):
 class CashierVenueBoardResponse(BaseModel):
     tables: list[CashierTableStateResponse]
     derived_at: str = Field(alias="derivedAt")
+
+
+class QrTokenPreviewResponse(BaseModel):
+    qr_token: str = Field(alias="qrToken")
+    expires_at: str = Field(alias="expiresAt")
+    refresh_after_seconds: int = Field(alias="refreshAfterSeconds")
 
 
 class ActiveTableSessionResponse(BaseModel):
@@ -155,12 +163,39 @@ def get_customer_ordering_service(
     return CustomerOrderingService(session)
 
 
+def get_table_presence_service(
+    session: Annotated[AsyncSession, Depends(get_database_session)],
+) -> TablePresenceService:
+    return TablePresenceService(session)
+
+
 @router.get("/venue/board", response_model=CashierVenueBoardResponse)
 async def venue_board(
     actor: Annotated[ActorContext, CASHIER_SCOPE_DEP],
     service: Annotated[TableSessionBillingService, Depends(get_table_session_billing_service)],
+    include_virtual_test_tables: bool = Query(False, alias="includeVirtualTestTables"),
 ) -> dict[str, Any]:
-    return (await service.venue_board(actor=actor)).as_api_payload()
+    return (
+        await service.venue_board(
+            actor=actor,
+            include_virtual_test_tables=include_virtual_test_tables,
+        )
+    ).as_api_payload()
+
+
+@router.post(
+    "/virtual-tables/{table_id}/qr-preview",
+    response_model=QrTokenPreviewResponse,
+    dependencies=[CSRF_DEP],
+)
+async def virtual_table_qr_preview(
+    table_id: UUID,
+    actor: Annotated[ActorContext, CASHIER_SCOPE_DEP],
+    service: Annotated[TablePresenceService, Depends(get_table_presence_service)],
+) -> dict[str, Any]:
+    return (
+        await service.issue_virtual_table_qr_preview(actor=actor, table_id=table_id)
+    ).as_api_payload()
 
 
 @router.get("/tables/{table_id}/active-session", response_model=ActiveTableSessionResponse)

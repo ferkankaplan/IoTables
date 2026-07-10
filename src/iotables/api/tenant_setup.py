@@ -43,8 +43,11 @@ router = APIRouter(prefix="/tenant-setup", tags=["Tenant Setup"])
 class VenueTableResponse(BaseModel):
     table_id: str = Field(alias="tableId")
     hall_id: str = Field(alias="hallId")
+    table_number: int = Field(alias="tableNumber")
     name: str
     display_order: int = Field(alias="displayOrder")
+    mode: str
+    system_boundary_slot: bool = Field(alias="systemBoundarySlot")
     enabled: bool
 
 
@@ -52,6 +55,7 @@ class HallWithTablesResponse(BaseModel):
     hall_id: str = Field(alias="hallId")
     name: str
     display_order: int = Field(alias="displayOrder")
+    table_number_base: int = Field(alias="tableNumberBase")
     enabled: bool
     tables: list[VenueTableResponse]
 
@@ -163,6 +167,7 @@ class TableWriteRequest(BaseModel):
     display_order: int = Field(alias="displayOrder", gt=0)
     hall_id: UUID | None = Field(default=None, alias="hallId")
     enabled: bool | None = None
+    mode: str | None = None
 
     def to_command(self) -> TableWriteCommand:
         return TableWriteCommand(
@@ -170,6 +175,7 @@ class TableWriteRequest(BaseModel):
             display_order=self.display_order,
             hall_id=self.hall_id,
             enabled=self.enabled,
+            mode=self.mode,
         )
 
 

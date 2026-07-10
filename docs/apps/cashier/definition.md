@@ -28,7 +28,7 @@ CashierApp can operate tenant runtime records related to table sessions and paym
 
 | Area | Authority |
 | --- | --- |
-| Active table view | Read halls, tables, and table states |
+| Active table view | Read physical halls, tables, and table states; reveal virtual test tables only through a temporary page-local toggle |
 | Table session view | Read active session details for each table |
 | Single check/adisyon view | Read the single current release check/adisyon attached to the table session |
 | Order inspection | Read orders and order items attached to a session |
@@ -45,7 +45,8 @@ CashierApp must always be tenant-scoped. Every action belongs to the current ten
 - It does not edit tenant identity or tenant setup data.
 - It does not create halls, tables, stations, products, or menu categories.
 - It does not prepare station tickets.
-- It does not create customer QR access tokens.
+- It does not create customer QR access tokens for physical tables.
+- It may request a fresh QR preview only for `virtual_test` tables when the temporary virtual-table view is explicitly enabled.
 - It does not directly mutate station fulfillment state unless a specific correction workflow allows it.
 - It does not create customer payment links or pay-at-table flows in the current release.
 - It does not issue fiscal/e-Adisyon/ÖKC receipts or external fiscal documents in the current release.
@@ -80,11 +81,13 @@ Table and session details should open inside the cashier workspace. A separate f
 ### Monitor Active Sessions
 
 1. Cashier opens the cashier workspace.
-2. CashierApp shows halls and tables with current runtime state.
+2. CashierApp shows halls and physical tables with current runtime state.
 3. Tables with active sessions show total balance, paid amount, remaining balance, and latest order state.
 4. Cashier selects a table to inspect the active session in a contextual panel.
 
 Table sessions are created by customer ordering, not by CashierApp. The first customer order on a table opens the session.
+
+Virtual test tables are hidden from the normal cashier board. The cashier may enable a page-local "show virtual tables" control for testing; this state must reset when the page reloads. Only then may the cashier open a virtual table detail panel and display a fresh QR preview for that virtual table.
 
 ### Inspect Session
 

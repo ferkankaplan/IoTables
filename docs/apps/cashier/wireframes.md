@@ -68,7 +68,7 @@ Workspace content:
 | --- | --- |
 | Header | Tenant label, cashier actor, refresh/logout, stale indicator. |
 | Hall tabs/filter | Switch hall context without changing cashier authorization. |
-| Table board | Tables grouped by hall with active/empty/attention state. |
+| Table board | Physical tables grouped by hall with active/empty/attention state. Virtual test tables are hidden unless explicitly revealed for the current page session. |
 | Session panel | Active TableSession, Check/Adisyon, orders, payments, corrections. |
 | Action drawers/dialogs | Payment, correction, payment void, close session. |
 
@@ -83,6 +83,16 @@ Table tile content:
 | Cannot-prepare flag | Prominent cashier attention state. |
 
 The board may show operational `TableState`, but Venue Layout does not own runtime financial/order state. Runtime values are derived from Settlement, Ordering, Fulfillment, and Payments.
+
+Virtual test table controls:
+
+| Control / State | Behavior |
+| --- | --- |
+| Show virtual tables toggle | Off by default on every page load. |
+| Toggle enabled | Reveals `virtual_test` tables in a visually distinct test group or muted table tiles. |
+| Virtual table selected | Opens table detail panel with fresh QR preview action. |
+| Physical table selected | Never shows cashier-generated QR preview; physical QR belongs to ESP32 display flow. |
+| `x00` / `x99` virtual table | Always remains virtual and cannot expose physical provisioning actions. |
 
 ## Session Detail Panel
 

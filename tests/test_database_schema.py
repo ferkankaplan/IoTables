@@ -30,7 +30,7 @@ EXPECTED_FOUNDATION_TABLES = {
     "modifier_options",
     "staff_station_assignments",
     "staff_hall_assignments",
-    "table_display_claims",
+    "table_display_firmware_packages",
     "table_display_credentials",
     "table_access_tokens",
     "table_sessions",
@@ -177,16 +177,29 @@ def test_active_role_grants_are_idempotency_safe() -> None:
 
 
 def test_tenant_setup_tables_enforce_names_and_ordering() -> None:
-    assert "uq_halls__tenant_display_order" in constraint_names("halls", UniqueConstraint)
-    assert "uq_venue_tables__tenant_hall_display_order" in constraint_names(
-        "venue_tables",
-        UniqueConstraint,
-    )
+    hall_uniques = constraint_names("halls", UniqueConstraint)
+    table_uniques = constraint_names("venue_tables", UniqueConstraint)
+    hall_checks = constraint_names("halls", CheckConstraint)
+    table_checks = constraint_names("venue_tables", CheckConstraint)
+
+    assert {
+        "uq_halls__tenant_display_order",
+        "uq_halls__tenant_table_number_base",
+    } <= hall_uniques
+    assert {
+        "uq_venue_tables__tenant_hall_display_order",
+        "uq_venue_tables__tenant_table_number",
+    } <= table_uniques
     assert "uq_stations__tenant_display_order" in constraint_names("stations", UniqueConstraint)
     assert "uq_menu_categories__tenant_display_order" in constraint_names(
         "menu_categories",
         UniqueConstraint,
     )
+    assert "ck_halls__table_number_base_range" in hall_checks
+    assert {
+        "ck_venue_tables__mode",
+        "ck_venue_tables__boundary_slots_virtual",
+    } <= table_checks
 
     assert "lower(name)" in compiled_index_sql("halls", "uq_halls__tenant_name_lower")
     assert "lower(name)" in compiled_index_sql(
@@ -299,15 +312,23 @@ def test_staff_station_and_hall_assignments_are_tenant_scoped_and_idempotent() -
     assert "status = 'active'" in hall_assignment_index
 
 
-def test_table_display_claims_are_one_time_tenant_scoped_secrets() -> None:
-    claim_uniques = constraint_names("table_display_claims", UniqueConstraint)
-    claim_fks = constraint_names("table_display_claims", ForeignKeyConstraint)
-    claim_checks = constraint_names("table_display_claims", CheckConstraint)
+def test_table_display_firmware_packages_are_one_time_tenant_scoped_secrets() -> None:
+    package_uniques = constraint_names("table_display_firmware_packages", UniqueConstraint)
+    package_fks = constraint_names("table_display_firmware_packages", ForeignKeyConstraint)
+    package_checks = constraint_names("table_display_firmware_packages", CheckConstraint)
+    package_lookup_index = compiled_index_sql(
+        "table_display_firmware_packages",
+        "ix_table_display_firmware_packages__tenant_table_created",
+    )
 
-    assert "uq_table_display_claims__claim_hash" in claim_uniques
-    assert "fk_table_display_claims__tenant_venue_tables" in claim_fks
-    assert "fk_table_display_claims__tenant_users" in claim_fks
-    assert "ck_table_display_claims__consumed_before_expiry" in claim_checks
+    assert "uq_table_display_firmware_packages__download_token_hash" in package_uniques
+    assert "fk_table_display_firmware_packages__tenant_venue_tables" in package_fks
+    assert "fk_table_display_firmware_packages__tenant_credentials" in package_fks
+    assert "fk_table_display_firmware_packages__tenant_users" in package_fks
+    assert "ck_table_display_firmware_packages__downloaded_before_expiry" in package_checks
+    assert "CREATE INDEX ix_table_display_firmware_packages__tenant_table_created" in (
+        package_lookup_index
+    )
 
 
 def test_table_display_credentials_have_single_active_binding_per_table() -> None:

@@ -82,8 +82,10 @@ All tables in [schema.md](schema.md) use `uuid` primary keys except one-to-one t
 | --- | --- | --- |
 | `halls` | unique `(tenant_id, lower(name))` | Prevent duplicate hall names inside tenant. |
 | `halls` | unique `(tenant_id, display_order)` | Keep hall ordering deterministic. |
+| `halls` | unique `(tenant_id, table_number_base)` | Prevent overlapping 100-table hall ranges. |
 | `venue_tables` | unique `(tenant_id, hall_id, lower(name))` | Prevent duplicate table labels inside hall. |
 | `venue_tables` | unique `(tenant_id, hall_id, display_order)` | Keep table grid ordering deterministic. |
+| `venue_tables` | unique `(tenant_id, table_number)` | Prevent duplicate human table numbers inside a tenant. |
 | `stations` | unique `(tenant_id, lower(name))` | Prevent duplicate station names. |
 | `stations` | unique `(tenant_id, display_order)` | Keep station ordering deterministic. |
 | `menu_categories` | unique `(tenant_id, lower(name))` | Prevent duplicate customer category names. |
@@ -100,12 +102,12 @@ At least one enabled `product_variants` row for an enabled `product_services` ro
 
 | Table | Constraint / Index | Purpose |
 | --- | --- | --- |
-| `table_display_claims` | unique `claim_hash` | Prevent claim collision/replay ambiguity. |
+| `table_display_firmware_packages` | unique `download_token_hash` | Prevent one-time firmware download token ambiguity. |
 | `table_display_credentials` | unique `credential_hash` | Prevent ambiguous display authentication. |
 | `table_display_credentials` | unique `(tenant_id, table_id)` where `status = 'active'` | One active ESP32 table display credential per table. |
 | `table_access_tokens` | unique `token_hash` | Prevent QR token collision/replay ambiguity. |
 
-Only one live unconsumed QR token per display should be enforced by the token issuance transaction with a table/display lock. Do not use a partial index involving `now()`, because PostgreSQL indexes cannot safely depend on volatile time expressions.
+Only one valid firmware package per table generation and only one live unconsumed QR token per display should be enforced by the issuance transaction with a table/display credential lock. Do not use a partial index involving `now()`, because PostgreSQL indexes cannot safely depend on volatile time expressions.
 
 ### Customer Ordering and Settlement
 
@@ -176,8 +178,12 @@ constraint ck_preparation_items__status
 | `staff_profiles` | referenced user must have same `tenant_id` | Enforce with composite FK or service validation. |
 | `availability_overrides` | `expires_at is null or starts_at is null or expires_at > starts_at` | Prevent invalid windows. |
 | `availability_overrides` | product variant must belong to product when `product_variant_id` is present | Enforce with composite FK. |
-| `table_display_claims` | `consumed_at is null or consumed_at <= expires_at` | Preserve one-time claim lifecycle. |
+| `table_display_firmware_packages` | `downloaded_at is null or downloaded_at <= expires_at` | Preserve one-time firmware download lifecycle. |
 | `table_display_credentials` | `(status = 'active' and revoked_at is null) or (status = 'revoked' and revoked_at is not null)` | Keep credential lifecycle coherent. |
+| `halls` | `table_number_base >= 100 and table_number_base % 100 = 0` | Hall ranges start at `100`, `200`, `300`, and so on. |
+| `venue_tables` | `table_number % 100 between 0 and 99` with hall-range validation in command/database trigger | Table number must remain inside the owning hall's 100-slot range. |
+| `venue_tables` | `mode in ('virtual_test', 'physical')` | Preserve table mode vocabulary. |
+| `venue_tables` | `table_number % 100 not in (0, 99) or mode = 'virtual_test'` | `x00` and `x99` slots can never become physical. |
 | `table_access_tokens` | `consumed_at is null or consumed_at <= expires_at` | Preserve token lifecycle. |
 | `customer_ordering_sessions` | `presence_valid_until <= expires_at` | Presence cannot outlive session. |
 | `order_submit_idempotency` | completed rows require `order_id` and `completed_at` | Prevent ambiguous idempotency results. |
@@ -233,8 +239,9 @@ Required examples:
 | `availability_overrides` | `(tenant_id, created_by_user_id)` -> `users(tenant_id, id)` | Availability actor cannot cross tenant. |
 | `modifier_groups` | `(tenant_id, product_service_id)` -> `product_services(tenant_id, id)` | Modifier group cannot cross tenant. |
 | `modifier_options` | `(tenant_id, modifier_group_id)` -> `modifier_groups(tenant_id, id)` | Option cannot cross tenant. |
-| `table_display_claims` | `(tenant_id, table_id)` -> `venue_tables(tenant_id, id)` | Claim cannot provision another tenant's table. |
-| `table_display_claims` | `(tenant_id, created_by_user_id)` -> `users(tenant_id, id)` | Claim creator cannot cross tenant. |
+| `table_display_firmware_packages` | `(tenant_id, table_id)` -> `venue_tables(tenant_id, id)` | Firmware cannot provision another tenant's table. |
+| `table_display_firmware_packages` | `(tenant_id, credential_id)` -> `table_display_credentials(tenant_id, id)` | Firmware package cannot point to another tenant's display credential. |
+| `table_display_firmware_packages` | `(tenant_id, generated_by_user_id)` -> `users(tenant_id, id)` | Firmware creator cannot cross tenant. |
 | `table_display_credentials` | `(tenant_id, table_id)` -> `venue_tables(tenant_id, id)` | Credential cannot authenticate another tenant's table. |
 | `table_access_tokens` | `(tenant_id, table_id)` -> `venue_tables(tenant_id, id)` | QR token cannot target another tenant's table. |
 | `customer_ordering_sessions` | `(tenant_id, table_id)` -> `venue_tables(tenant_id, id)` | Customer session cannot target another tenant's table. |
@@ -376,7 +383,7 @@ These are database behavior requirements, not API suggestions.
 | --- | --- |
 | Tenant creation | Use the phased provisioning flow in [seed-provisioning.md](seed-provisioning.md): reserve tenant first, then apply required records in one locked transaction, then mark failure separately if needed. |
 | Starter template retry | Lock tenant and starter application rows with `select for update`; never apply successful template twice. |
-| Display claim consumption | Atomic update `where consumed_at is null and expires_at > now()`; only winner receives credential. |
+| Display firmware download | Atomic update `where downloaded_at is null and expires_at > now()`; only winner receives the generated `.ino` response. |
 | Display credential rotation | Lock tenant/table credential rows; revoke old active credential before inserting active replacement. |
 | QR token redemption | Atomic update `where consumed_at is null and expires_at > now()`; only winner refreshes presence. |
 | Order submit | Reserve idempotency row first, then lock active cart and active/open table session path. Duplicate key returns original result. |

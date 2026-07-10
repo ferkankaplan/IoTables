@@ -23,7 +23,7 @@ This document maps TenantApp behavior to module-owned API contracts. It does not
 | Hall/table commands | `/api/tenant-setup/halls...`, `/api/tenant-setup/tables...` | [Venue Layout](../../modules/tenant-setup/venue-layout-api.md) | Tables remain managed in hall context. |
 | Station setup | `/api/tenant-setup/stations...` | [Station Setup](../../modules/tenant-setup/station-setup-api.md) | Station lifecycle and assignment source. |
 | Menu setup | `/api/tenant-setup/menu...` | [Menu Catalog](../../modules/tenant-setup/menu-catalog-api.md) | Prices/routing/availability source. |
-| Display provisioning | `/api/tenant-setup/tables/{tableId}/display...` | [Table Display Provisioning](../../modules/tenant-setup/table-display-provisioning-api.md) | Raw claims/secrets returned once. |
+| Display provisioning | `/api/tenant-setup/tables/{tableId}/display...` | [Table Display Provisioning](../../modules/tenant-setup/table-display-provisioning-api.md) | Generated firmware is returned/downloaded once; raw WiFi and credential secrets are not stored. |
 | Tenant audit | `GET /api/tenant/audit-events` | [Audit](../../modules/governance/audit-api.md) | Setup/security audit only. |
 
 ## Explicit Non-Usage
