@@ -33,12 +33,12 @@ TenantApp can manage tenant-owned setup and configuration records.
 | Area | Authority |
 | --- | --- |
 | Tenant profile | View tenant identity and platform-owned profile fields |
-| Hall management | Create, update, organize, and disable halls |
+| Hall management | Create, update, organize, and remove halls |
 | Table management | Create, update, reorder, and disable tables within halls |
-| Station management | Create, update, and disable preparation/service stations |
-| Menu management | Create, update, categorize, price, temporarily mark unavailable, and disable products/services and variants/portions |
+| Station management | Create, update, and remove preparation/service stations |
+| Menu management | Create, update, categorize, price, temporarily mark unavailable, and remove products/services and variants/portions |
 | Station assignment | Assign products/services to the station responsible for fulfillment |
-| Staff management | Manage staff users, roles, and app access |
+| Staff management | Create, update, and remove staff users, roles, and app access |
 | Service hall assignment | Assign service staff to the halls they can operate |
 | Service delivery tracking | Enable or disable ServiceStaffApp item-delivery tracking for the tenant |
 | Starter data editing | Edit or remove sector-based starter records after tenant creation |
@@ -187,9 +187,11 @@ In v1, each product/service belongs to exactly one fulfillment station. Multi-st
 
 1. Tenant Admin logs in after tenant creation.
 2. TenantApp shows starter data as normal editable tenant data.
-3. Tenant Admin can rename, disable, delete, or extend starter halls, tables, stations, products, and staff users according to normal TenantApp rules.
+3. Tenant Admin can rename, remove, disable, or extend starter halls, tables, stations, products, and staff users according to normal TenantApp rules.
 
-Starter data must not be recreated automatically after the tenant edits or deletes it.
+TenantApp uses the user-facing word `Sil` for removing halls, stations, menu records, and staff users from normal operation. For current-release business records, `Sil` is not a hard database delete: it maps to the owning module's disable, revoke, or archive command so order history, access history, and audit evidence remain coherent. A hard delete is allowed only for an explicitly safe, unreferenced setup record when the owning module contract defines that path.
+
+Starter data must not be recreated automatically after the tenant edits or removes it.
 
 ## Data Concepts Visible in TenantApp
 
@@ -251,7 +253,7 @@ Minimum current release TenantApp audit actions:
 - Tenant name and tenant subdomain are not editable in TenantApp.
 - Configuration changes should be audited.
 - Starter data is normal tenant-owned data after creation.
-- Starter data must not be recreated after Tenant Admin edits, disables, or deletes it.
+- Starter data must not be recreated after Tenant Admin edits, disables, or removes it.
 - Starter staff users must change bootstrap passwords on first login.
 - Starter staff first password setup requires OTP sent to the platform-owned tenant identity GSM.
 - Service staff must be authorized per hall.

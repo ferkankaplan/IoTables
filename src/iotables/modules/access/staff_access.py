@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import func, insert, select
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -259,6 +259,77 @@ class StaffAccessService:
             updated_at=now,
         )
 
+    async def disable_staff(
+        self,
+        *,
+        actor: ActorContext,
+        user_id: UUID,
+        reason: str,
+    ) -> StaffProfile:
+        tenant_id = require_tenant_id(actor)
+        if actor.user_id is None:
+            raise not_authorized()
+        if actor.user_id == user_id:
+            raise self_disable_not_allowed()
+        normalized_reason = reason.strip()
+        if not normalized_reason:
+            raise reason_required()
+        profile = await self._load_staff_profile(tenant_id=tenant_id, user_id=user_id)
+        if profile is None:
+            raise not_found()
+        roles = set(profile.roles)
+        if StaffRole.TENANT_ADMIN.value in roles:
+            active_admin_count = await self._active_tenant_admin_count(tenant_id=tenant_id)
+            if active_admin_count <= 1:
+                raise last_admin_not_allowed()
+
+        now = utc_now()
+        await self.session.execute(
+            update(users)
+            .where(users.c.tenant_id == tenant_id, users.c.id == user_id)
+            .values(status="disabled", updated_at=now)
+        )
+        await self.session.execute(
+            update(staff_profiles)
+            .where(
+                staff_profiles.c.tenant_id == tenant_id,
+                staff_profiles.c.user_id == user_id,
+            )
+            .values(status="disabled", updated_at=now)
+        )
+        for assignment_table in (
+            staff_role_assignments,
+            staff_station_assignments,
+            staff_hall_assignments,
+        ):
+            await self.session.execute(
+                update(assignment_table)
+                .where(
+                    assignment_table.c.tenant_id == tenant_id,
+                    assignment_table.c.user_id == user_id,
+                    assignment_table.c.status == "active",
+                )
+                .values(status="revoked", revoked_at=now)
+            )
+        await self._audit(
+            tenant_id=tenant_id,
+            actor=actor,
+            action="user.disabled",
+            target_id=user_id,
+            metadata={
+                "operation": "staff.disabled",
+                "username": profile.username,
+                "roles": sorted(roles),
+                "reason": normalized_reason,
+            },
+            now=now,
+        )
+        await self.session.commit()
+        disabled_profile = await self._load_staff_profile(tenant_id=tenant_id, user_id=user_id)
+        if disabled_profile is None:
+            raise not_found()
+        return disabled_profile
+
     async def _validate_assignment_targets(
         self,
         *,
@@ -296,6 +367,76 @@ class StaffAccessService:
             )
             if hall_count != len(hall_ids):
                 raise assignment_target_disabled()
+
+    async def _load_staff_profile(
+        self,
+        *,
+        tenant_id: UUID,
+        user_id: UUID,
+    ) -> StaffProfile | None:
+        row = (
+            (
+                await self.session.execute(
+                    select(
+                        users.c.id,
+                        users.c.username,
+                        users.c.first_password_change_required,
+                        users.c.created_at,
+                        users.c.updated_at,
+                        staff_profiles.c.display_name,
+                        staff_profiles.c.status,
+                    )
+                    .join(staff_profiles, staff_profiles.c.user_id == users.c.id)
+                    .where(
+                        users.c.tenant_id == tenant_id,
+                        users.c.id == user_id,
+                        staff_profiles.c.tenant_id == tenant_id,
+                    )
+                )
+            )
+            .mappings()
+            .first()
+        )
+        if row is None:
+            return None
+        roles_by_user = await self._active_roles_by_user(tenant_id=tenant_id, user_ids=(user_id,))
+        stations_by_user = await self._active_stations_by_user(
+            tenant_id=tenant_id,
+            user_ids=(user_id,),
+        )
+        halls_by_user = await self._active_halls_by_user(tenant_id=tenant_id, user_ids=(user_id,))
+        return StaffProfile(
+            user_id=row["id"],
+            username=row["username"],
+            display_name=row["display_name"],
+            status=row["status"],
+            roles=tuple(sorted(roles_by_user.get(row["id"], ()))),
+            station_ids=tuple(sorted(stations_by_user.get(row["id"], ()), key=str)),
+            hall_ids=tuple(sorted(halls_by_user.get(row["id"], ()), key=str)),
+            first_password_required=row["first_password_change_required"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    async def _active_tenant_admin_count(self, *, tenant_id: UUID) -> int:
+        return int(
+            await self.session.scalar(
+                select(func.count())
+                .select_from(staff_role_assignments)
+                .join(users, users.c.id == staff_role_assignments.c.user_id)
+                .join(staff_profiles, staff_profiles.c.user_id == staff_role_assignments.c.user_id)
+                .where(
+                    staff_role_assignments.c.tenant_id == tenant_id,
+                    staff_role_assignments.c.role == StaffRole.TENANT_ADMIN.value,
+                    staff_role_assignments.c.status == "active",
+                    users.c.tenant_id == tenant_id,
+                    users.c.status == "active",
+                    staff_profiles.c.tenant_id == tenant_id,
+                    staff_profiles.c.status == "active",
+                )
+            )
+            or 0
+        )
 
     async def _active_roles_by_user(
         self, *, tenant_id: UUID, user_ids: tuple[UUID, ...]
@@ -380,13 +521,14 @@ class StaffAccessService:
         target_id: UUID,
         metadata: dict[str, object],
         now: datetime,
+        action: str = "user.created",
     ) -> None:
         await self.session.execute(
             insert(audit_events).values(
                 id=uuid4(),
                 tenant_id=tenant_id,
                 actor_user_id=actor.user_id,
-                action="user.created",
+                action=action,
                 target_type="staff_user",
                 target_id=str(target_id),
                 metadata=metadata,
@@ -442,4 +584,36 @@ def not_authorized() -> ApiError:
         status_code=403,
         code="not_authorized",
         message="You are not allowed to perform this action.",
+    )
+
+
+def not_found() -> ApiError:
+    return ApiError(
+        status_code=404,
+        code="not_found_or_hidden",
+        message="The requested staff user was not found.",
+    )
+
+
+def reason_required() -> ApiError:
+    return ApiError(
+        status_code=422,
+        code="reason_required",
+        message="A reason is required.",
+    )
+
+
+def self_disable_not_allowed() -> ApiError:
+    return ApiError(
+        status_code=409,
+        code="self_disable_not_allowed",
+        message="You cannot disable your own staff user.",
+    )
+
+
+def last_admin_not_allowed() -> ApiError:
+    return ApiError(
+        status_code=409,
+        code="last_admin_not_allowed",
+        message="The last tenant admin cannot be disabled.",
     )

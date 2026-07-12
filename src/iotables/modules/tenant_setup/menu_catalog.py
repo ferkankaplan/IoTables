@@ -815,17 +815,34 @@ class MenuCatalogMutationService:
         product_id: UUID,
         reason: str,
     ) -> ProductService:
-        return await self.update_product_service(
+        tenant_id = require_tenant_id(actor)
+        normalized_reason = reason.strip()
+        if not normalized_reason:
+            raise reason_required()
+        if await self._load_product(tenant_id=tenant_id, product_id=product_id) is None:
+            raise not_found()
+        now = utc_now()
+        await self.session.execute(
+            update(product_services)
+            .where(
+                product_services.c.tenant_id == tenant_id,
+                product_services.c.id == product_id,
+            )
+            .values(enabled=False, updated_at=now)
+        )
+        await self._audit_menu(
+            tenant_id=tenant_id,
             actor=actor,
+            target_type="product_service",
+            target_id=product_id,
+            metadata={"operation": "product.disabled", "reason": normalized_reason},
+            now=now,
+        )
+        await self.session.commit()
+        return await MenuCatalogQueryService(self.session).get_product_service(
+            tenant_id=tenant_id,
             product_id=product_id,
-            command=ProductUpdateCommand(
-                category_id=None,
-                station_id=None,
-                name=None,
-                description=None,
-                description_supplied=False,
-                enabled=False,
-            ),
+            include_disabled=True,
         )
 
     async def manage_variant(
@@ -1505,6 +1522,10 @@ def not_found() -> ApiError:
 
 def validation_failed(message: str) -> ApiError:
     return ApiError(status_code=422, code="validation_failed", message=message)
+
+
+def reason_required() -> ApiError:
+    return ApiError(status_code=422, code="reason_required", message="Reason is required.")
 
 
 def duplicate_category() -> ApiError:
