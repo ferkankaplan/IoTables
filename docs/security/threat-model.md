@@ -98,11 +98,11 @@ Verification:
 
 Verification:
 
-- tenant creation cannot start provisioning without OTP proof;
-- password reset cannot complete without OTP proof;
+- tenant creation cannot start provisioning without tenant-GSM OTP proof;
+- first-password setup and password reset cannot complete without tenant-GSM OTP proof;
 - concurrent OTP attempts respect the max attempt count;
 - OTP code is never stored or logged in plaintext;
-- first-password setup does not require OTP in the current release.
+- first-password setup OTP is sent to the platform-owned tenant identity GSM.
 
 ### Duplicate Submit, Replay, and Concurrency
 

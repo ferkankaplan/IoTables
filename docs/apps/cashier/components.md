@@ -57,7 +57,7 @@ Source context:
 - invalid credential state;
 - no-role state.
 
-Cashier login must not skip bootstrap password setup, but OTP is not required for first-password setup in the current release.
+Cashier login must not skip bootstrap password setup, and first-password setup requires OTP sent to the platform-owned tenant identity GSM.
 
 ## Board Components
 

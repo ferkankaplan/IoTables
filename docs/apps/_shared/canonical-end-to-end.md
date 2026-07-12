@@ -188,7 +188,7 @@ Acceptance criteria:
 ### 9. Cashier Settles and Closes Session
 
 1. Cashier logs into CashierApp.
-2. First cashier password setup requires password change without OTP in the current release.
+2. First cashier password setup requires password change with tenant-GSM OTP.
 3. Cashier sees halls, tables, active sessions, balances, and latest order state.
 4. Cashier opens a table session panel.
 5. Cashier receives partial or full payments against the single Check/Adisyon.

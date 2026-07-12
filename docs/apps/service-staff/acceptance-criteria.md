@@ -2,7 +2,7 @@
 ServiceStaffApp is accepted for the current release when:
 
 - service staff must log in and change bootstrap password on first login;
-- OTP is not required for service staff in the current release;
+- OTP is required for service staff first-password setup and is sent to the tenant identity GSM;
 - service delivery tracking is checked before showing the queue;
 - disabled service tracking hides delivery controls;
 - service staff sees only authorized halls;

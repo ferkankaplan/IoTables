@@ -1927,7 +1927,8 @@ otp_challenges = Table(
     CheckConstraint(
         "purpose in ("
         "'tenant_creation', 'staff_password_reset', "
-        "'tenant_admin_first_password', 'cashier_first_password'"
+        "'tenant_admin_first_password', 'cashier_first_password', "
+        "'station_staff_first_password', 'service_staff_first_password'"
         ")",
         name="purpose",
     ),

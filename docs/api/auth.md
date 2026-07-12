@@ -83,16 +83,16 @@ Bootstrap users cannot enter normal app workflows until first password setup com
 | User | OTP Requirement |
 | --- | --- |
 | Platform Owner | No OTP/TOTP requirement in the current release |
-| Tenant Admin | OTP not required for first-password setup in the current release |
-| Cashier | OTP not required for first-password setup in the current release |
-| Station Staff | OTP not required in the current release |
-| Service Staff | OTP not required in the current release |
+| Tenant Admin | OTP required; code is sent to the platform-owned tenant identity GSM |
+| Cashier | OTP required; code is sent to the platform-owned tenant identity GSM |
+| Station Staff | OTP required; code is sent to the platform-owned tenant identity GSM |
+| Service Staff | OTP required; code is sent to the platform-owned tenant identity GSM |
 
 Tenant creation requires OTP proof before Provisioning starts. The challenge is sent to the platform-owned tenant identity GSM.
 
 Password reset flows require OTP sent to the platform-owned tenant identity GSM. Until an external SMS provider is connected, the configured fixed OTP provider issues the non-secret test code `000000` while still storing hashed OTP challenges and attempt records.
 
-OTP challenges are not required when first password setup begins in the current release.
+First-password setup creates an OTP challenge before the new password can be accepted.
 
 ## CustomerApp Authentication
 

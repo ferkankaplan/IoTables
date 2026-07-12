@@ -10,5 +10,9 @@ def test_staff_app_scopes_have_identity_role_policy() -> None:
 
 
 def test_first_password_otp_policy_matches_app_risk() -> None:
-    _ = AppScope
-    assert FIRST_PASSWORD_OTP_PURPOSES == {}
+    assert FIRST_PASSWORD_OTP_PURPOSES == {
+        AppScope.TENANT: "tenant_admin_first_password",
+        AppScope.CASHIER: "cashier_first_password",
+        AppScope.STATION: "station_staff_first_password",
+        AppScope.SERVICE: "service_staff_first_password",
+    }

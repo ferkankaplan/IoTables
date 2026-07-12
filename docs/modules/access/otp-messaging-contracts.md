@@ -6,7 +6,7 @@ Source module: [otp-messaging.md](otp-messaging.md)
 
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
-| `otp_messaging.create_challenge` | PlatformApp, Identity and Access | tenantId?, userId, purpose, targetGsm | Purpose supported; target GSM snapshotted; tenant creation uses platform user with `tenantId = null`; password reset users belong to tenant | Create challenge with hashed code and expiry; do not retarget existing challenge | OTP challenge state |
+| `otp_messaging.create_challenge` | PlatformApp, Identity and Access | tenantId?, userId, purpose, targetGsm | Purpose supported; target GSM snapshotted; tenant creation uses platform user with `tenantId = null`; first-password and password reset users belong to tenant | Create challenge with hashed code and expiry; do not retarget existing challenge | OTP challenge state |
 | `otp_messaging.send_otp` | PlatformApp, Identity and Access, worker | challengeId | Challenge not expired/verified/locked; tenant creation/password reset flow owns challenge; max 3 sends in the current release; provider payload redacted | Insert `message_deliveries`; enqueue Reliable Side Effects outbox work; provider send happens only after commit | Delivery attempt state |
 | `otp_messaging.verify_otp` | PlatformApp, Identity and Access | challengeId, submitted code | Challenge active; target GSM must match the protected command; max 5 attempts; code compared against hash | Lock challenge; append attempt; verification idempotent after success | Verified proof or failure state |
 | `otp_messaging.expire_or_lock_challenge` | OTP Messaging | challengeId, reason | Internal policy action | Mark effective terminal state through challenge/attempt metadata | Expired/locked state |
@@ -15,7 +15,7 @@ Source module: [otp-messaging.md](otp-messaging.md)
 
 | Query | Caller | Input / Scope | Guards | Result |
 | --- | --- | --- | --- | --- |
-| `otp_messaging.get_challenge_state` | PlatformApp, TenantApp, CashierApp, Identity and Access | challengeId | User/session must match tenant creation or password reset flow; do not expose OTP code | Expiry, retry count, send count, verification state |
+| `otp_messaging.get_challenge_state` | PlatformApp, TenantApp, CashierApp, Identity and Access | challengeId | User/session must match tenant creation, first-password, or password reset flow; do not expose OTP code | Expiry, retry count, send count, verification state |
 | `otp_messaging.get_delivery_state` | Identity and Access, support/recovery | challengeId | Tenant/admin scope | Redacted delivery attempts |
 
 ## Events

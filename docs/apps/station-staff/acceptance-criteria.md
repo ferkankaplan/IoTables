@@ -2,7 +2,7 @@
 StationStaffApp is accepted for the current release when:
 
 - station staff must log in and change bootstrap password on first login;
-- OTP is not required for station staff in the current release;
+- OTP is required for station staff first-password setup and is sent to the tenant identity GSM;
 - one authorized station opens directly;
 - multiple authorized stations require station selection;
 - unauthorized stations are not visible or mutable;
