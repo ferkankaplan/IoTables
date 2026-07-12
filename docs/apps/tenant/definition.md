@@ -67,6 +67,8 @@ The admin should keep context while working. For example, tables are part of hal
 
 Primary pages should represent stable workspaces. Secondary objects should usually be edited in panels inside those workspaces.
 
+TenantApp uses action-first progressive disclosure. Staff creation, tenant settings edits, table display provisioning, station/product creation, disable flows, and similar secondary workflows should be launched from buttons and completed inside modals, drawers, or contextual panels. Their forms should not be permanently visible on the base workspace.
+
 ## Screens and URLs
 
 | Screen | URL | Purpose |
