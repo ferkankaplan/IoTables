@@ -30,6 +30,8 @@ Every app `wireframes.md` must include:
 
 Use the fewest durable pages that preserve a clear working context.
 
+IoTables uses action-first progressive disclosure. Durable pages should show the primary context, current state, and action buttons first. Action-specific forms, advanced controls, destructive controls, and secondary workflow details must stay hidden until the user starts the action.
+
 | UI Shape | Use When |
 | --- | --- |
 | Durable page | The workflow has a distinct primary context or needs a durable URL. |
@@ -41,6 +43,8 @@ Use the fewest durable pages that preserve a clear working context.
 
 Rules:
 
+- Prefer Action-first UI, modal/drawer based task flow, contextual workflow, and low-clutter admin UI.
+- A visible button may advertise an available action; the action's form or detailed controls should open in a dialog, drawer, panel, or bottom sheet after activation.
 - Do not split tightly owned concepts into separate primary screens.
 - Tables are managed inside Hall Management; table detail opens in context.
 - Session detail opens inside Cashier Workspace unless a durable history/reporting workspace is explicitly defined.

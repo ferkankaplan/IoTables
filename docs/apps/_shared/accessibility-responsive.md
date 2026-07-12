@@ -17,6 +17,7 @@ Baseline target: WCAG 2.2 AA. Product rules below may be stricter where restaura
 
 ## Shared Principles
 
+- Use action-first progressive disclosure: pages expose the primary context and action buttons; forms, confirmations, advanced settings, and destructive controls open only after the relevant action is activated.
 - Keep users in context. Prefer panels, drawers, dialogs, bottom sheets, and inline editing over unnecessary navigation.
 - Use the shared component model to keep repeated layout responsibilities consistent across app packages.
 - CustomerApp is mobile-first and customer-polished.

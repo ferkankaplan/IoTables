@@ -2330,6 +2330,7 @@ function StaffManagementWorkspace() {
   const [halls, setHalls] = useState<HallWithTables[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     displayName: "",
@@ -2420,6 +2421,7 @@ function StaffManagementWorkspace() {
         stationIds: [],
         username: ""
       });
+      setCreateModalOpen(false);
       setActionState("idle");
     } catch (createError) {
       setError(errorMessageFrom(createError));
@@ -2440,8 +2442,30 @@ function StaffManagementWorkspace() {
     ["service_staff", "Servis personeli"]
   ];
 
+  function openCreateModal() {
+    setForm({
+      displayName: "",
+      hallIds: [],
+      roles: ["cashier"],
+      stationIds: [],
+      username: ""
+    });
+    setActionState("idle");
+    setError(null);
+    setCreateModalOpen(true);
+  }
+
+  function closeCreateModal() {
+    if (actionState === "submitting") {
+      return;
+    }
+    setCreateModalOpen(false);
+    setActionState("idle");
+    setError(null);
+  }
+
   return (
-    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <section>
       <div className="border border-zinc-200 bg-white">
         <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
           <div>
@@ -2450,13 +2474,22 @@ function StaffManagementWorkspace() {
               Kullanıcı adı burada belirlenir. İlk şifre varsayılan olarak 12345678 olur.
             </p>
           </div>
-          <button
-            className="h-9 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
-            onClick={() => void loadStaffWorkspace()}
-            type="button"
-          >
-            Yenile
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="h-9 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
+              onClick={() => void loadStaffWorkspace()}
+              type="button"
+            >
+              Yenile
+            </button>
+            <button
+              className="h-9 bg-zinc-950 px-3 text-sm font-medium text-white hover:bg-zinc-800"
+              onClick={openCreateModal}
+              type="button"
+            >
+              Personel ekle
+            </button>
+          </div>
         </div>
         {state === "loading" ? (
           <StateBlock title="Personel listesi yükleniyor" />
@@ -2505,104 +2538,133 @@ function StaffManagementWorkspace() {
         )}
       </div>
 
-      <aside className="border border-zinc-200 bg-white px-5 py-5">
-        <h3 className="text-sm font-semibold">Personel ekle</h3>
-        <form className="mt-4 space-y-4" onSubmit={(event) => void createStaff(event)}>
-          <FieldText
-            label="Kullanıcı adı"
-            onChange={(value) => setForm((current) => ({...current, username: value}))}
-            required
-            value={form.username}
-          />
-          <FieldText
-            label="Görünen ad"
-            onChange={(value) => setForm((current) => ({...current, displayName: value}))}
-            required
-            value={form.displayName}
-          />
-          <div>
-            <p className="text-sm font-medium">Roller *</p>
-            <div className="mt-2 grid gap-2">
-              {roleOptions.map(([role, label]) => (
-                <label
-                  className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
-                  key={role}
+      {createModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 py-6">
+          <section className="flex max-h-full w-full max-w-xl flex-col border border-zinc-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
+              <h3 className="text-lg font-semibold">Personel ekle</h3>
+              <button
+                className="h-9 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={actionState === "submitting"}
+                onClick={closeCreateModal}
+                type="button"
+              >
+                Kapat
+              </button>
+            </div>
+            <form
+              className="flex min-h-0 flex-1 flex-col"
+              onSubmit={(event) => void createStaff(event)}
+            >
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
+                <FieldText
+                  label="Kullanıcı adı"
+                  onChange={(value) => setForm((current) => ({...current, username: value}))}
+                  required
+                  value={form.username}
+                />
+                <FieldText
+                  label="Görünen ad"
+                  onChange={(value) => setForm((current) => ({...current, displayName: value}))}
+                  required
+                  value={form.displayName}
+                />
+                <div>
+                  <p className="text-sm font-medium">Roller *</p>
+                  <div className="mt-2 grid gap-2">
+                    {roleOptions.map(([role, label]) => (
+                      <label
+                        className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
+                        key={role}
+                      >
+                        <input
+                          checked={form.roles.includes(role)}
+                          onChange={() => toggleRole(role)}
+                          type="checkbox"
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {form.roles.includes("station_staff") ? (
+                  <div>
+                    <p className="text-sm font-medium">İstasyon yetkileri</p>
+                    <div className="mt-2 grid gap-2">
+                      {stations.length === 0 ? (
+                        <p className="text-sm text-zinc-500">Aktif istasyon yok.</p>
+                      ) : (
+                        stations.map((station) => (
+                          <label
+                            className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
+                            key={station.stationId}
+                          >
+                            <input
+                              checked={form.stationIds.includes(station.stationId)}
+                              onChange={() => toggleScope("stationIds", station.stationId)}
+                              type="checkbox"
+                            />
+                            <span>{station.name}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+                {form.roles.includes("service_staff") ? (
+                  <div>
+                    <p className="text-sm font-medium">Salon yetkileri</p>
+                    <div className="mt-2 grid gap-2">
+                      {halls.length === 0 ? (
+                        <p className="text-sm text-zinc-500">Aktif salon yok.</p>
+                      ) : (
+                        halls.map((hall) => (
+                          <label
+                            className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
+                            key={hall.hallId}
+                          >
+                            <input
+                              checked={form.hallIds.includes(hall.hallId)}
+                              onChange={() => toggleScope("hallIds", hall.hallId)}
+                              type="checkbox"
+                            />
+                            <span>{hall.name}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
+                  <p className="font-semibold">İlk giriş</p>
+                  <p className="mt-1">
+                    Varsayılan şifre 12345678. İlk girişte şifre değişimi zorunlu ve OTP tenant
+                    GSM numarasına gönderilir.
+                  </p>
+                </div>
+                {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
+              </div>
+              <div className="flex items-center justify-end gap-2 border-t border-zinc-200 px-5 py-4">
+                <button
+                  className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                  disabled={actionState === "submitting"}
+                  onClick={closeCreateModal}
+                  type="button"
                 >
-                  <input
-                    checked={form.roles.includes(role)}
-                    onChange={() => toggleRole(role)}
-                    type="checkbox"
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          {form.roles.includes("station_staff") ? (
-            <div>
-              <p className="text-sm font-medium">İstasyon yetkileri</p>
-              <div className="mt-2 grid gap-2">
-                {stations.length === 0 ? (
-                  <p className="text-sm text-zinc-500">Aktif istasyon yok.</p>
-                ) : (
-                  stations.map((station) => (
-                    <label
-                      className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
-                      key={station.stationId}
-                    >
-                      <input
-                        checked={form.stationIds.includes(station.stationId)}
-                        onChange={() => toggleScope("stationIds", station.stationId)}
-                        type="checkbox"
-                      />
-                      <span>{station.name}</span>
-                    </label>
-                  ))
-                )}
+                  Vazgeç
+                </button>
+                <button
+                  className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                  disabled={!canCreate}
+                  type="submit"
+                >
+                  {actionState === "submitting" ? "Ekleniyor" : "Personel ekle"}
+                </button>
               </div>
-            </div>
-          ) : null}
-          {form.roles.includes("service_staff") ? (
-            <div>
-              <p className="text-sm font-medium">Salon yetkileri</p>
-              <div className="mt-2 grid gap-2">
-                {halls.length === 0 ? (
-                  <p className="text-sm text-zinc-500">Aktif salon yok.</p>
-                ) : (
-                  halls.map((hall) => (
-                    <label
-                      className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
-                      key={hall.hallId}
-                    >
-                      <input
-                        checked={form.hallIds.includes(hall.hallId)}
-                        onChange={() => toggleScope("hallIds", hall.hallId)}
-                        type="checkbox"
-                      />
-                      <span>{hall.name}</span>
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-          ) : null}
-          <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
-            <p className="font-semibold">İlk giriş</p>
-            <p className="mt-1">
-              Varsayılan şifre 12345678. İlk girişte şifre değişimi zorunlu ve OTP tenant GSM
-              numarasına gönderilir.
-            </p>
-          </div>
-          {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
-          <button
-            className="h-10 w-full bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
-            disabled={!canCreate}
-            type="submit"
-          >
-            {actionState === "submitting" ? "Ekleniyor" : "Personel ekle"}
-          </button>
-        </form>
-      </aside>
+            </form>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
