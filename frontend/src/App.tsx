@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 
 type TenantHealthSummary = {
@@ -1759,6 +1759,9 @@ function CashierSignedInScreen({
   const [orders, setOrders] = useState<CashierOrder[]>([]);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cash" | "transfer">("cash");
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [voidingPayment, setVoidingPayment] = useState<CashierPayment | null>(null);
+  const [voidReason, setVoidReason] = useState("");
   const [showVirtualTables, setShowVirtualTables] = useState(false);
   const [qrPreview, setQrPreview] = useState<{
     tableId: string;
@@ -1888,6 +1891,7 @@ function CashierSignedInScreen({
         }
       );
       setPaymentAmount("");
+      setPaymentModalOpen(false);
       setBillSummary((current) =>
         current
           ? {
@@ -1934,18 +1938,18 @@ function CashierSignedInScreen({
     }
   }
 
-  async function voidPayment(payment: CashierPayment) {
-    const reason = window.prompt("Ödeme iptal nedeni");
-    if (!reason?.trim() || actionState === "submitting") {
+  async function voidPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!voidingPayment || !voidReason.trim() || actionState === "submitting") {
       return;
     }
     setActionState("submitting");
     setError(null);
     try {
       const result = await apiRequest<PaymentVoidResult>(
-        `/api/cashier/payments/${payment.paymentId}/void`,
+        `/api/cashier/payments/${voidingPayment.paymentId}/void`,
         {
-          body: JSON.stringify({reason: reason.trim()}),
+          body: JSON.stringify({reason: voidReason.trim()}),
           headers: {
             "Content-Type": "application/json",
             "Idempotency-Key": crypto.randomUUID(),
@@ -1970,6 +1974,8 @@ function CashierSignedInScreen({
           item.paymentId === result.payment.paymentId ? result.payment : item
         )
       );
+      setVoidingPayment(null);
+      setVoidReason("");
       await loadBoard();
       setActionState("idle");
     } catch (requestError) {
@@ -2124,40 +2130,18 @@ function CashierSignedInScreen({
                   ["Ödeme", billSummary.paymentCount.toString()]
                 ]}
               />
-              <form className="grid gap-2 border-t border-zinc-200 pt-4" onSubmit={recordPayment}>
-                <input
-                  className="h-10 border border-zinc-300 px-3 text-sm"
-                  max={billSummary.remainingMinor}
-                  min="1"
-                  onChange={(event) => setPaymentAmount(event.target.value)}
-                  placeholder="Tutar minor"
-                  type="number"
-                  value={paymentAmount}
-                />
-                <select
-                  className="h-10 border border-zinc-300 bg-white px-3 text-sm"
-                  onChange={(event) =>
-                    setPaymentMethod(event.target.value as "card" | "cash" | "transfer")
-                  }
-                  value={paymentMethod}
-                >
-                  <option value="cash">Nakit</option>
-                  <option value="card">Kart</option>
-                  <option value="transfer">Transfer</option>
-                </select>
-                <button
-                  className="h-10 border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
-                  disabled={
-                    actionState === "submitting" ||
-                    !paymentAmount ||
-                    Number(paymentAmount) <= 0 ||
-                    Number(paymentAmount) > billSummary.remainingMinor
-                  }
-                  type="submit"
-                >
-                  Ödeme al
-                </button>
-              </form>
+              <button
+                className="h-10 w-full border border-zinc-950 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-300"
+                disabled={actionState === "submitting" || billSummary.remainingMinor === 0}
+                onClick={() => {
+                  setPaymentAmount("");
+                  setPaymentMethod("cash");
+                  setPaymentModalOpen(true);
+                }}
+                type="button"
+              >
+                Ödeme al
+              </button>
               <button
                 className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"
                 disabled={actionState === "submitting" || billSummary.remainingMinor !== 0}
@@ -2220,7 +2204,10 @@ function CashierSignedInScreen({
                           <button
                             className="h-8 border border-zinc-300 px-2 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
                             disabled={payment.status !== "recorded" || actionState === "submitting"}
-                            onClick={() => void voidPayment(payment)}
+                            onClick={() => {
+                              setVoidingPayment(payment);
+                              setVoidReason("");
+                            }}
                             type="button"
                           >
                             İptal et
@@ -2236,6 +2223,116 @@ function CashierSignedInScreen({
           )}
         </aside>
       </section>
+      {paymentModalOpen && billSummary !== null ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setPaymentModalOpen(false);
+              setPaymentAmount("");
+            }
+          }}
+          title="Ödeme al"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={recordPayment}>
+            <DetailRows
+              rows={[
+                ["Kalan", `${billSummary.remainingMinor} ${billSummary.currency}`],
+                ["Masa", selectedTable?.tableLabel ?? "-"]
+              ]}
+            />
+            <FieldText
+              label="Tutar minor"
+              onChange={setPaymentAmount}
+              required
+              type="number"
+              value={paymentAmount}
+            />
+            <label className="block">
+              <span className="text-sm font-medium">Ödeme yöntemi</span>
+              <select
+                className="mt-1 h-10 w-full border border-zinc-300 bg-white px-3 text-sm"
+                onChange={(event) =>
+                  setPaymentMethod(event.target.value as "card" | "cash" | "transfer")
+                }
+                value={paymentMethod}
+              >
+                <option value="cash">Nakit</option>
+                <option value="card">Kart</option>
+                <option value="transfer">Transfer</option>
+              </select>
+            </label>
+            {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
+            <div className="flex items-center justify-end gap-2 border-t border-zinc-200 pt-4">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={actionState === "submitting"}
+                onClick={() => setPaymentModalOpen(false)}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={
+                  actionState === "submitting" ||
+                  !paymentAmount ||
+                  Number(paymentAmount) <= 0 ||
+                  Number(paymentAmount) > billSummary.remainingMinor
+                }
+                type="submit"
+              >
+                {actionState === "submitting" ? "Kaydediliyor" : "Ödeme al"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {voidingPayment ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setVoidingPayment(null);
+              setVoidReason("");
+            }
+          }}
+          title="Ödeme iptal et"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={voidPayment}>
+            <DetailRows
+              rows={[
+                ["Tutar", `${voidingPayment.amountMinor} ${voidingPayment.currency}`],
+                ["Yöntem", voidingPayment.method],
+                ["Kayıt", formatDate(voidingPayment.recordedAt)]
+              ]}
+            />
+            <FieldText
+              label="İptal nedeni"
+              onChange={setVoidReason}
+              required
+              value={voidReason}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => {
+                  setVoidingPayment(null);
+                  setVoidReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={actionState === "submitting" || !voidReason.trim()}
+                type="submit"
+              >
+                {actionState === "submitting" ? "İptal ediliyor" : "Ödemeyi iptal et"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
     </main>
   );
 }
@@ -2706,6 +2803,11 @@ function TenantDetailPanel({
   const [provisioningPanelState, setProvisioningPanelState] = useState<
     "idle" | "loading" | "ready" | "error"
   >("idle");
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [provisioningRetryOpen, setProvisioningRetryOpen] = useState(false);
+  const [recoveryNote, setRecoveryNote] = useState("");
+  const [statusChangeTarget, setStatusChangeTarget] = useState<"active" | "suspended" | null>(null);
+  const [statusReason, setStatusReason] = useState("");
 
   useEffect(() => {
     if (!tenant) {
@@ -2791,12 +2893,9 @@ function TenantDetailPanel({
     }
   }
 
-  async function retryProvisioning() {
+  async function retryProvisioning(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     if (!tenant || actionState === "submitting") {
-      return;
-    }
-    const recoveryNote = window.prompt("Provisioning retry notu");
-    if (recoveryNote === null) {
       return;
     }
 
@@ -2819,6 +2918,8 @@ function TenantDetailPanel({
       );
       onTenantChanged(updated);
       refreshTenantEvidence(updated.tenantId);
+      setProvisioningRetryOpen(false);
+      setRecoveryNote("");
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -2853,6 +2954,7 @@ function TenantDetailPanel({
       );
       onTenantChanged(updated);
       refreshTenantEvidence(updated.tenantId);
+      setProfileModalOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -2860,15 +2962,9 @@ function TenantDetailPanel({
     }
   }
 
-  async function changeStatus(nextStatus: "active" | "suspended") {
-    if (!tenant || actionState === "submitting") {
-      return;
-    }
-
-    const reason = window.prompt(
-      nextStatus === "suspended" ? "Askıya alma nedeni" : "Yeniden aktifleştirme nedeni"
-    );
-    if (!reason?.trim()) {
+  async function changeStatus(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!tenant || !statusChangeTarget || !statusReason.trim() || actionState === "submitting") {
       return;
     }
 
@@ -2878,7 +2974,7 @@ function TenantDetailPanel({
       const updated = await apiRequest<TenantProfile>(
         `/api/platform/tenants/${tenant.tenantId}/status`,
         {
-          body: JSON.stringify({nextStatus, reason: reason.trim()}),
+          body: JSON.stringify({nextStatus: statusChangeTarget, reason: statusReason.trim()}),
           headers: {
             "Content-Type": "application/json",
             "X-CSRF-Token": crypto.randomUUID()
@@ -2888,6 +2984,8 @@ function TenantDetailPanel({
       );
       onTenantChanged(updated);
       refreshTenantEvidence(updated.tenantId);
+      setStatusChangeTarget(null);
+      setStatusReason("");
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -2899,6 +2997,7 @@ function TenantDetailPanel({
   const nextLifecycleStatus = tenant?.status === "active" ? "suspended" : "active";
 
   return (
+    <>
     <aside className="border-t border-zinc-200 bg-white px-5 py-5 xl:border-l xl:border-t-0">
       <h3 className="text-sm font-semibold">Tenant ayrıntısı</h3>
       {state === "idle" ? (
@@ -2961,7 +3060,10 @@ function TenantDetailPanel({
                     tenant.status !== "provisioning_failed" ||
                     !recoverySummary?.safeRetryAllowed
                   }
-                  onClick={() => void retryProvisioning()}
+                  onClick={() => {
+                    setProvisioningRetryOpen(true);
+                    setRecoveryNote("");
+                  }}
                   type="button"
                 >
                   Provisioning retry
@@ -2969,51 +3071,19 @@ function TenantDetailPanel({
               </div>
             ) : null}
           </div>
-          <form className="space-y-3 border-t border-zinc-200 pt-4" onSubmit={saveProfile}>
+          <div className="space-y-3 border-t border-zinc-200 pt-4">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
               Profil ayarları
             </p>
-            <FieldText
-              label="GSM"
-              onChange={(value) => setForm((current) => ({...current, gsmNumber: value}))}
-              required
-              value={form.gsmNumber}
-            />
-            <label className="block">
-              <span className="text-sm font-medium">Sektör</span>
-              <select
-                className="mt-1 h-10 w-full border border-zinc-300 px-3 text-sm"
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    sector: event.target.value === "cafe" ? "cafe" : ""
-                  }))
-                }
-                value={form.sector}
-              >
-                <option value="">Seçilmedi</option>
-                <option value="cafe">Kafe</option>
-              </select>
-            </label>
-            <FieldText
-              label="Kapasite"
-              onChange={(value) => setForm((current) => ({...current, capacity: value}))}
-              type="number"
-              value={form.capacity}
-            />
-            <FieldText
-              label="Adres"
-              onChange={(value) => setForm((current) => ({...current, address: value}))}
-              value={form.address}
-            />
             <button
-              className="h-10 w-full bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
-              disabled={!canSubmit}
-              type="submit"
+              className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+              disabled={actionState === "submitting"}
+              onClick={() => setProfileModalOpen(true)}
+              type="button"
             >
-              {actionState === "submitting" ? "Kaydediliyor" : "Profili kaydet"}
+              Profili düzenle
             </button>
-          </form>
+          </div>
           <div className="space-y-3 border-t border-zinc-200 pt-4">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
               Operasyonlar
@@ -3025,7 +3095,10 @@ function TenantDetailPanel({
                   actionState === "submitting" ||
                   !["active", "suspended", "provisioning_failed"].includes(tenant.status)
                 }
-                onClick={() => void changeStatus(nextLifecycleStatus)}
+                onClick={() => {
+                  setStatusChangeTarget(nextLifecycleStatus);
+                  setStatusReason("");
+                }}
                 type="button"
               >
                 {nextLifecycleStatus === "suspended" ? "Askıya al" : "Aktifleştir"}
@@ -3098,6 +3171,142 @@ function TenantDetailPanel({
         </div>
       )}
     </aside>
+    {profileModalOpen ? (
+      <ActionModal
+        onClose={() => {
+          if (actionState !== "submitting") {
+            setProfileModalOpen(false);
+          }
+        }}
+        title="Tenant profilini düzenle"
+      >
+        <form className="space-y-4 px-5 py-5" onSubmit={saveProfile}>
+          <FieldText
+            label="GSM"
+            onChange={(value) => setForm((current) => ({...current, gsmNumber: value}))}
+            required
+            value={form.gsmNumber}
+          />
+          <label className="block">
+            <span className="text-sm font-medium">Sektör</span>
+            <select
+              className="mt-1 h-10 w-full border border-zinc-300 px-3 text-sm"
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  sector: event.target.value === "cafe" ? "cafe" : ""
+                }))
+              }
+              value={form.sector}
+            >
+              <option value="">Seçilmedi</option>
+              <option value="cafe">Kafe</option>
+            </select>
+          </label>
+          <FieldText
+            label="Kapasite"
+            onChange={(value) => setForm((current) => ({...current, capacity: value}))}
+            type="number"
+            value={form.capacity}
+          />
+          <FieldText
+            label="Adres"
+            onChange={(value) => setForm((current) => ({...current, address: value}))}
+            value={form.address}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={() => setProfileModalOpen(false)}
+              type="button"
+            >
+              Vazgeç
+            </button>
+            <button
+              className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+              disabled={!canSubmit}
+              type="submit"
+            >
+              {actionState === "submitting" ? "Kaydediliyor" : "Profili kaydet"}
+            </button>
+          </div>
+        </form>
+      </ActionModal>
+    ) : null}
+    {provisioningRetryOpen ? (
+      <ActionModal
+        onClose={() => {
+          if (actionState !== "submitting") {
+            setProvisioningRetryOpen(false);
+            setRecoveryNote("");
+          }
+        }}
+        title="Provisioning retry"
+      >
+        <form className="space-y-4 px-5 py-5" onSubmit={retryProvisioning}>
+          <FieldText label="Retry notu" onChange={setRecoveryNote} value={recoveryNote} />
+          <div className="flex justify-end gap-2">
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={() => {
+                setProvisioningRetryOpen(false);
+                setRecoveryNote("");
+              }}
+              type="button"
+            >
+              Vazgeç
+            </button>
+            <button
+              className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+              disabled={actionState === "submitting"}
+              type="submit"
+            >
+              {actionState === "submitting" ? "Çalıştırılıyor" : "Retry çalıştır"}
+            </button>
+          </div>
+        </form>
+      </ActionModal>
+    ) : null}
+    {statusChangeTarget ? (
+      <ActionModal
+        onClose={() => {
+          if (actionState !== "submitting") {
+            setStatusChangeTarget(null);
+            setStatusReason("");
+          }
+        }}
+        title={statusChangeTarget === "suspended" ? "Tenant askıya al" : "Tenant aktifleştir"}
+      >
+        <form className="space-y-4 px-5 py-5" onSubmit={changeStatus}>
+          <FieldText
+            label="İşlem nedeni"
+            onChange={setStatusReason}
+            required
+            value={statusReason}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+              onClick={() => {
+                setStatusChangeTarget(null);
+                setStatusReason("");
+              }}
+              type="button"
+            >
+              Vazgeç
+            </button>
+            <button
+              className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+              disabled={actionState === "submitting" || !statusReason.trim()}
+              type="submit"
+            >
+              {actionState === "submitting" ? "Kaydediliyor" : "Onayla"}
+            </button>
+          </div>
+        </form>
+      </ActionModal>
+    ) : null}
+    </>
   );
 }
 
@@ -3115,6 +3324,11 @@ function HallManagementWorkspace() {
   const [hallDisableReason, setHallDisableReason] = useState("");
   const [disableReason, setDisableReason] = useState("");
   const [tablePickerOpen, setTablePickerOpen] = useState(false);
+  const [hallCreateOpen, setHallCreateOpen] = useState(false);
+  const [hallEditOpen, setHallEditOpen] = useState(false);
+  const [hallDisableOpen, setHallDisableOpen] = useState(false);
+  const [tableDisableOpen, setTableDisableOpen] = useState(false);
+  const [displayFirmwareOpen, setDisplayFirmwareOpen] = useState(false);
   const [displayWifiSsid, setDisplayWifiSsid] = useState("");
   const [displayWifiPassword, setDisplayWifiPassword] = useState("");
   const [displayFirmware, setDisplayFirmware] = useState<DisplayFirmwareCreated | null>(null);
@@ -3200,6 +3414,7 @@ function HallManagementWorkspace() {
       setNewHallOrder("");
       await loadBoard();
       setSelectedHallId(created.hallId);
+      setHallCreateOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3257,6 +3472,7 @@ function HallManagementWorkspace() {
       });
       await loadBoard();
       setSelectedHallId(selectedHall.hallId);
+      setHallEditOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3279,6 +3495,8 @@ function HallManagementWorkspace() {
         },
         method: "POST"
       });
+      setHallDisableOpen(false);
+      setHallDisableReason("");
       await loadBoard();
       setSelectedHallId(selectedHall.hallId);
       setActionState("idle");
@@ -3304,6 +3522,7 @@ function HallManagementWorkspace() {
         method: "POST"
       });
       setDisableReason("");
+      setTableDisableOpen(false);
       await loadBoard();
       setSelectedTableId(selectedTable.tableId);
       setActionState("idle");
@@ -3344,6 +3563,7 @@ function HallManagementWorkspace() {
       setDisplayFirmware(created);
       downloadTextFile(created.fileName, created.firmwareContent, "text/x-arduino");
       setDisplayWifiPassword("");
+      setDisplayFirmwareOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3392,29 +3612,20 @@ function HallManagementWorkspace() {
             ))}
           </div>
         )}
-        <form className="space-y-2 border-t border-zinc-200 px-4 py-4" onSubmit={createHall}>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Salon ekle</p>
-          <input
-            className="h-10 w-full border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setNewHallName(event.target.value)}
-            placeholder="Salon adı"
-            value={newHallName}
-          />
-          <input
-            className="h-10 w-full border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setNewHallOrder(event.target.value)}
-            placeholder="Sıra"
-            type="number"
-            value={newHallOrder}
-          />
+        <div className="border-t border-zinc-200 px-4 py-4">
           <button
             className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-            disabled={!newHallName.trim() || !newHallOrder || actionState === "submitting"}
-            type="submit"
+            disabled={actionState === "submitting"}
+            onClick={() => {
+              setNewHallName("");
+              setNewHallOrder("");
+              setHallCreateOpen(true);
+            }}
+            type="button"
           >
             Salon ekle
           </button>
-        </form>
+        </div>
       </aside>
 
       <section className="border border-zinc-200 bg-white">
@@ -3480,46 +3691,30 @@ function HallManagementWorkspace() {
         <h3 className="text-sm font-semibold">Salon ve masa detayı</h3>
         {selectedHall ? (
           <div className="mt-4 space-y-3 border-b border-zinc-200 pb-4">
-            <form className="grid gap-2" onSubmit={updateSelectedHall}>
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                Salon düzenle
-              </p>
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setHallEditName(event.target.value)}
-                placeholder="Salon adı"
-                value={hallEditName}
-              />
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setHallEditOrder(event.target.value)}
-                placeholder="Liste sırası"
-                type="number"
-                value={hallEditOrder}
-              />
+            <DetailRows
+              rows={[
+                ["Salon", selectedHall.name],
+                ["Liste sırası", selectedHall.displayOrder.toString()],
+                ["Slot aralığı", `${selectedHall.tableNumberBase}-${selectedHall.tableNumberBase + 99}`],
+                ["Durum", selectedHall.enabled ? "enabled" : "disabled"]
+              ]}
+            />
+            <div className="grid gap-2">
               <button
                 className="h-10 border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={!hallEditName.trim() || !hallEditOrder || actionState === "submitting"}
-                type="submit"
+                disabled={actionState === "submitting"}
+                onClick={() => setHallEditOpen(true)}
+                type="button"
               >
-                Salonu kaydet
+                Salonu düzenle
               </button>
-            </form>
-            <div className="grid gap-2">
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setHallDisableReason(event.target.value)}
-                placeholder="Salon pasifleştirme nedeni"
-                value={hallDisableReason}
-              />
               <button
                 className="h-10 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={
-                  !selectedHall.enabled ||
-                  !hallDisableReason.trim() ||
-                  actionState === "submitting"
-                }
-                onClick={() => void disableSelectedHall()}
+                disabled={!selectedHall.enabled || actionState === "submitting"}
+                onClick={() => {
+                  setHallDisableReason("");
+                  setHallDisableOpen(true);
+                }}
                 type="button"
               >
                 Salonu pasifleştir
@@ -3566,34 +3761,22 @@ function HallManagementWorkspace() {
                 </button>
               </div>
             ) : (
-              <form className="space-y-2 border-t border-zinc-200 pt-4" onSubmit={generateDisplayFirmware}>
+              <div className="space-y-2 border-t border-zinc-200 pt-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                   ESP32 ekran
                 </p>
                 <p className="text-sm text-zinc-600">
                   WiFi bilgileri ve ekran credential yalnızca oluşturulan .ino dosyasında yer alır.
                 </p>
-                <input
-                  className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setDisplayWifiSsid(event.target.value)}
-                  placeholder="WiFi SSID"
-                  value={displayWifiSsid}
-                />
-                <input
-                  className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setDisplayWifiPassword(event.target.value)}
-                  placeholder="WiFi şifresi"
-                  type="password"
-                  value={displayWifiPassword}
-                />
                 <button
                   className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                  disabled={
-                    !displayWifiSsid.trim() ||
-                    !displayWifiPassword ||
-                    actionState === "submitting"
-                  }
-                  type="submit"
+                  disabled={actionState === "submitting"}
+                  onClick={() => {
+                    setDisplayWifiSsid("");
+                    setDisplayWifiPassword("");
+                    setDisplayFirmwareOpen(true);
+                  }}
+                  type="button"
                 >
                   Ekran yazılımını oluştur
                 </button>
@@ -3602,24 +3785,19 @@ function HallManagementWorkspace() {
                     {displayFirmware.fileName} oluşturuldu. Credential rotate edildi.
                   </p>
                 ) : null}
-              </form>
+              </div>
             )}
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Operasyonlar
               </p>
-              <input
-                className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setDisableReason(event.target.value)}
-                placeholder="Pasifleştirme nedeni"
-                value={disableReason}
-              />
               <button
                 className="h-10 w-full border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={
-                  !selectedTable.enabled || !disableReason.trim() || actionState === "submitting"
-                }
-                onClick={() => void disableSelectedTable()}
+                disabled={!selectedTable.enabled || actionState === "submitting"}
+                onClick={() => {
+                  setDisableReason("");
+                  setTableDisableOpen(true);
+                }}
                 type="button"
               >
                 Masayı pasifleştir
@@ -3629,6 +3807,177 @@ function HallManagementWorkspace() {
         )}
         {actionError ? <StateBlock title={actionError} tone="error" /> : null}
       </aside>
+      {hallCreateOpen ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setHallCreateOpen(false);
+            }
+          }}
+          title="Salon ekle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={createHall}>
+            <FieldText label="Salon adı" onChange={setNewHallName} required value={newHallName} />
+            <FieldText label="Liste sırası" onChange={setNewHallOrder} required type="number" value={newHallOrder} />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => setHallCreateOpen(false)}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!newHallName.trim() || !newHallOrder || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Ekleniyor" : "Salon ekle"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {hallEditOpen && selectedHall ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setHallEditOpen(false);
+            }
+          }}
+          title="Salonu düzenle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={updateSelectedHall}>
+            <FieldText label="Salon adı" onChange={setHallEditName} required value={hallEditName} />
+            <FieldText label="Liste sırası" onChange={setHallEditOrder} required type="number" value={hallEditOrder} />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => setHallEditOpen(false)}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!hallEditName.trim() || !hallEditOrder || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Kaydediliyor" : "Salonu kaydet"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {hallDisableOpen && selectedHall ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setHallDisableOpen(false);
+              setHallDisableReason("");
+            }
+          }}
+          title="Salonu pasifleştir"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows rows={[["Salon", selectedHall.name]]} />
+            <FieldText label="Pasifleştirme nedeni" onChange={setHallDisableReason} required value={hallDisableReason} />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => {
+                  setHallDisableOpen(false);
+                  setHallDisableReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!hallDisableReason.trim() || actionState === "submitting"}
+                onClick={() => void disableSelectedHall()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+              </button>
+            </div>
+          </div>
+        </ActionModal>
+      ) : null}
+      {tableDisableOpen && selectedTable ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setTableDisableOpen(false);
+              setDisableReason("");
+            }
+          }}
+          title="Masayı pasifleştir"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows rows={[["Masa", selectedTable.name], ["Numara", selectedTable.tableNumber.toString()]]} />
+            <FieldText label="Pasifleştirme nedeni" onChange={setDisableReason} required value={disableReason} />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => {
+                  setTableDisableOpen(false);
+                  setDisableReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!disableReason.trim() || actionState === "submitting"}
+                onClick={() => void disableSelectedTable()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+              </button>
+            </div>
+          </div>
+        </ActionModal>
+      ) : null}
+      {displayFirmwareOpen && selectedTable ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setDisplayFirmwareOpen(false);
+              setDisplayWifiSsid("");
+              setDisplayWifiPassword("");
+            }
+          }}
+          title="ESP32 ekran yazılımı"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={generateDisplayFirmware}>
+            <FieldText label="WiFi SSID" onChange={setDisplayWifiSsid} required value={displayWifiSsid} />
+            <FieldText label="WiFi şifresi" onChange={setDisplayWifiPassword} required type="password" value={displayWifiPassword} />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => {
+                  setDisplayFirmwareOpen(false);
+                  setDisplayWifiSsid("");
+                  setDisplayWifiPassword("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!displayWifiSsid.trim() || !displayWifiPassword || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Oluşturuluyor" : "Oluştur"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
       {tablePickerOpen && selectedHall ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 px-4">
           <div className="max-h-[85vh] w-full max-w-3xl overflow-hidden border border-zinc-200 bg-white">
@@ -3688,6 +4037,10 @@ function StationManagementWorkspace() {
   const [stationProductCategoryId, setStationProductCategoryId] = useState("");
   const [stationProductVariantName, setStationProductVariantName] = useState("Standart");
   const [stationProductPrice, setStationProductPrice] = useState("");
+  const [stationCreateOpen, setStationCreateOpen] = useState(false);
+  const [stationEditOpen, setStationEditOpen] = useState(false);
+  const [stationProductOpen, setStationProductOpen] = useState(false);
+  const [stationDisableOpen, setStationDisableOpen] = useState(false);
 
   async function loadStations(nextSelectedStationId?: string) {
     setState("loading");
@@ -3755,6 +4108,7 @@ function StationManagementWorkspace() {
       setNewStationName("");
       setNewStationOrder("");
       await loadStations(created.stationId);
+      setStationCreateOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3779,6 +4133,7 @@ function StationManagementWorkspace() {
       });
       setDisableReason("");
       await loadStations(selectedStation.stationId);
+      setStationDisableOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3811,6 +4166,7 @@ function StationManagementWorkspace() {
         method: "PATCH"
       });
       await loadStations(selectedStation.stationId);
+      setStationEditOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3855,6 +4211,7 @@ function StationManagementWorkspace() {
       setStationProductVariantName("Standart");
       setStationProductPrice("");
       await loadStations(selectedStation.stationId);
+      setStationProductOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -3911,31 +4268,20 @@ function StationManagementWorkspace() {
             ))}
           </div>
         )}
-        <form
-          className="grid gap-2 border-t border-zinc-200 p-4 md:grid-cols-[minmax(0,1fr)_110px_auto]"
-          onSubmit={createStation}
-        >
-          <input
-            className="h-10 border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setNewStationName(event.target.value)}
-            placeholder="İstasyon adı"
-            value={newStationName}
-          />
-          <input
-            className="h-10 border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setNewStationOrder(event.target.value)}
-            placeholder="Liste sırası"
-            type="number"
-            value={newStationOrder}
-          />
+        <div className="border-t border-zinc-200 p-4">
           <button
-            className="h-10 border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-            disabled={!newStationName.trim() || !newStationOrder || actionState === "submitting"}
-            type="submit"
+            className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+            disabled={actionState === "submitting"}
+            onClick={() => {
+              setNewStationName("");
+              setNewStationOrder("");
+              setStationCreateOpen(true);
+            }}
+            type="button"
           >
             İstasyon ekle
           </button>
-        </form>
+        </div>
       </section>
 
       <aside className="border border-zinc-200 bg-white px-4 py-4">
@@ -3952,35 +4298,16 @@ function StationManagementWorkspace() {
                 ["Güncelleme", formatDate(selectedStation.updatedAt)]
               ]}
             />
-            <form className="grid gap-2 border-t border-zinc-200 pt-4" onSubmit={updateSelectedStation}>
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                İstasyon düzenle
-              </p>
-              <input
-                className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setStationEditName(event.target.value)}
-                placeholder="İstasyon adı"
-                value={stationEditName}
-              />
-              <input
-                className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setStationEditOrder(event.target.value)}
-                placeholder="Liste sırası"
-                type="number"
-                value={stationEditOrder}
-              />
+            <div className="grid gap-2 border-t border-zinc-200 pt-4">
               <button
                 className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={
-                  !stationEditName.trim() ||
-                  !stationEditOrder ||
-                  actionState === "submitting"
-                }
-                type="submit"
+                disabled={actionState === "submitting"}
+                onClick={() => setStationEditOpen(true)}
+                type="button"
               >
-                İstasyonu kaydet
+                İstasyonu düzenle
               </button>
-            </form>
+            </div>
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Bu istasyondaki ürünler
@@ -4003,12 +4330,112 @@ function StationManagementWorkspace() {
                 </div>
               )}
             </div>
-            <form className="grid gap-2 border-t border-zinc-200 pt-4" onSubmit={createStationProduct}>
+            <div className="grid gap-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                Bu istasyona ürün ekle
+                Ürün aksiyonları
               </p>
+              <button
+                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={!selectedStation.enabled || actionState === "submitting"}
+                onClick={() => {
+                  setStationProductName("");
+                  setStationProductVariantName("Standart");
+                  setStationProductPrice("");
+                  setStationProductOpen(true);
+                }}
+                type="button"
+              >
+                Ürün ekle
+              </button>
+            </div>
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Operasyonlar
+              </p>
+              <button
+                className="h-10 w-full border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={!selectedStation.enabled || actionState === "submitting"}
+                onClick={() => {
+                  setDisableReason("");
+                  setStationDisableOpen(true);
+                }}
+                type="button"
+              >
+                İstasyonu pasifleştir
+              </button>
+            </div>
+          </div>
+        )}
+        {actionError ? <StateBlock title={actionError} tone="error" /> : null}
+      </aside>
+      {stationCreateOpen ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setStationCreateOpen(false);
+            }
+          }}
+          title="İstasyon ekle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={createStation}>
+            <FieldText label="İstasyon adı" onChange={setNewStationName} required value={newStationName} />
+            <FieldText label="Liste sırası" onChange={setNewStationOrder} required type="number" value={newStationOrder} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setStationCreateOpen(false)} type="button">
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!newStationName.trim() || !newStationOrder || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Ekleniyor" : "İstasyon ekle"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {stationEditOpen && selectedStation ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setStationEditOpen(false);
+            }
+          }}
+          title="İstasyonu düzenle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={updateSelectedStation}>
+            <FieldText label="İstasyon adı" onChange={setStationEditName} required value={stationEditName} />
+            <FieldText label="Liste sırası" onChange={setStationEditOrder} required type="number" value={stationEditOrder} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setStationEditOpen(false)} type="button">
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!stationEditName.trim() || !stationEditOrder || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Kaydediliyor" : "İstasyonu kaydet"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {stationProductOpen && selectedStation ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setStationProductOpen(false);
+            }
+          }}
+          title="İstasyona ürün ekle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={createStationProduct}>
+            <label className="block">
+              <span className="text-sm font-medium">Kategori</span>
               <select
-                className="h-10 border border-zinc-300 bg-white px-3 text-sm"
+                className="mt-1 h-10 w-full border border-zinc-300 bg-white px-3 text-sm"
                 onChange={(event) => setStationProductCategoryId(event.target.value)}
                 value={stationProductCategoryId}
               >
@@ -4021,27 +4448,16 @@ function StationManagementWorkspace() {
                     </option>
                   ))}
               </select>
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setStationProductName(event.target.value)}
-                placeholder="Ürün adı"
-                value={stationProductName}
-              />
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setStationProductVariantName(event.target.value)}
-                placeholder="Varyant"
-                value={stationProductVariantName}
-              />
-              <input
-                className="h-10 border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setStationProductPrice(event.target.value)}
-                placeholder="Fiyat minor"
-                type="number"
-                value={stationProductPrice}
-              />
+            </label>
+            <FieldText label="Ürün adı" onChange={setStationProductName} required value={stationProductName} />
+            <FieldText label="Varyant" onChange={setStationProductVariantName} required value={stationProductVariantName} />
+            <FieldText label="Fiyat minor" onChange={setStationProductPrice} required type="number" value={stationProductPrice} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setStationProductOpen(false)} type="button">
+                Vazgeç
+              </button>
               <button
-                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
                 disabled={
                   !stationProductCategoryId ||
                   !stationProductName.trim() ||
@@ -4051,36 +4467,48 @@ function StationManagementWorkspace() {
                 }
                 type="submit"
               >
-                Ürün ekle
+                {actionState === "submitting" ? "Ekleniyor" : "Ürün ekle"}
               </button>
-            </form>
-            <div className="space-y-2 border-t border-zinc-200 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                Operasyonlar
-              </p>
-              <input
-                className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setDisableReason(event.target.value)}
-                placeholder="Pasifleştirme nedeni"
-                value={disableReason}
-              />
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {stationDisableOpen && selectedStation ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setStationDisableOpen(false);
+              setDisableReason("");
+            }
+          }}
+          title="İstasyonu pasifleştir"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows rows={[["İstasyon", selectedStation.name]]} />
+            <FieldText label="Pasifleştirme nedeni" onChange={setDisableReason} required value={disableReason} />
+            <div className="flex justify-end gap-2">
               <button
-                className="h-10 w-full border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={
-                  !selectedStation.enabled ||
-                  !disableReason.trim() ||
-                  actionState === "submitting"
-                }
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => {
+                  setStationDisableOpen(false);
+                  setDisableReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!disableReason.trim() || actionState === "submitting"}
                 onClick={() => void disableSelectedStation()}
                 type="button"
               >
-                İstasyonu pasifleştir
+                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
               </button>
             </div>
           </div>
-        )}
-        {actionError ? <StateBlock title={actionError} tone="error" /> : null}
-      </aside>
+        </ActionModal>
+      ) : null}
     </section>
   );
 }
@@ -4105,6 +4533,11 @@ function MenuManagementWorkspace() {
   const [modifierOptionName, setModifierOptionName] = useState("");
   const [modifierOptionPrice, setModifierOptionPrice] = useState("0");
   const [availabilityReason, setAvailabilityReason] = useState("");
+  const [categoryCreateOpen, setCategoryCreateOpen] = useState(false);
+  const [productCreateOpen, setProductCreateOpen] = useState(false);
+  const [variantCreateOpen, setVariantCreateOpen] = useState(false);
+  const [modifierConfigOpen, setModifierConfigOpen] = useState(false);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
 
   async function loadMenu(nextCategoryId?: string, nextProductId?: string) {
     setState("loading");
@@ -4169,6 +4602,7 @@ function MenuManagementWorkspace() {
       setNewCategoryName("");
       setNewCategoryOrder("");
       await loadMenu(created.categoryId);
+      setCategoryCreateOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4213,6 +4647,7 @@ function MenuManagementWorkspace() {
       setVariantName("Standart");
       setVariantPrice("");
       await loadMenu(created.categoryId, created.productId);
+      setProductCreateOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4304,6 +4739,7 @@ function MenuManagementWorkspace() {
       setDetailVariantName("");
       setDetailVariantPrice("");
       await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setVariantCreateOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4355,6 +4791,7 @@ function MenuManagementWorkspace() {
       setModifierOptionName("");
       setModifierOptionPrice("0");
       await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setModifierConfigOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4385,6 +4822,7 @@ function MenuManagementWorkspace() {
       );
       setAvailabilityReason("");
       await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setAvailabilityOpen(false);
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4437,29 +4875,20 @@ function MenuManagementWorkspace() {
             ))}
           </div>
         )}
-        <form className="space-y-2 border-t border-zinc-200 px-4 py-4" onSubmit={createCategory}>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Kategori ekle</p>
-          <input
-            className="h-10 w-full border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setNewCategoryName(event.target.value)}
-            placeholder="Kategori adı"
-            value={newCategoryName}
-          />
-          <input
-            className="h-10 w-full border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setNewCategoryOrder(event.target.value)}
-            placeholder="Sıra"
-            type="number"
-            value={newCategoryOrder}
-          />
+        <div className="border-t border-zinc-200 px-4 py-4">
           <button
             className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-            disabled={!newCategoryName.trim() || !newCategoryOrder || actionState === "submitting"}
-            type="submit"
+            disabled={actionState === "submitting"}
+            onClick={() => {
+              setNewCategoryName("");
+              setNewCategoryOrder("");
+              setCategoryCreateOpen(true);
+            }}
+            type="button"
           >
             Kategori ekle
           </button>
-        </form>
+        </div>
       </aside>
 
       <section className="border border-zinc-200 bg-white">
@@ -4509,58 +4938,21 @@ function MenuManagementWorkspace() {
             ))}
           </div>
         )}
-        <form
-          className="grid gap-2 border-t border-zinc-200 p-4 md:grid-cols-2"
-          onSubmit={createProduct}
-        >
-          <input
-            className="h-10 border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setProductName(event.target.value)}
-            placeholder="Ürün adı"
-            value={productName}
-          />
-          <select
-            className="h-10 border border-zinc-300 bg-white px-3 text-sm"
-            onChange={(event) => setProductStationId(event.target.value)}
-            value={productStationId}
-          >
-            <option value="">İstasyon seç</option>
-            {stations
-              .filter((station) => station.enabled)
-              .map((station) => (
-                <option key={station.stationId} value={station.stationId}>
-                  {station.name}
-                </option>
-              ))}
-          </select>
-          <input
-            className="h-10 border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setVariantName(event.target.value)}
-            placeholder="Varyant"
-            value={variantName}
-          />
-          <input
-            className="h-10 border border-zinc-300 px-3 text-sm"
-            onChange={(event) => setVariantPrice(event.target.value)}
-            placeholder="Fiyat minor"
-            type="number"
-            value={variantPrice}
-          />
+        <div className="border-t border-zinc-200 p-4">
           <button
-            className="h-10 border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100 md:col-span-2"
-            disabled={
-              !selectedCategory ||
-              !productName.trim() ||
-              !productStationId ||
-              !variantName.trim() ||
-              !variantPrice ||
-              actionState === "submitting"
-            }
-            type="submit"
+            className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+            disabled={!selectedCategory || !selectedCategory.enabled || actionState === "submitting"}
+            onClick={() => {
+              setProductName("");
+              setVariantName("Standart");
+              setVariantPrice("");
+              setProductCreateOpen(true);
+            }}
+            type="button"
           >
             Ürün ekle
           </button>
-        </form>
+        </div>
       </section>
 
       <aside className="border border-zinc-200 bg-white px-4 py-4">
@@ -4596,88 +4988,47 @@ function MenuManagementWorkspace() {
                 ["Uygunluk", selectedProduct.availability[0]?.state ?? "default"]
               ]}
             />
-            <div className="space-y-2">
+            <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                Varyant ekle
+                Ürün aksiyonları
               </p>
-              <form className="grid gap-2" onSubmit={addVariant}>
-                <input
-                  className="h-10 border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setDetailVariantName(event.target.value)}
-                  placeholder="Varyant adı"
-                  value={detailVariantName}
-                />
-                <input
-                  className="h-10 border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setDetailVariantPrice(event.target.value)}
-                  placeholder="Fiyat minor"
-                  type="number"
-                  value={detailVariantPrice}
-                />
-                <button
-                  className="h-10 border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                  disabled={
-                    !detailVariantName.trim() ||
-                    !detailVariantPrice ||
-                    actionState === "submitting"
-                  }
-                  type="submit"
-                >
-                  Varyant ekle
-                </button>
-              </form>
+              <button
+                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={actionState === "submitting"}
+                onClick={() => {
+                  setDetailVariantName("");
+                  setDetailVariantPrice("");
+                  setVariantCreateOpen(true);
+                }}
+                type="button"
+              >
+                Varyant ekle
+              </button>
             </div>
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Modifier config
               </p>
-              <form className="grid gap-2" onSubmit={saveSimpleModifierConfig}>
-                <input
-                  className="h-10 border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setModifierGroupName(event.target.value)}
-                  placeholder="Grup adı"
-                  value={modifierGroupName}
-                />
-                <input
-                  className="h-10 border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setModifierOptionName(event.target.value)}
-                  placeholder="Seçenek adı"
-                  value={modifierOptionName}
-                />
-                <input
-                  className="h-10 border border-zinc-300 px-3 text-sm"
-                  onChange={(event) => setModifierOptionPrice(event.target.value)}
-                  placeholder="Fiyat farkı minor"
-                  type="number"
-                  value={modifierOptionPrice}
-                />
-                <button
-                  className="h-10 border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                  disabled={
-                    !modifierGroupName.trim() ||
-                    !modifierOptionName.trim() ||
-                    actionState === "submitting"
-                  }
-                  type="submit"
-                >
-                  Modifier kaydet
-                </button>
-              </form>
+              <button
+                className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={actionState === "submitting"}
+                onClick={() => setModifierConfigOpen(true)}
+                type="button"
+              >
+                Modifier düzenle
+              </button>
             </div>
             <div className="space-y-2 border-t border-zinc-200 pt-4">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Uygunluk
               </p>
-              <input
-                className="h-10 w-full border border-zinc-300 px-3 text-sm"
-                onChange={(event) => setAvailabilityReason(event.target.value)}
-                placeholder="Pasiflik nedeni"
-                value={availabilityReason}
-              />
               <button
                 className="h-10 w-full border border-zinc-950 px-3 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
-                disabled={!availabilityReason.trim() || actionState === "submitting"}
-                onClick={() => void markUnavailable()}
+                disabled={actionState === "submitting"}
+                onClick={() => {
+                  setAvailabilityReason("");
+                  setAvailabilityOpen(true);
+                }}
                 type="button"
               >
                 Geçici unavailable yap
@@ -4687,6 +5038,175 @@ function MenuManagementWorkspace() {
         )}
         {actionError ? <StateBlock title={actionError} tone="error" /> : null}
       </aside>
+      {categoryCreateOpen ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setCategoryCreateOpen(false);
+            }
+          }}
+          title="Kategori ekle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={createCategory}>
+            <FieldText label="Kategori adı" onChange={setNewCategoryName} required value={newCategoryName} />
+            <FieldText label="Liste sırası" onChange={setNewCategoryOrder} required type="number" value={newCategoryOrder} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setCategoryCreateOpen(false)} type="button">
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!newCategoryName.trim() || !newCategoryOrder || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Ekleniyor" : "Kategori ekle"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {productCreateOpen && selectedCategory ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setProductCreateOpen(false);
+            }
+          }}
+          title="Ürün ekle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={createProduct}>
+            <FieldText label="Ürün adı" onChange={setProductName} required value={productName} />
+            <label className="block">
+              <span className="text-sm font-medium">İstasyon</span>
+              <select
+                className="mt-1 h-10 w-full border border-zinc-300 bg-white px-3 text-sm"
+                onChange={(event) => setProductStationId(event.target.value)}
+                value={productStationId}
+              >
+                <option value="">İstasyon seç</option>
+                {stations
+                  .filter((station) => station.enabled)
+                  .map((station) => (
+                    <option key={station.stationId} value={station.stationId}>
+                      {station.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <FieldText label="Varyant" onChange={setVariantName} required value={variantName} />
+            <FieldText label="Fiyat minor" onChange={setVariantPrice} required type="number" value={variantPrice} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setProductCreateOpen(false)} type="button">
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={
+                  !productName.trim() ||
+                  !productStationId ||
+                  !variantName.trim() ||
+                  !variantPrice ||
+                  actionState === "submitting"
+                }
+                type="submit"
+              >
+                {actionState === "submitting" ? "Ekleniyor" : "Ürün ekle"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {variantCreateOpen && selectedProduct ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setVariantCreateOpen(false);
+            }
+          }}
+          title="Varyant ekle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={addVariant}>
+            <FieldText label="Varyant adı" onChange={setDetailVariantName} required value={detailVariantName} />
+            <FieldText label="Fiyat minor" onChange={setDetailVariantPrice} required type="number" value={detailVariantPrice} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setVariantCreateOpen(false)} type="button">
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!detailVariantName.trim() || !detailVariantPrice || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Ekleniyor" : "Varyant ekle"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {modifierConfigOpen && selectedProduct ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setModifierConfigOpen(false);
+            }
+          }}
+          title="Modifier düzenle"
+        >
+          <form className="space-y-4 px-5 py-5" onSubmit={saveSimpleModifierConfig}>
+            <FieldText label="Grup adı" onChange={setModifierGroupName} required value={modifierGroupName} />
+            <FieldText label="Seçenek adı" onChange={setModifierOptionName} required value={modifierOptionName} />
+            <FieldText label="Fiyat farkı minor" onChange={setModifierOptionPrice} type="number" value={modifierOptionPrice} />
+            <div className="flex justify-end gap-2">
+              <button className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50" onClick={() => setModifierConfigOpen(false)} type="button">
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!modifierGroupName.trim() || !modifierOptionName.trim() || actionState === "submitting"}
+                type="submit"
+              >
+                {actionState === "submitting" ? "Kaydediliyor" : "Modifier kaydet"}
+              </button>
+            </div>
+          </form>
+        </ActionModal>
+      ) : null}
+      {availabilityOpen && selectedProduct ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setAvailabilityOpen(false);
+              setAvailabilityReason("");
+            }
+          }}
+          title="Ürünü unavailable yap"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows rows={[["Ürün", selectedProduct.name]]} />
+            <FieldText label="Pasiflik nedeni" onChange={setAvailabilityReason} required value={availabilityReason} />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                onClick={() => {
+                  setAvailabilityOpen(false);
+                  setAvailabilityReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!availabilityReason.trim() || actionState === "submitting"}
+                onClick={() => void markUnavailable()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Kaydediliyor" : "Unavailable yap"}
+              </button>
+            </div>
+          </div>
+        </ActionModal>
+      ) : null}
     </section>
   );
 }
@@ -5299,6 +5819,34 @@ function StateBlock({ title, tone = "neutral" }: { title: string; tone?: "error"
       }`}
     >
       {title}
+    </div>
+  );
+}
+
+function ActionModal({
+  children,
+  onClose,
+  title
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 py-6">
+      <section className="flex max-h-full w-full max-w-xl flex-col border border-zinc-200 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button
+            className="h-9 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
+            onClick={onClose}
+            type="button"
+          >
+            Kapat
+          </button>
+        </div>
+        {children}
+      </section>
     </div>
   );
 }
