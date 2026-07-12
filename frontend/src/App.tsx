@@ -178,6 +178,23 @@ type StationList = {
   items: Station[];
 };
 
+type StaffProfile = {
+  userId: string;
+  username: string;
+  displayName: string;
+  status: string;
+  roles: string[];
+  stationIds: string[];
+  hallIds: string[];
+  firstPasswordRequired: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type StaffList = {
+  items: StaffProfile[];
+};
+
 type ProductVariant = {
   variantId: string;
   productId: string;
@@ -2282,6 +2299,10 @@ function TenantWorkspace({
     return <MenuManagementWorkspace />;
   }
 
+  if (workspace === "staff") {
+    return <StaffManagementWorkspace />;
+  }
+
   const copy: Record<TenantWorkspaceKey, [string, string]> = {
     dashboard: ["Dashboard", "Kurulum özeti."],
     halls: ["Salon ve masa yönetimi", "Masalar ayrı sayfaya bölünmeden salon bağlamında yönetilecek."],
@@ -2299,6 +2320,289 @@ function TenantWorkspace({
         <StateBlock title="API bağlantısı sıradaki implementasyon adımı" />
         <StateBlock title="Detaylar panel/drawer içinde açılacak" />
       </div>
+    </section>
+  );
+}
+
+function StaffManagementWorkspace() {
+  const [staff, setStaff] = useState<StaffProfile[]>([]);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [halls, setHalls] = useState<HallWithTables[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    displayName: "",
+    hallIds: [] as string[],
+    roles: ["cashier"] as string[],
+    stationIds: [] as string[],
+    username: ""
+  });
+
+  useEffect(() => {
+    void loadStaffWorkspace();
+  }, []);
+
+  async function loadStaffWorkspace() {
+    setState("loading");
+    setError(null);
+    try {
+      const [staffPayload, stationPayload, boardPayload] = await Promise.all([
+        apiRequest<StaffList>("/api/tenant-setup/staff"),
+        apiRequest<StationList>("/api/tenant-setup/stations"),
+        apiRequest<HallTableBoard>("/api/tenant-setup/venue/board")
+      ]);
+      setStaff(staffPayload.items);
+      setStations(stationPayload.items.filter((station) => station.enabled));
+      setHalls(boardPayload.halls.filter((hall) => hall.enabled));
+      setState("ready");
+    } catch (loadError) {
+      setError(errorMessageFrom(loadError));
+      setState("error");
+    }
+  }
+
+  function toggleRole(role: string) {
+    setForm((current) => {
+      const roles = current.roles.includes(role)
+        ? current.roles.filter((value) => value !== role)
+        : [...current.roles, role];
+      return {
+        ...current,
+        hallIds: roles.includes("service_staff") ? current.hallIds : [],
+        roles,
+        stationIds: roles.includes("station_staff") ? current.stationIds : []
+      };
+    });
+  }
+
+  function toggleScope(scope: "hallIds" | "stationIds", id: string) {
+    setForm((current) => ({
+      ...current,
+      [scope]: current[scope].includes(id)
+        ? current[scope].filter((value) => value !== id)
+        : [...current[scope], id]
+    }));
+  }
+
+  async function createStaff(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      actionState === "submitting" ||
+      !form.username.trim() ||
+      !form.displayName.trim() ||
+      form.roles.length === 0
+    ) {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      const created = await apiRequest<StaffProfile>("/api/tenant-setup/staff", {
+        body: JSON.stringify({
+          username: form.username.trim(),
+          displayName: form.displayName.trim(),
+          roles: form.roles,
+          stationIds: form.roles.includes("station_staff") ? form.stationIds : [],
+          hallIds: form.roles.includes("service_staff") ? form.hallIds : []
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": crypto.randomUUID()
+        },
+        method: "POST"
+      });
+      setStaff((current) => [...current, created].sort((a, b) => a.displayName.localeCompare(b.displayName)));
+      setForm({
+        displayName: "",
+        hallIds: [],
+        roles: ["cashier"],
+        stationIds: [],
+        username: ""
+      });
+      setActionState("idle");
+    } catch (createError) {
+      setError(errorMessageFrom(createError));
+      setActionState("error");
+    }
+  }
+
+  const canCreate = Boolean(
+    form.username.trim() &&
+      form.displayName.trim() &&
+      form.roles.length > 0 &&
+      actionState !== "submitting"
+  );
+  const roleOptions = [
+    ["tenant_admin", "Tenant admin"],
+    ["cashier", "Kasiyer"],
+    ["station_staff", "İstasyon personeli"],
+    ["service_staff", "Servis personeli"]
+  ];
+
+  return (
+    <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="border border-zinc-200 bg-white">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
+          <div>
+            <h3 className="text-lg font-semibold">Personel</h3>
+            <p className="mt-1 text-sm text-zinc-600">
+              Kullanıcı adı burada belirlenir. İlk şifre varsayılan olarak 12345678 olur.
+            </p>
+          </div>
+          <button
+            className="h-9 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
+            onClick={() => void loadStaffWorkspace()}
+            type="button"
+          >
+            Yenile
+          </button>
+        </div>
+        {state === "loading" ? (
+          <StateBlock title="Personel listesi yükleniyor" />
+        ) : state === "error" ? (
+          <StateBlock title={error ?? "Personel listesi alınamadı"} tone="error" />
+        ) : staff.length === 0 ? (
+          <StateBlock title="Henüz personel yok." />
+        ) : (
+          <div className="divide-y divide-zinc-200">
+            {staff.map((item) => (
+              <button
+                className="block w-full px-5 py-4 text-left hover:bg-zinc-50"
+                key={item.userId}
+                type="button"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="font-semibold">{item.displayName}</p>
+                    <p className="mt-1 text-sm text-zinc-500">{item.username}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <StatusBadge value={item.status} />
+                    {item.firstPasswordRequired ? <StatusBadge value="first_password_required" /> : null}
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.roles.map((role) => (
+                    <span
+                      className="border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs font-medium"
+                      key={role}
+                    >
+                      {staffRoleLabel(role)}
+                    </span>
+                  ))}
+                </div>
+                <DetailRows
+                  rows={[
+                    ["İstasyon scope", item.stationIds.length.toString()],
+                    ["Salon scope", item.hallIds.length.toString()],
+                    ["Oluşturma", formatDate(item.createdAt)]
+                  ]}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <aside className="border border-zinc-200 bg-white px-5 py-5">
+        <h3 className="text-sm font-semibold">Personel ekle</h3>
+        <form className="mt-4 space-y-4" onSubmit={(event) => void createStaff(event)}>
+          <FieldText
+            label="Kullanıcı adı"
+            onChange={(value) => setForm((current) => ({...current, username: value}))}
+            required
+            value={form.username}
+          />
+          <FieldText
+            label="Görünen ad"
+            onChange={(value) => setForm((current) => ({...current, displayName: value}))}
+            required
+            value={form.displayName}
+          />
+          <div>
+            <p className="text-sm font-medium">Roller *</p>
+            <div className="mt-2 grid gap-2">
+              {roleOptions.map(([role, label]) => (
+                <label
+                  className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
+                  key={role}
+                >
+                  <input
+                    checked={form.roles.includes(role)}
+                    onChange={() => toggleRole(role)}
+                    type="checkbox"
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {form.roles.includes("station_staff") ? (
+            <div>
+              <p className="text-sm font-medium">İstasyon yetkileri</p>
+              <div className="mt-2 grid gap-2">
+                {stations.length === 0 ? (
+                  <p className="text-sm text-zinc-500">Aktif istasyon yok.</p>
+                ) : (
+                  stations.map((station) => (
+                    <label
+                      className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
+                      key={station.stationId}
+                    >
+                      <input
+                        checked={form.stationIds.includes(station.stationId)}
+                        onChange={() => toggleScope("stationIds", station.stationId)}
+                        type="checkbox"
+                      />
+                      <span>{station.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : null}
+          {form.roles.includes("service_staff") ? (
+            <div>
+              <p className="text-sm font-medium">Salon yetkileri</p>
+              <div className="mt-2 grid gap-2">
+                {halls.length === 0 ? (
+                  <p className="text-sm text-zinc-500">Aktif salon yok.</p>
+                ) : (
+                  halls.map((hall) => (
+                    <label
+                      className="flex min-h-10 items-center gap-2 border border-zinc-200 px-3 text-sm"
+                      key={hall.hallId}
+                    >
+                      <input
+                        checked={form.hallIds.includes(hall.hallId)}
+                        onChange={() => toggleScope("hallIds", hall.hallId)}
+                        type="checkbox"
+                      />
+                      <span>{hall.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : null}
+          <div className="border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
+            <p className="font-semibold">İlk giriş</p>
+            <p className="mt-1">
+              Varsayılan şifre 12345678. İlk girişte şifre değişimi zorunlu ve OTP tenant GSM
+              numarasına gönderilir.
+            </p>
+          </div>
+          {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
+          <button
+            className="h-10 w-full bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+            disabled={!canCreate}
+            type="submit"
+          >
+            {actionState === "submitting" ? "Ekleniyor" : "Personel ekle"}
+          </button>
+        </form>
+      </aside>
     </section>
   );
 }
@@ -5229,6 +5533,16 @@ function tenantWorkspacePath(workspace: TenantWorkspaceKey): string {
 
 function tenantWorkspaceLabel(workspace: TenantWorkspaceKey): string {
   return tenantWorkspaces.find((item) => item.key === workspace)?.label ?? "Dashboard";
+}
+
+function staffRoleLabel(role: string): string {
+  const labels: Record<string, string> = {
+    cashier: "Kasiyer",
+    service_staff: "Servis personeli",
+    station_staff: "İstasyon personeli",
+    tenant_admin: "Tenant admin"
+  };
+  return labels[role] ?? role.replaceAll("_", " ");
 }
 
 function formatDate(value: string): string {

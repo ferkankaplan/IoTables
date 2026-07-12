@@ -8,6 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from iotables.api.errors import ApiError
 from iotables.database.session import get_database_session
+from iotables.modules.access.staff_access import (
+    CreateStaffCommand,
+    StaffAccessService,
+)
 from iotables.modules.tenant_setup.menu_catalog import (
     AvailabilityCommand,
     CategoryWriteCommand,
@@ -80,6 +84,23 @@ class StationResponse(BaseModel):
 
 class StationListResponse(BaseModel):
     items: list[StationResponse]
+
+
+class StaffProfileResponse(BaseModel):
+    user_id: str = Field(alias="userId")
+    username: str
+    display_name: str = Field(alias="displayName")
+    status: str
+    roles: list[str]
+    station_ids: list[str] = Field(alias="stationIds")
+    hall_ids: list[str] = Field(alias="hallIds")
+    first_password_required: bool = Field(alias="firstPasswordRequired")
+    created_at: str = Field(alias="createdAt")
+    updated_at: str = Field(alias="updatedAt")
+
+
+class StaffListResponse(BaseModel):
+    items: list[StaffProfileResponse]
 
 
 class ProductVariantResponse(BaseModel):
@@ -219,6 +240,25 @@ class StationWriteRequest(BaseModel):
 
     def to_command(self) -> StationWriteCommand:
         return StationWriteCommand(name=self.name, display_order=self.display_order)
+
+
+class StaffCreateRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    username: str = Field(min_length=1)
+    display_name: str = Field(alias="displayName", min_length=1)
+    roles: list[StaffRole] = Field(min_length=1)
+    station_ids: list[UUID] = Field(default_factory=list, alias="stationIds")
+    hall_ids: list[UUID] = Field(default_factory=list, alias="hallIds")
+
+    def to_command(self) -> CreateStaffCommand:
+        return CreateStaffCommand(
+            username=self.username,
+            display_name=self.display_name,
+            roles=tuple(self.roles),
+            station_ids=tuple(self.station_ids),
+            hall_ids=tuple(self.hall_ids),
+        )
 
 
 class CategoryWriteRequest(BaseModel):
@@ -401,6 +441,12 @@ def get_table_display_provisioning_service(
     return TableDisplayProvisioningService(session)
 
 
+def get_staff_access_service(
+    session: Annotated[AsyncSession, Depends(get_database_session)],
+) -> StaffAccessService:
+    return StaffAccessService(session)
+
+
 def require_tenant_admin(actor: ActorContext) -> None:
     if StaffRole.TENANT_ADMIN not in actor.roles:
         raise ApiError(
@@ -561,6 +607,29 @@ async def list_stations(
             include_disabled=include_disabled,
         )
     ).as_api_payload()
+
+
+@router.get("/staff", response_model=StaffListResponse)
+async def list_staff(
+    actor: Annotated[ActorContext, TENANT_SCOPE_DEP],
+    service: Annotated[StaffAccessService, Depends(get_staff_access_service)],
+) -> dict[str, Any]:
+    require_tenant_admin(actor)
+    return (await service.list_staff(tenant_id=actor.tenant_id)).as_api_payload()
+
+
+@router.post(
+    "/staff",
+    response_model=StaffProfileResponse,
+    dependencies=[CSRF_DEP],
+)
+async def create_staff(
+    payload: StaffCreateRequest,
+    actor: Annotated[ActorContext, TENANT_SCOPE_DEP],
+    service: Annotated[StaffAccessService, Depends(get_staff_access_service)],
+) -> dict[str, Any]:
+    require_tenant_admin(actor)
+    return (await service.create_staff(actor=actor, command=payload.to_command())).as_api_payload()
 
 
 @router.post(

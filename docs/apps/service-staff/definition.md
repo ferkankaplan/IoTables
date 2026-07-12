@@ -38,7 +38,7 @@ Starter service staff users may be created automatically by a sector starter tem
 | Garson | `garson` | `admin` | Service delivery |
 | Komi | `komi` | `admin` | Service support |
 
-Starter service staff must change the temporary password on first login. OTP is not required for service staff in the first version because these roles do not perform critical financial or administrative operations. After creation, they are normal tenant-owned staff users.
+Starter service staff must change the temporary password on first login. First-password setup requires OTP sent to the platform-owned tenant identity GSM. After creation, they are normal tenant-owned staff users.
 
 ## App Authority
 
@@ -202,7 +202,7 @@ ServiceStaffApp updates live delivery state, so transitions must be safe under d
 - Service actions require service-staff permission.
 - Service staff can only view and update ready/delivery items for authorized halls.
 - Starter service staff passwords are temporary and must be changed on first login.
-- Service staff first-login password change does not require OTP.
+- Service staff first-login password change requires OTP sent to the platform-owned tenant identity GSM.
 - ServiceStaffApp must not expose TenantApp configuration, StationStaffApp preparation controls, or CashierApp payment capabilities.
 - ServiceStaffApp must not expose delivery controls when service delivery tracking is disabled for the tenant.
 

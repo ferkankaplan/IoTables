@@ -9,8 +9,8 @@ Source module: [identity-access.md](identity-access.md)
 | `identity_access.create_platform_owner` | Bootstrap tool | username, initial credential material | Explicit bootstrap only; no active Platform Owner exists; no app startup seed | Unique active Platform Owner; create user, credential, platform role, audit | Platform Owner user |
 | `identity_access.create_bootstrap_user` | Provisioning, TenantApp | tenantId, username, role intent, temporary credential flag | Caller authorized by Provisioning or Tenant Admin; username unique in tenant/platform scope | Insert user and credential in caller transaction where possible | User with first password change required |
 | `identity_access.authenticate` | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | tenant/app scope, username, password | Tenant/app scope must match user; disabled users fail; bootstrap users may be forced into setup flow | Create `login_sessions` only after required factors pass | Login session or first-login requirement |
-| `identity_access.begin_first_password_setup` | TenantApp, CashierApp, staff apps | userId/setup token | Bootstrap credential required; no first-password OTP in the current release | Return password setup state | Setup state |
-| `identity_access.complete_first_password_setup` | TenantApp, CashierApp, staff apps | userId/session setup token, new password | Bootstrap credential required; password policy | Lock user credential; replace password hash; clear bootstrap flag; audit | Active credential and app-appropriate login state |
+| `identity_access.begin_first_password_setup` | TenantApp, CashierApp, staff apps | userId/setup token | Bootstrap credential required; create OTP challenge to platform-owned tenant identity GSM | Return redacted OTP setup state | Setup state |
+| `identity_access.complete_first_password_setup` | TenantApp, CashierApp, staff apps | userId/session setup token, new password, OTP proof | Bootstrap credential required; password policy; OTP challenge verified | Lock user credential; replace password hash; clear bootstrap flag; audit | Active credential and app-appropriate login state |
 | `identity_access.change_password` | Authenticated user | current password, new password | Active user; current password valid | Lock credential; update password hash; audit | Password changed |
 | `identity_access.enroll_totp` | PlatformApp | platform owner user, TOTP secret proof | Reserved for future PlatformApp hardening; not required before dashboard access in the current release | Store encrypted TOTP secret; audit | Enabled TOTP factor |
 | `identity_access.logout_or_revoke_session` | Any authenticated app, admin recovery | sessionId or userId/session filter | User owns session or admin recovery is authorized | Set `revoked_at`; no deletion of session metadata | Revoked session |
@@ -29,8 +29,8 @@ Source module: [identity-access.md](identity-access.md)
 
 | Contract | Purpose |
 | --- | --- |
-| `otp_messaging.create_challenge` | Create tenant-creation or password-reset OTP challenge. |
-| `otp_messaging.verify_otp` | Validate OTP proof before completing sensitive tenant creation or password reset. |
+| `otp_messaging.create_challenge` | Create tenant-creation, first-password, or password-reset OTP challenge. |
+| `otp_messaging.verify_otp` | Validate OTP proof before completing sensitive tenant creation, first-password setup, or password reset. |
 | `audit.record_event` | Record bootstrap, password, TOTP, user disable, and session security events. |
 
 ## Events
@@ -48,6 +48,6 @@ Source module: [identity-access.md](identity-access.md)
 | --- | --- |
 | `invalid_credentials` | Username/password/factor validation failed. |
 | `first_password_change_required` | User cannot enter normal app until setup completes. |
-| `otp_required` | Sensitive tenant creation or password reset needs OTP proof. |
+| `otp_required` | Sensitive tenant creation, first-password setup, or password reset needs OTP proof. |
 | `totp_required` | Reserved for future PlatformApp hardening; not emitted by current release PlatformApp login. |
 | `wrong_app_scope` | User/session is valid but not for this app. |

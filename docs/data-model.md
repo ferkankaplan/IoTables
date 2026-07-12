@@ -989,8 +989,8 @@ Owned by: OTP / Messaging
 | `tenantId` | Tenant |
 | `id` | Challenge ID |
 | `userId` | User being verified |
-| `purpose` | tenant_creation / staff_password_reset; historical first-password purpose values may exist only for old data compatibility |
-| `targetGsm` | Requested tenant GSM for tenant creation, or platform-owned tenant identity GSM for staff password reset |
+| `purpose` | tenant_creation / staff_password_reset / tenant_admin_first_password / cashier_first_password / station_staff_first_password / service_staff_first_password |
+| `targetGsm` | Requested tenant GSM for tenant creation, or platform-owned tenant identity GSM for staff first-password and password reset |
 | `codeHash` | Never plaintext |
 | `expiresAt` | Short lifetime |
 | `verifiedAt` | Completion |

@@ -46,7 +46,7 @@ Required states:
 | No cashier role | Block app access. |
 | Tenant unavailable/suspended | Block access. |
 
-Cashier first-password setup does not require OTP in the current release. Password reset flows use OTP sent to the platform-owned tenant identity GSM.
+Cashier first-password setup requires OTP sent to the platform-owned tenant identity GSM. Password reset flows use OTP sent to the platform-owned tenant identity GSM.
 
 ## Cashier Workspace
 

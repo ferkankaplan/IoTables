@@ -26,7 +26,7 @@ Source context:
 | Component | Responsibility | Main Sources |
 | --- | --- | --- |
 | `StationStaffShell` | Station app route frame, session gate, tenant/station context. | Session check, tenant route |
-| `StationLogin` | Login and first-password change without OTP. | Identity and Access |
+| `StationLogin` | Login and first-password change with tenant-GSM OTP. | Identity and Access |
 | `StationSelector` | Select authorized station when more than one station is assigned. | Staff Access |
 | `StationQueueWorkspace` | Active queue grouped by status and sorted oldest first. | Preparation |
 | `StationWorkloadBar` | Pending/preparing/ready counts and age metrics. | Preparation workload |
@@ -54,7 +54,7 @@ Source context:
 - invalid credential state;
 - no-role state.
 
-Station staff first-password flow must not show OTP controls in the current release.
+Station staff first-password flow must show OTP controls for first-password setup.
 
 ## Station Selector
 

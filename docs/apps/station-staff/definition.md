@@ -29,7 +29,7 @@ Starter station staff users may be created automatically by a sector starter tem
 | Aşçı | `asci` | `admin` | `Mutfak` |
 | Barista | `barista` | `admin` | `Kahve` |
 
-Starter station staff must change the temporary password on first login. OTP is not required for station staff because these roles do not perform critical financial or administrative operations. After creation, they are normal tenant-owned staff users.
+Starter station staff must change the temporary password on first login. First-password setup requires OTP sent to the platform-owned tenant identity GSM. After creation, they are normal tenant-owned staff users.
 
 ## App Authority
 
@@ -209,7 +209,7 @@ StationStaffApp updates live order item state, so transitions must be safe under
 - Station actions require station-staff permission.
 - Staff can only view and update authorized stations.
 - Starter station staff passwords are temporary and must be changed on first login.
-- Station staff first-login password change does not require OTP.
+- Station staff first-login password change requires OTP sent to the platform-owned tenant identity GSM.
 - StationStaffApp must not expose TenantApp configuration or CashierApp payment capabilities.
 
 ## Open Questions

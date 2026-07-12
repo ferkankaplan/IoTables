@@ -8,7 +8,7 @@ ServiceStaffApp uses tenant-scoped APIs on `https://[tenant].iotables.net`.
 | --- | --- | --- | --- |
 | Login requirements | `GET /api/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe first-login/setup requirement discovery. |
 | Login | `POST /api/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | ServiceStaff app scope. |
-| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | No OTP required for service staff in the current release. |
+| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | OTP required; code is sent to the tenant identity GSM. |
 | Session check/logout | `GET /api/auth/session`, `POST /api/auth/logout` | [Identity and Access](../../modules/access/identity-access-api.md) | Human staff session. |
 | Authorized halls | `GET /api/service-staff/authorized-halls` | [Staff Access](../../modules/access/staff-access-api.md) | Scope source for service queue filters. |
 | Ready items | `GET /api/service-staff/ready-items` | [Service Delivery](../../modules/fulfillment/service-delivery-api.md) | Reads ready PreparationItems and delivery state. |

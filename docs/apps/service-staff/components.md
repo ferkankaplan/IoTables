@@ -26,7 +26,7 @@ Source context:
 | Component | Responsibility | Main Sources |
 | --- | --- | --- |
 | `ServiceStaffShell` | Service route frame, session gate, tenant/hall context. | Session check, tenant route |
-| `ServiceLogin` | Login and first-password change without OTP. | Identity and Access |
+| `ServiceLogin` | Login and first-password change with tenant-GSM OTP. | Identity and Access |
 | `ServiceDisabledState` | Tracking disabled state with no delivery mutation controls. | Tenant Operational Settings via Service Delivery |
 | `ServiceQueueWorkspace` | Ready/picked-up queue grouped by table. | Service Delivery |
 | `ServiceWorkloadBar` | Ready/picked-up/delivered counters and age metrics. | Service Delivery workload |
@@ -55,7 +55,7 @@ Source context:
 - invalid credential state;
 - no-role state.
 
-Service staff first-password flow must not show OTP controls in the current release.
+Service staff first-password flow must show OTP controls for first-password setup.
 
 `ServiceDisabledState` owns:
 
