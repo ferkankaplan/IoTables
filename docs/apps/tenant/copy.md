@@ -50,6 +50,7 @@ Source context:
 | Create product/service | `Ürün ekle` |
 | Create staff | `Personel ekle` |
 | Save | `Kaydet` |
+| Remove | `Sil` |
 | Disable | `Devre dışı bırak` |
 | Re-provision display | `Ekranı yeniden kur` |
 | Generate display firmware | `Ekran yazılımını oluştur` |
@@ -157,6 +158,7 @@ Do not show raw WiFi passwords or credential secrets after the one-time response
 | Password reset OTP helper | `Şifre sıfırlama kodları tenant kimlik GSM numarasına gönderilir.` |
 | Missing role/scope | `Bu rol için gerekli yetki alanı eksik.` |
 | Disabled user | `Personel devre dışı.` |
+| Remove staff helper | `Personel erişimi kapatılır, aktif roller ve yetki kapsamları iptal edilir. Geçmiş kayıtlar korunur.` |
 | Permission changed | `Yetki değişti. Bir sonraki işlemde yeni yetki uygulanır.` |
 
 ## Settings Copy
@@ -212,6 +214,7 @@ Do not show raw WiFi passwords or credential secrets after the one-time response
 | `otp_invalid` | `Doğrulama kodu hatalı.` |
 | `otp_locked` | `Çok fazla deneme yapıldı. Daha sonra tekrar deneyin.` |
 | `assignment_target_disabled` | `Seçilen yetki alanı devre dışı.` |
+| `self_disable_not_allowed` | `Kendi personel erişiminizi silemezsiniz.` |
 | `last_admin_not_allowed` | `Son admin yetkisi kaldırılamaz.` |
 | `tenant_settings_missing` | `Tenant ayarları bulunamadı.` |
 
@@ -224,7 +227,7 @@ Do not show labels or copy that imply:
 - TenantApp can prepare or deliver items;
 - tables have a standalone primary management page in the current release;
 - current release supports floor-plan coordinates;
-- starter data is recreated after edit/delete;
+- starter data is recreated after edit/remove;
 - sector change reruns starter data;
 - raw display credentials can be viewed later;
 - staff scope warnings are only frontend checks.

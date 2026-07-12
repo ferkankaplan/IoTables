@@ -2481,6 +2481,8 @@ function StaffManagementWorkspace() {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [actionState, setActionState] = useState<"idle" | "submitting" | "error">("idle");
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<StaffProfile | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     displayName: "",
@@ -2579,6 +2581,38 @@ function StaffManagementWorkspace() {
     }
   }
 
+  async function disableStaff() {
+    if (!deleteTarget || !deleteReason.trim() || actionState === "submitting") {
+      return;
+    }
+    setActionState("submitting");
+    setError(null);
+    try {
+      const disabled = await apiRequest<StaffProfile>(
+        `/api/tenant-setup/staff/${deleteTarget.userId}/disable`,
+        {
+          body: JSON.stringify({reason: deleteReason.trim()}),
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": crypto.randomUUID()
+          },
+          method: "POST"
+        }
+      );
+      setStaff((current) =>
+        current
+          .map((item) => (item.userId === disabled.userId ? disabled : item))
+          .sort((a, b) => a.displayName.localeCompare(b.displayName))
+      );
+      setDeleteTarget(null);
+      setDeleteReason("");
+      setActionState("idle");
+    } catch (deleteError) {
+      setError(errorMessageFrom(deleteError));
+      setActionState("error");
+    }
+  }
+
   const canCreate = Boolean(
     form.username.trim() &&
       form.displayName.trim() &&
@@ -2610,6 +2644,16 @@ function StaffManagementWorkspace() {
       return;
     }
     setCreateModalOpen(false);
+    setActionState("idle");
+    setError(null);
+  }
+
+  function closeDeleteModal() {
+    if (actionState === "submitting") {
+      return;
+    }
+    setDeleteTarget(null);
+    setDeleteReason("");
     setActionState("idle");
     setError(null);
   }
@@ -2650,19 +2694,31 @@ function StaffManagementWorkspace() {
         ) : (
           <div className="divide-y divide-zinc-200">
             {staff.map((item) => (
-              <button
-                className="block w-full px-5 py-4 text-left hover:bg-zinc-50"
+              <div
+                className="block w-full px-5 py-4 text-left"
                 key={item.userId}
-                type="button"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <p className="font-semibold">{item.displayName}</p>
                     <p className="mt-1 text-sm text-zinc-500">{item.username}</p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap justify-start gap-2 md:justify-end">
                     <StatusBadge value={item.status} />
                     {item.firstPasswordRequired ? <StatusBadge value="first_password_required" /> : null}
+                    <button
+                      className="h-8 border border-zinc-300 px-3 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                      disabled={item.status !== "active" || actionState === "submitting"}
+                      onClick={() => {
+                        setDeleteTarget(item);
+                        setDeleteReason("");
+                        setError(null);
+                        setActionState("idle");
+                      }}
+                      type="button"
+                    >
+                      Sil
+                    </button>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -2682,7 +2738,7 @@ function StaffManagementWorkspace() {
                     ["Oluşturma", formatDate(item.createdAt)]
                   ]}
                 />
-              </button>
+              </div>
             ))}
           </div>
         )}
@@ -2814,6 +2870,43 @@ function StaffManagementWorkspace() {
             </form>
           </section>
         </div>
+      ) : null}
+      {deleteTarget ? (
+        <ActionModal onClose={closeDeleteModal} title="Personeli sil">
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows
+              rows={[
+                ["Personel", deleteTarget.displayName],
+                ["Kullanıcı adı", deleteTarget.username],
+                ["Durum", deleteTarget.status]
+              ]}
+            />
+            <p className="text-sm text-zinc-600">
+              Personel erişimi kapatılır, aktif roller ve yetki kapsamları iptal edilir.
+              Geçmiş kayıtlar ve audit izi korunur.
+            </p>
+            <FieldText label="Silme nedeni" onChange={setDeleteReason} required value={deleteReason} />
+            {actionState === "error" && error ? <StateBlock title={error} tone="error" /> : null}
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
+                disabled={actionState === "submitting"}
+                onClick={closeDeleteModal}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!deleteReason.trim() || actionState === "submitting"}
+                onClick={() => void disableStaff()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Siliniyor" : "Sil"}
+              </button>
+            </div>
+          </div>
+        </ActionModal>
       ) : null}
     </section>
   );
@@ -3770,7 +3863,7 @@ function HallManagementWorkspace() {
                 }}
                 type="button"
               >
-                Salonu pasifleştir
+                Salonu sil
               </button>
             </div>
           </div>
@@ -3930,11 +4023,14 @@ function HallManagementWorkspace() {
               setHallDisableReason("");
             }
           }}
-          title="Salonu pasifleştir"
+          title="Salonu sil"
         >
           <div className="space-y-4 px-5 py-5">
             <DetailRows rows={[["Salon", selectedHall.name]]} />
-            <FieldText label="Pasifleştirme nedeni" onChange={setHallDisableReason} required value={hallDisableReason} />
+            <p className="text-sm text-zinc-600">
+              Salon aktif kullanımdan kaldırılır. Geçmiş oturum ve audit kayıtları korunur.
+            </p>
+            <FieldText label="Silme nedeni" onChange={setHallDisableReason} required value={hallDisableReason} />
             <div className="flex justify-end gap-2">
               <button
                 className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
@@ -3952,7 +4048,7 @@ function HallManagementWorkspace() {
                 onClick={() => void disableSelectedHall()}
                 type="button"
               >
-                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+                {actionState === "submitting" ? "Siliniyor" : "Sil"}
               </button>
             </div>
           </div>
@@ -4414,7 +4510,7 @@ function StationManagementWorkspace() {
                 }}
                 type="button"
               >
-                İstasyonu pasifleştir
+                İstasyonu sil
               </button>
             </div>
           </div>
@@ -4534,11 +4630,15 @@ function StationManagementWorkspace() {
               setDisableReason("");
             }
           }}
-          title="İstasyonu pasifleştir"
+          title="İstasyonu sil"
         >
           <div className="space-y-4 px-5 py-5">
             <DetailRows rows={[["İstasyon", selectedStation.name]]} />
-            <FieldText label="Pasifleştirme nedeni" onChange={setDisableReason} required value={disableReason} />
+            <p className="text-sm text-zinc-600">
+              İstasyon aktif hazırlık akışından kaldırılır. Bu istasyona bağlı siparişe açık ürün
+              veya aktif hazırlık işi varsa işlem engellenir.
+            </p>
+            <FieldText label="Silme nedeni" onChange={setDisableReason} required value={disableReason} />
             <div className="flex justify-end gap-2">
               <button
                 className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
@@ -4556,7 +4656,7 @@ function StationManagementWorkspace() {
                 onClick={() => void disableSelectedStation()}
                 type="button"
               >
-                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+                {actionState === "submitting" ? "Siliniyor" : "Sil"}
               </button>
             </div>
           </div>
@@ -4971,7 +5071,7 @@ function MenuManagementWorkspace() {
                 }}
                 type="button"
               >
-                Pasifleştir
+                Sil
               </button>
             ) : null}
           </div>
@@ -5032,7 +5132,7 @@ function MenuManagementWorkspace() {
               }}
               type="button"
             >
-              Pasifleştir
+              Sil
             </button>
           ) : null}
         </div>
@@ -5282,12 +5382,15 @@ function MenuManagementWorkspace() {
               setCategoryDisableReason("");
             }
           }}
-          title="Kategoriyi pasifleştir"
+          title="Kategoriyi sil"
         >
           <div className="space-y-4 px-5 py-5">
             <DetailRows rows={[["Kategori", selectedCategory.name]]} />
+            <p className="text-sm text-zinc-600">
+              Kategori menüden kaldırılır. Geçmiş sipariş ve audit kayıtları korunur.
+            </p>
             <FieldText
-              label="Pasifleştirme nedeni"
+              label="Silme nedeni"
               onChange={setCategoryDisableReason}
               required
               value={categoryDisableReason}
@@ -5310,7 +5413,7 @@ function MenuManagementWorkspace() {
                 onClick={() => void disableSelectedCategory()}
                 type="button"
               >
-                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+                {actionState === "submitting" ? "Siliniyor" : "Sil"}
               </button>
             </div>
           </div>
@@ -5324,12 +5427,15 @@ function MenuManagementWorkspace() {
               setProductDisableReason("");
             }
           }}
-          title="Ürünü pasifleştir"
+          title="Ürünü sil"
         >
           <div className="space-y-4 px-5 py-5">
             <DetailRows rows={[["Ürün", selectedProduct.name]]} />
+            <p className="text-sm text-zinc-600">
+              Ürün siparişe kapatılır. Geçmiş siparişlerdeki ürün snapshotları değiştirilmez.
+            </p>
             <FieldText
-              label="Pasifleştirme nedeni"
+              label="Silme nedeni"
               onChange={setProductDisableReason}
               required
               value={productDisableReason}
@@ -5352,7 +5458,7 @@ function MenuManagementWorkspace() {
                 onClick={() => void disableSelectedProduct()}
                 type="button"
               >
-                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+                {actionState === "submitting" ? "Siliniyor" : "Sil"}
               </button>
             </div>
           </div>
@@ -6146,8 +6252,11 @@ const apiErrorMessages: Record<string, string> = {
   reason_required: "Bu işlem için açıklama girmek zorunlu.",
   setup_token_invalid: "Şifre kurulum bağlantısı geçersiz veya süresi dolmuş.",
   session_expired: "Oturum süresi doldu. Tekrar giriş yapın.",
+  self_disable_not_allowed: "Kendi personel erişiminizi silemezsiniz.",
+  station_has_active_queue: "Bu istasyonda aktif hazırlık işi var.",
   station_has_active_menu_items: "Bu istasyona bağlı aktif menü ürünleri var.",
   station_has_active_work: "Bu istasyonda aktif hazırlık işi var.",
+  station_has_orderable_products: "Bu istasyona yönlenen siparişe açık ürünler var.",
   station_unavailable: "Seçilen istasyon kullanılamıyor.",
   tenant_unavailable: "Bu işletme şu anda erişilebilir değil.",
   token_consumed: "Bu QR kod daha önce kullanılmış. Masadaki yeni kodu okutun.",

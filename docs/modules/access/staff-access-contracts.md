@@ -7,6 +7,7 @@ Source module: [staff-access.md](staff-access.md)
 | Command | Caller | Input | Guards / Validation | Transaction / Idempotency | Result |
 | --- | --- | --- | --- | --- | --- |
 | `staff_access.upsert_staff_profile` | Provisioning, TenantApp | tenantId, userId, displayName, status | User belongs to tenant; Tenant Admin or Provisioning only | Upsert profile; audit when user-visible | Staff profile |
+| `staff_access.disable_staff` | TenantApp | tenantId, userId, reason | Tenant Admin; reason required; cannot disable self; cannot disable the last active tenant admin | Mark user/profile disabled; revoke active roles, station scopes, and hall scopes atomically; audit | Disabled staff profile |
 | `staff_access.assign_role` | Provisioning, TenantApp | tenantId, userId, role | Tenant Admin/Provisioning; user belongs to tenant; role supported | Unique active role assignment; duplicate compatible grant returns existing assignment | Active staff role assignment |
 | `staff_access.revoke_role` | TenantApp | tenantId, userId, role, reason | Tenant Admin; cannot revoke own last tenant admin role without recovery rule | Mark assignment revoked; audit | Revoked role assignment |
 | `staff_access.assign_station` | Provisioning, TenantApp | tenantId, userId, stationId | User has station_staff role or is being provisioned; station belongs to tenant | Unique active station assignment; audit | Active station scope |
@@ -37,3 +38,5 @@ Source module: [staff-access.md](staff-access.md)
 | `outside_station_scope` | Station staff attempted to operate unassigned station. |
 | `outside_hall_scope` | Service staff attempted to operate unassigned hall. |
 | `assignment_target_disabled` | Assignment target is disabled and cannot grant active runtime authority. |
+| `self_disable_not_allowed` | Tenant Admin attempted to disable their own staff user from TenantApp. |
+| `last_admin_not_allowed` | The operation would remove the last active tenant admin. |

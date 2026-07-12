@@ -107,7 +107,7 @@ Out of scope for this test plan:
 | Capacity changed | Informational update only; no entitlement enforcement. |
 | Public display name omitted | Public page falls back to tenant name. |
 | GSM edit attempted in TenantApp | Blocked; only PlatformApp can change platform-owned tenant identity GSM. |
-| Starter record deleted/disabled | Does not regenerate after restart/deploy. |
+| Starter record removed/disabled | Does not regenerate after restart/deploy. |
 | New starter template version exists | Existing tenant does not receive it automatically. |
 | Staff role without required scope | Affected app shows no operational access. |
 | Multiple roles | Each runtime app checks its own role/scope. |

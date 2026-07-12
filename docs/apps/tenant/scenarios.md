@@ -231,13 +231,13 @@ Happy path:
 
 1. Tenant Admin logs in after tenant creation.
 2. TenantApp shows starter halls, tables, stations, menu items, staff, and service tracking setting as normal tenant data.
-3. Tenant Admin edits, disables, deletes where allowed, or extends starter data.
+3. Tenant Admin edits, removes, disables where allowed, or extends starter data.
 
 Branches:
 
 | Branch | Expected Result |
 | --- | --- |
-| Tenant Admin deletes starter product before orders exist | Allowed if normal menu rules allow deletion/disable |
+| Tenant Admin removes starter product before orders exist | Allowed through normal menu removal rules; current-release removal preserves history by disable/archive semantics |
 | Starter product has historical orders | Hard delete unavailable; disable/preserve history |
 | Tenant Admin removes starter hall with active tables/sessions | Reject or require explicit recovery workflow |
 | App restart/deploy occurs after edits | Starter data must not be recreated |
