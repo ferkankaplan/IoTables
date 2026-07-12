@@ -96,6 +96,7 @@ Frontend visibility is never authorization proof.
 | `identity_access.logout_or_revoke_session` | Authenticated user, TenantApp admin recovery, Platform recovery | Own session, Tenant Admin own tenant, or Platform recovery | Revoked/expired sessions fail closed |
 | `identity_access.disable_user` | TenantApp, Platform recovery | Tenant Admin own tenant or Platform recovery | Cannot silently disable only active Platform Owner |
 | `staff_access.upsert_staff_profile` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | User belongs to tenant |
+| `staff_access.disable_staff` | TenantApp | Tenant Admin own tenant | Cannot disable self; cannot remove the last active tenant admin; active role/scope assignments are revoked |
 | `staff_access.assign_role` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | Role supported; user belongs to tenant |
 | `staff_access.revoke_role` | TenantApp | Tenant Admin own tenant | Cannot revoke own last tenant admin role without recovery rule |
 | `staff_access.assign_station` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | Station belongs to tenant; user has or is receiving station role |

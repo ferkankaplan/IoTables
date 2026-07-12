@@ -11,6 +11,7 @@ Staff Access owns staff profiles, role assignments, station scope, and hall scop
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `GET` | `/api/tenant-setup/staff` | TenantApp | `staff_access.list_staff` | Tenant Admin session | none | `StaffList` | `not_authorized` |
 | `POST` | `/api/tenant-setup/staff` | TenantApp | `identity_access.create_bootstrap_user` + `staff_access.upsert_staff_profile` + `staff_access.assign_role` + conditional station/hall assignments | Tenant Admin session + CSRF | Body: `CreateStaffRequest` | `StaffProfile` | `duplicate_username`, `validation_failed`, `assignment_target_disabled` |
+| `POST` | `/api/tenant-setup/staff/{userId}/disable` | TenantApp | `staff_access.disable_staff` | Tenant Admin session + CSRF | Body: `reason` | `StaffProfile` | `reason_required`, `not_found_or_hidden`, `self_disable_not_allowed`, `last_admin_not_allowed` |
 | `PATCH` | `/api/tenant-setup/staff/{userId}/profile` | TenantApp | `staff_access.upsert_staff_profile` | Tenant Admin session + CSRF | Body: `displayName`, `status` | `StaffProfile` | `not_authorized`, `not_found_or_hidden` |
 | `POST` | `/api/tenant-setup/staff/{userId}/roles` | TenantApp | `staff_access.assign_role` | Tenant Admin session + CSRF | Body: `role` | `StaffProfile` | `assignment_target_disabled`, `validation_failed` |
 | `POST` | `/api/tenant-setup/staff/{userId}/roles/{role}/revoke` | TenantApp | `staff_access.revoke_role` | Tenant Admin session + CSRF | Body: `reason` | `StaffProfile` | `reason_required`, `last_admin_not_allowed` |
@@ -47,7 +48,7 @@ Creating staff with initial role/scope assignments is one atomic API command fro
 
 ## Response Schemas
 
-`StaffProfile` includes `userId`, `username`, `displayName`, `status`, `roles`, `stationIds`, `hallIds`, `firstPasswordRequired`, and `disabledAt`.
+`StaffProfile` includes `userId`, `username`, `displayName`, `status`, `roles`, `stationIds`, `hallIds`, `firstPasswordRequired`, `createdAt`, and `updatedAt`.
 
 `StaffList` uses list envelope with `StaffProfile` items.
 

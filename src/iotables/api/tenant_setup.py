@@ -633,6 +633,27 @@ async def create_staff(
 
 
 @router.post(
+    "/staff/{user_id}/disable",
+    response_model=StaffProfileResponse,
+    dependencies=[CSRF_DEP],
+)
+async def disable_staff(
+    user_id: UUID,
+    payload: DisableRequest,
+    actor: Annotated[ActorContext, TENANT_SCOPE_DEP],
+    service: Annotated[StaffAccessService, Depends(get_staff_access_service)],
+) -> dict[str, Any]:
+    require_tenant_admin(actor)
+    return (
+        await service.disable_staff(
+            actor=actor,
+            user_id=user_id,
+            reason=payload.reason,
+        )
+    ).as_api_payload()
+
+
+@router.post(
     "/stations",
     response_model=StationResponse,
     dependencies=[CSRF_DEP],

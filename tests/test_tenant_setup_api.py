@@ -217,6 +217,7 @@ class FakeStaffAccessService:
     def __init__(self) -> None:
         self.list_tenant_id: UUID | None = None
         self.create_args: dict[str, object] | None = None
+        self.disable_args: dict[str, object] | None = None
 
     async def list_staff(self, *, tenant_id: UUID) -> StaffList:
         self.list_tenant_id = tenant_id
@@ -236,6 +237,16 @@ class FakeStaffAccessService:
             station_ids=command.station_ids,
             hall_ids=command.hall_ids,
         )
+
+    async def disable_staff(
+        self,
+        *,
+        actor: ActorContext,
+        user_id: UUID,
+        reason: str,
+    ) -> StaffProfile:
+        self.disable_args = {"actor": actor, "user_id": user_id, "reason": reason}
+        return make_staff_profile(status="disabled", roles=(), station_ids=(), hall_ids=())
 
 
 class FakeMenuCatalogQueryService:
@@ -548,6 +559,7 @@ def make_staff_profile(
     *,
     username: str = "kasiyer",
     display_name: str = "Kasiyer",
+    status: str = "active",
     roles: tuple[str, ...] = ("cashier",),
     station_ids: tuple[UUID, ...] = (),
     hall_ids: tuple[UUID, ...] = (),
@@ -557,7 +569,7 @@ def make_staff_profile(
         user_id=USER_ID,
         username=username,
         display_name=display_name,
-        status="active",
+        status=status,
         roles=roles,
         station_ids=station_ids,
         hall_ids=hall_ids,
@@ -840,6 +852,31 @@ def test_create_staff_requires_csrf_and_binds_roles_and_scopes() -> None:
     assert command.display_name == "Barista"
     assert command.roles == (StaffRole.STATION_STAFF,)
     assert command.station_ids == (STATION_ID,)
+
+
+def test_disable_staff_requires_csrf_and_binds_reason() -> None:
+    service = FakeStaffAccessService()
+    client = make_client(actor=make_actor(), staff_access_service=service)
+
+    missing_csrf = client.post(
+        f"/api/tenant-setup/staff/{USER_ID}/disable",
+        json={"reason": "left team"},
+    )
+    response = client.post(
+        f"/api/tenant-setup/staff/{USER_ID}/disable",
+        headers={"X-CSRF-Token": "csrf"},
+        json={"reason": "left team"},
+    )
+
+    assert missing_csrf.status_code == 403
+    assert response.status_code == 200
+    assert response.json()["status"] == "disabled"
+    assert response.json()["roles"] == []
+    assert service.disable_args == {
+        "actor": make_actor(),
+        "user_id": USER_ID,
+        "reason": "left team",
+    }
 
 
 def test_create_station_requires_csrf_and_returns_station() -> None:
