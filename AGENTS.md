@@ -189,6 +189,18 @@ When an operation spans multiple steps, prefer a single database transaction for
 
 ## UX and Interface Principles
 
+IoTables uses an action-first, low-clutter admin UI model built on progressive disclosure.
+
+Every stable page should first show the current context, key state, and available actions. Do not show the detailed form, secondary workflow, destructive controls, advanced settings, or operational sub-flow until the user explicitly starts that action.
+
+When an action is started, run it in the smallest context-preserving surface that fits the workflow:
+
+- use a modal dialog for focused short forms, confirmations, OTP/password steps, and one-off commands;
+- use a drawer or contextual panel for object detail, longer forms, scoped editing, or workflows that benefit from keeping the list/board visible;
+- use inline editing only when the field is already the primary object of the workspace and the edit does not add clutter or competing controls.
+
+This is the canonical UI posture for admin/operational screens: Action-first UI, modal/drawer based task flow, contextual workflow, and low-clutter admin UI. Forms must not sit permanently on the page merely because the action exists. A page may contain a `Create`, `Edit`, `Provision`, `Pay`, `Correct`, `Disable`, or similar button; the related controls appear only after that button opens its modal, drawer, or panel.
+
 For admin and operational interfaces, prefer fewer stable pages with rich contextual controls over many narrow pages.
 
 Users should keep their working context. Use panels, drawers, dialogs, inline editing, and contextual sidebars for secondary objects and detail editing when this avoids unnecessary navigation. A separate full page should exist only when the workflow has a distinct primary context, deep complexity, or a durable URL-worthy workspace.
