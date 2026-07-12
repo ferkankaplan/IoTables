@@ -176,7 +176,7 @@ Workspace content:
 - create station action;
 - station detail panel;
 - enabled/disabled state;
-- disable reason dialog;
+- remove reason dialog; user-facing `Sil` maps to disable/archive where history must be preserved;
 - active queue/orderable product blockers.
 
 States:
@@ -216,7 +216,7 @@ Product/service detail supports:
 - required/optional modifier groups;
 - availability override;
 - enabled/disabled state;
-- reason-required disable where applicable.
+- reason-required remove where applicable; user-facing `Sil` maps to disable/archive where history must be preserved.
 
 Rules:
 
@@ -250,6 +250,7 @@ Workspace content:
 - role assignment;
 - station scopes for station staff;
 - hall scopes for service staff;
+- remove staff action that disables the staff user and revokes active role/scope assignments;
 - disabled user state;
 - first-password-required state.
 
@@ -328,7 +329,7 @@ No layout may depend on viewport-width font scaling. Hall/table labels, product 
 
 - Login, OTP, hall/table/menu/station/staff/settings flows must work by keyboard.
 - Drawers and dialogs must trap focus while open and restore focus on close.
-- Disable/revoke/service-tracking changes must identify consequence and reason requirement where applicable.
+- Remove/disable/revoke/service-tracking changes must identify consequence and reason requirement where applicable.
 - Ordered table grids need readable row/position labels.
 - Status badges must have text, not color alone.
 - Touch targets for admin controls must remain usable on mobile fallback.
