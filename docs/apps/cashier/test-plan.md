@@ -36,7 +36,7 @@ Out of scope for this test plan:
 
 | Scenario | Coverage |
 | --- | --- |
-| K-01 Cashier First Login | Bootstrap cashier changes password without OTP in the current release. |
+| K-01 Cashier First Login | Bootstrap cashier changes password with tenant-GSM OTP. |
 | K-02 Monitor and Inspect Active Session | Cashier sees hall/table board, active session, bill summary, orders, payments, and corrections. |
 | K-03 Record Partial Payment | Cashier records amount below remaining balance with one idempotency key. |
 | K-04 Record Full Payment and Close Session | Remaining balance payment is recorded, then session closes explicitly. |
@@ -112,7 +112,7 @@ Out of scope for this test plan:
 | Acceptance Criterion | Test Evidence |
 | --- | --- |
 | Cashier login and bootstrap password change | Browser/API tests. |
-| Cashier first password setup does not require OTP | First-password setup tests. |
+| Cashier first password setup requires OTP | First-password setup tests verify tenant-GSM OTP proof. |
 | Cashier sees halls, tables, sessions, latest state, total, paid, remaining | Browser/component/API tests. |
 | Session detail opens in context | Browser layout tests. |
 | Every active TableSession has one Check/Adisyon | API/domain tests. |
@@ -147,7 +147,7 @@ CashierApp executable tests must cover the app-visible behavior of these endpoin
 | --- | --- |
 | `GET /api/auth/login-requirements` | First-password requirement discovery. |
 | `POST /api/auth/login` | Cashier scope, missing role, invalid credentials. |
-| `POST /api/auth/first-password/begin` | Setup token and no-OTP password-change state. |
+| `POST /api/auth/first-password/begin` | Setup token and OTP-required password-change state. |
 | `POST /api/auth/first-password/complete` | Password policy and setup-token validation. |
 | `GET /api/auth/session` | Protected route access. |
 | `POST /api/auth/logout` | Session revocation. |

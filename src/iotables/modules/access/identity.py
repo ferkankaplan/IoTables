@@ -38,7 +38,12 @@ APP_SCOPE_REQUIRED_ROLES = {
     AppScope.STATION: StaffRole.STATION_STAFF,
     AppScope.SERVICE: StaffRole.SERVICE_STAFF,
 }
-FIRST_PASSWORD_OTP_PURPOSES: dict[AppScope, str] = {}
+FIRST_PASSWORD_OTP_PURPOSES: dict[AppScope, str] = {
+    AppScope.TENANT: "tenant_admin_first_password",
+    AppScope.CASHIER: "cashier_first_password",
+    AppScope.STATION: "station_staff_first_password",
+    AppScope.SERVICE: "service_staff_first_password",
+}
 
 
 @dataclass(frozen=True)

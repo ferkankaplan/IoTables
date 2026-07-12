@@ -89,8 +89,8 @@ Frontend visibility is never authorization proof.
 | `identity_access.create_platform_owner` | Bootstrap Tool | Explicit setup command; no existing active Platform Owner | No automatic startup seed |
 | `identity_access.create_bootstrap_user` | Provisioning, TenantApp | Provisioning or Tenant Admin own tenant | Username unique in tenant/platform scope |
 | `identity_access.authenticate` | PlatformApp, TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | App scope must match target app and tenant | Disabled users fail; first-login users forced to setup |
-| `identity_access.begin_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | No first-password OTP in the current release |
-| `identity_access.complete_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Password policy only; no first-password OTP in the current release |
+| `identity_access.begin_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Create OTP challenge to platform-owned tenant identity GSM |
+| `identity_access.complete_first_password_setup` | TenantApp, CashierApp, StationStaffApp, ServiceStaffApp | Setup token/user must match app/tenant | Password policy and tenant-GSM OTP proof |
 | `identity_access.change_password` | Authenticated user | Own active user session | Current password valid |
 | `identity_access.enroll_totp` | PlatformApp | Platform Owner | Reserved for future PlatformApp hardening; not required by current release login |
 | `identity_access.logout_or_revoke_session` | Authenticated user, TenantApp admin recovery, Platform recovery | Own session, Tenant Admin own tenant, or Platform recovery | Revoked/expired sessions fail closed |

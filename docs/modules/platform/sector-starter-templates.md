@@ -111,7 +111,7 @@ Starter staff:
 | Garson | `garson` | `admin` | `service_staff` | All starter halls | Not required |
 | Komi | `komi` | `admin` | `service_staff` | All starter halls | Not required |
 
-All starter staff must change the temporary password on first login. First-password setup does not require OTP in the current release.
+All starter staff must change the temporary password on first login. First-password setup requires OTP sent to the platform-owned tenant identity GSM.
 
 ## Operational Safety
 

@@ -16,7 +16,7 @@ TenantApp is used to set up and manage the restaurant operation: halls, tables, 
 
 TenantApp is not the customer ordering interface, station preparation screen, or cashier console. Those flows may use tenant data, but they are separate apps.
 
-When PlatformApp creates a tenant with a sector starter template, TenantApp opens with those starter halls, tables, stations, products, and staff users already created. Starter staff users have bootstrap credentials and must change their password on first login. First-password setup does not require OTP in the current release; password reset flows use OTP sent to the platform-owned tenant identity GSM.
+When PlatformApp creates a tenant with a sector starter template, TenantApp opens with those starter halls, tables, stations, products, and staff users already created. Starter staff users have bootstrap credentials and must change their password on first login. First-password setup requires OTP sent to the platform-owned tenant identity GSM.
 
 ## Users and Access
 
@@ -174,10 +174,12 @@ In v1, each product/service belongs to exactly one fulfillment station. Multi-st
 
 1. Tenant Admin opens staff management.
 2. Tenant Admin reviews starter staff users if a starter template was applied.
-3. Tenant Admin creates or edits staff users.
-4. Tenant Admin assigns app roles such as cashier, station staff, and service staff.
-5. Tenant Admin assigns service staff to authorized halls.
-6. Tenant Admin disables staff users who should no longer access tenant apps.
+3. Tenant Admin creates staff users with a tenant-unique username and operational display name.
+4. TenantApp creates the staff user with default temporary password `12345678`.
+5. Tenant Admin assigns app roles such as cashier, station staff, and service staff.
+6. Tenant Admin assigns station scopes for station staff and hall scopes for service staff.
+7. Staff must change the default password on first login with OTP sent to the platform-owned tenant identity GSM.
+8. Tenant Admin disables staff users who should no longer access tenant apps.
 
 ### Review Starter Data
 
@@ -243,13 +245,13 @@ Minimum current release TenantApp audit actions:
 - Tenant admin routes require authentication.
 - Public root page must not expose admin data or operational internals.
 - First tenant admin password must be changed on first login.
-- First password setup does not require OTP in the current release.
+- First password setup requires OTP sent to the platform-owned tenant identity GSM.
 - Tenant name and tenant subdomain are not editable in TenantApp.
 - Configuration changes should be audited.
 - Starter data is normal tenant-owned data after creation.
 - Starter data must not be recreated after Tenant Admin edits, disables, or deletes it.
 - Starter staff users must change bootstrap passwords on first login.
-- Starter staff first password setup does not require OTP in the current release.
+- Starter staff first password setup requires OTP sent to the platform-owned tenant identity GSM.
 - Service staff must be authorized per hall.
 - Service delivery tracking can be disabled only as an explicit tenant setting.
 - Fiscal/e-Adisyon/ÖKC, printer, hardware, stock/recipe, package service, courier, pickup, counter sale, and multi-location features are out of the current release scope.

@@ -39,7 +39,7 @@ Out of scope for this test plan:
 | Scenario | Coverage |
 | --- | --- |
 | T-01 Public Tenant Page | Public page shows safe tenant fields only. |
-| T-02 Tenant Admin First Login | Tenant Admin changes bootstrap password without OTP in the current release. |
+| T-02 Tenant Admin First Login | Tenant Admin changes bootstrap password with tenant-GSM OTP. |
 | T-03 Configure Halls and Tables | Tenant Admin manages halls/tables in one workspace with contextual table panel. |
 | T-04 Provision Table Display | Tenant Admin enters WiFi data, generates one-time firmware, downloads it, and panel shows provisioned state. |
 | T-05 Configure Service Delivery Tracking | Tenant Admin enables/disables tracking and UI explains staff/customer impact. |
@@ -119,7 +119,7 @@ Out of scope for this test plan:
 | Acceptance Criterion | Test Evidence |
 | --- | --- |
 | Public page exposes only safe fields | Browser/API visibility tests. |
-| Tenant admin first login requires password change without OTP | Browser login and first-password API tests. |
+| Tenant admin first login requires password change with tenant-GSM OTP | Browser login and first-password API tests. |
 | Tenant name/subdomain not editable | UI blocked state and API rejection. |
 | Halls/tables one workspace with contextual table panels | Browser E2E and forbidden route/control checks. |
 | Current release table layout ordered grid, not floor-plan coordinates | UI absence and copy checks. |
@@ -157,13 +157,13 @@ TenantApp executable tests must cover the app-visible behavior of these endpoint
 | `POST /api/auth/login` | Tenant admin login, wrong app scope, first-password required. |
 | `GET /api/auth/session` | Protected admin route access. |
 | `POST /api/auth/logout` | Session revocation. |
-| `POST /api/auth/first-password/begin` | Setup-token and no-OTP password-change state. |
+| `POST /api/auth/first-password/begin` | Setup-token and OTP-required password-change state. |
 | `POST /api/auth/first-password/complete` | Password policy and setup-token validation. |
 | `GET/POST /api/auth/otp-challenges/{challengeId}...` | Password reset OTP state, send, verify, expired, locked. |
 | `GET /api/tenant/profile` | Read-only tenant profile; identity GSM not mutable from TenantApp. |
 | `GET/PATCH /api/tenant-setup/operational-settings` | Public display and service tracking mode. |
 | `GET /api/tenant/starter-template-application` | Read-only starter proof. |
-| `GET/POST/PATCH /api/tenant/staff...` | Staff list/create/profile/role/scope changes and rollback. |
+| `GET/POST /api/tenant-setup/staff...` | Staff list/create with role/scope assignment and rollback. |
 | `GET /api/tenant-setup/venue/board` | Hall/table board and empty states. |
 | `/api/tenant-setup/halls...` | Hall create/update/disable blockers. |
 | `/api/tenant-setup/tables...` | Table create/update/disable/context blockers. |
@@ -244,7 +244,7 @@ TenantApp is ready for implementation only when:
 
 - all happy paths and branches above have an owner test layer;
 - hall/table, display provisioning, menu routing, staff scope, and service tracking safety coverage are defined;
-- first-login no-OTP coverage is defined;
+- first-login OTP-required coverage is defined;
 - UI state and copy coverage are defined;
 - forbidden TenantApp runtime controls are explicitly tested absent;
 - semantic index is regenerated after this document changes.

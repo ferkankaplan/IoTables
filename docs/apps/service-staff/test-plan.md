@@ -51,7 +51,7 @@ Out of scope for this test plan:
 | No authorized halls | Show no hall access state. |
 | Hall disabled after login | Remove/deny affected hall operations. |
 | Invalid credentials | Reject safely. |
-| Bootstrap password required | Password change required; no OTP. |
+| Bootstrap password required | Password change and tenant-GSM OTP required. |
 
 ### Queue and Visibility
 
@@ -95,7 +95,7 @@ Out of scope for this test plan:
 | Acceptance Criterion | Test Evidence |
 | --- | --- |
 | Service staff login and bootstrap password change | Browser/API tests. |
-| OTP not required for service staff | Login/first-password tests prove no OTP step. |
+| OTP required for service staff | Login/first-password tests prove tenant-GSM OTP step. |
 | Tracking checked before queue | Browser/API tracking-disabled tests. |
 | Disabled tracking hides delivery controls | UI absence tests. |
 | Authorized halls only | API/security and UI tests. |
@@ -128,7 +128,7 @@ ServiceStaffApp executable tests must cover the app-visible behavior of these en
 | `GET /api/auth/login-requirements` | First-password requirement discovery. |
 | `POST /api/auth/login` | ServiceStaff scope, missing role, invalid credentials. |
 | `POST /api/auth/first-password/begin` | Bootstrap password setup. |
-| `POST /api/auth/first-password/complete` | No OTP required for service staff. |
+| `POST /api/auth/first-password/complete` | OTP required for service staff. |
 | `GET /api/auth/session` | Protected route access. |
 | `POST /api/auth/logout` | Session revocation. |
 | `GET /api/service-staff/authorized-halls` | Hall scope and no-hall state. |
@@ -207,7 +207,7 @@ ServiceStaffApp is ready for implementation only when:
 
 - all happy paths and branches above have an owner test layer;
 - service tracking disabled, hall scope, stale transition, duplicate-click, and bulk idempotency coverage are defined;
-- no-OTP first-password behavior is defined;
+- OTP-required first-password behavior is defined;
 - UI state and copy coverage are defined;
 - forbidden ServiceStaffApp runtime/control leaks are explicitly tested absent;
 - semantic index is regenerated after this document changes.
