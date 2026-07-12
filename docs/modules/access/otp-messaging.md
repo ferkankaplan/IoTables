@@ -27,8 +27,10 @@ It supports sensitive tenant creation and password reset verification flows.
 | App / Actor | Access | Limits |
 | --- | --- | --- |
 | PlatformApp / Platform Owner | request/verify tenant creation OTP | Sent to the tenant identity GSM before Provisioning starts |
-| TenantApp / Tenant Admin | request/verify password reset OTP | Own tenant; target is platform-owned tenant identity GSM |
-| CashierApp / Cashier | request/verify password reset OTP | Own tenant; target is platform-owned tenant identity GSM |
+| TenantApp / Tenant Admin | request/verify first-password and password reset OTP | Own tenant; target is platform-owned tenant identity GSM |
+| CashierApp / Cashier | request/verify first-password and password reset OTP | Own tenant; target is platform-owned tenant identity GSM |
+| StationStaffApp / Station Staff | request/verify first-password OTP | Own tenant; target is platform-owned tenant identity GSM |
+| ServiceStaffApp / Service Staff | request/verify first-password OTP | Own tenant; target is platform-owned tenant identity GSM |
 
 ## Public Interface
 
@@ -45,7 +47,7 @@ It supports sensitive tenant creation and password reset verification flows.
 - OTP values must be stored hashed or otherwise non-recoverable.
 - OTP verification is required before PlatformApp creates a tenant.
 - OTP verification is required for staff password reset flows.
-- First password setup does not require OTP in the current release; temporary starter passwords must still be changed on first login.
+- First password setup requires OTP sent to the platform-owned tenant identity GSM; temporary starter passwords must still be changed on first login.
 - Staff password reset OTP is sent to the platform-owned tenant identity GSM number, which only PlatformApp may change.
 - OTP retries must be rate-limited.
 - Current release OTP lifetime is 5 minutes.

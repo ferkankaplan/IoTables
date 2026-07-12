@@ -8,7 +8,7 @@ CashierApp uses tenant-scoped APIs on `https://[tenant].iotables.net`.
 | --- | --- | --- | --- |
 | Login requirements | `GET /api/auth/login-requirements` | [Identity and Access](../../modules/access/identity-access-api.md) | Safe first-password requirement discovery. |
 | Login | `POST /api/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | Cashier app scope. |
-| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | No OTP proof in the current release. |
+| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | OTP proof required; code is sent to the platform-owned tenant identity GSM. |
 | OTP state/send/verify | `/api/auth/otp-challenges/{challengeId}...` | [OTP Messaging](../../modules/access/otp-messaging-api.md) | Used for password reset flows, not current first-password setup. |
 | Session check/logout | `GET /api/auth/session`, `POST /api/auth/logout` | [Identity and Access](../../modules/access/identity-access-api.md) | Human staff session. |
 | Venue board | `GET /api/cashier/venue/board` | [Venue Layout](../../modules/tenant-setup/venue-layout-api.md) | Operational physical table overview; optional request-scoped virtual test table reveal. |

@@ -13,12 +13,12 @@ This document maps TenantApp behavior to module-owned API contracts. It does not
 | Login | `POST /api/auth/login` | [Identity and Access](../../modules/access/identity-access-api.md) | Tenant Admin scope. |
 | Session check | `GET /api/auth/session` | [Identity and Access](../../modules/access/identity-access-api.md) | Used on protected admin routes. |
 | Logout | `POST /api/auth/logout` | [Identity and Access](../../modules/access/identity-access-api.md) | Revokes current tenant admin session. |
-| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | No OTP proof in the current release. |
-| OTP state/send/verify | `/api/auth/otp-challenges/{challengeId}...` | [OTP Messaging](../../modules/access/otp-messaging-api.md) | Used for password reset flows, not current first-password setup. |
+| First password setup | `POST /api/auth/first-password/begin`, `POST /api/auth/first-password/complete` | [Identity and Access](../../modules/access/identity-access-api.md) | OTP proof required; code is sent to the platform-owned tenant identity GSM. |
+| OTP state/send/verify | `/api/auth/otp-challenges/{challengeId}...` | [OTP Messaging](../../modules/access/otp-messaging-api.md) | Used for first-password and password reset flows. |
 | Tenant profile | `GET /api/tenant/profile` | [Tenant Registry](../../modules/platform/tenant-registry-api.md) | Read-only tenant identity/profile; TenantApp cannot change name, subdomain, status, or identity GSM. |
 | Tenant operational settings | `GET /api/tenant-setup/operational-settings`, `PATCH /api/tenant-setup/operational-settings` | [Tenant Operational Settings](../../modules/tenant-setup/tenant-operational-settings-api.md) | Public display name and service delivery tracking mode. |
 | Starter application state | `GET /api/tenant/starter-template-application` | [Sector Starter Templates](../../modules/platform/sector-starter-templates-api.md) | Read-only proof of starter data. |
-| Staff management | `/api/tenant/staff...` | [Staff Access](../../modules/access/staff-access-api.md) | Creates bootstrap users and assigns roles/scopes. |
+| Staff management | `/api/tenant-setup/staff...` | [Staff Access](../../modules/access/staff-access-api.md) | Lists staff and creates bootstrap users with roles/scopes. |
 | Hall/table board | `GET /api/tenant-setup/venue/board` | [Venue Layout](../../modules/tenant-setup/venue-layout-api.md) | Primary hall management workspace. |
 | Hall/table commands | `/api/tenant-setup/halls...`, `/api/tenant-setup/tables...` | [Venue Layout](../../modules/tenant-setup/venue-layout-api.md) | Tables remain managed in hall context. |
 | Station setup | `/api/tenant-setup/stations...` | [Station Setup](../../modules/tenant-setup/station-setup-api.md) | Station lifecycle and assignment source. |

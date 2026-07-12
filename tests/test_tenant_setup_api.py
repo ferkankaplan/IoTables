@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from iotables.api.tenant_setup import (
     get_menu_catalog_mutation_service,
     get_menu_catalog_query_service,
+    get_staff_access_service,
     get_station_setup_mutation_service,
     get_station_setup_query_service,
     get_table_display_provisioning_service,
@@ -13,6 +14,7 @@ from iotables.api.tenant_setup import (
     get_venue_layout_query_service,
 )
 from iotables.main import create_app
+from iotables.modules.access.staff_access import CreateStaffCommand, StaffList, StaffProfile
 from iotables.modules.tenant_setup.menu_catalog import (
     AvailabilityCommand,
     AvailabilityOverride,
@@ -208,6 +210,31 @@ class FakeTableDisplayProvisioningService:
             table_id=table_id,
             expires_at=datetime(2026, 7, 3, 12, 10, tzinfo=UTC),
             firmware_content="firmware",
+        )
+
+
+class FakeStaffAccessService:
+    def __init__(self) -> None:
+        self.list_tenant_id: UUID | None = None
+        self.create_args: dict[str, object] | None = None
+
+    async def list_staff(self, *, tenant_id: UUID) -> StaffList:
+        self.list_tenant_id = tenant_id
+        return StaffList(items=(make_staff_profile(),))
+
+    async def create_staff(
+        self,
+        *,
+        actor: ActorContext,
+        command: CreateStaffCommand,
+    ) -> StaffProfile:
+        self.create_args = {"actor": actor, "command": command}
+        return make_staff_profile(
+            username=command.username,
+            display_name=command.display_name,
+            roles=tuple(role.value for role in command.roles),
+            station_ids=command.station_ids,
+            hall_ids=command.hall_ids,
         )
 
 
@@ -517,6 +544,29 @@ def make_station(
     )
 
 
+def make_staff_profile(
+    *,
+    username: str = "kasiyer",
+    display_name: str = "Kasiyer",
+    roles: tuple[str, ...] = ("cashier",),
+    station_ids: tuple[UUID, ...] = (),
+    hall_ids: tuple[UUID, ...] = (),
+) -> StaffProfile:
+    now = datetime(2026, 7, 3, 12, 0, tzinfo=UTC)
+    return StaffProfile(
+        user_id=USER_ID,
+        username=username,
+        display_name=display_name,
+        status="active",
+        roles=roles,
+        station_ids=station_ids,
+        hall_ids=hall_ids,
+        first_password_required=True,
+        created_at=now,
+        updated_at=now,
+    )
+
+
 def make_actor(
     *,
     app_scope: AppScope = AppScope.TENANT,
@@ -539,6 +589,7 @@ def make_client(
     station_query_service: FakeStationSetupQueryService | None = None,
     station_mutation_service: FakeStationSetupMutationService | None = None,
     table_display_service: FakeTableDisplayProvisioningService | None = None,
+    staff_access_service: FakeStaffAccessService | None = None,
     menu_query_service: FakeMenuCatalogQueryService | None = None,
     menu_mutation_service: FakeMenuCatalogMutationService | None = None,
 ) -> TestClient:
@@ -558,6 +609,8 @@ def make_client(
         app.dependency_overrides[get_table_display_provisioning_service] = lambda: (
             table_display_service
         )
+    if staff_access_service is not None:
+        app.dependency_overrides[get_staff_access_service] = lambda: staff_access_service
     if menu_query_service is not None:
         app.dependency_overrides[get_menu_catalog_query_service] = lambda: menu_query_service
     if menu_mutation_service is not None:
@@ -723,6 +776,70 @@ def test_list_stations_uses_actor_tenant_scope() -> None:
     assert response.status_code == 200
     assert response.json()["items"][0]["stationId"] == str(STATION_ID)
     assert service.args == {"tenant_id": TENANT_ID, "include_disabled": True}
+
+
+def test_list_staff_uses_actor_tenant_scope() -> None:
+    service = FakeStaffAccessService()
+    client = make_client(actor=make_actor(), staff_access_service=service)
+
+    response = client.get("/api/tenant-setup/staff")
+
+    assert response.status_code == 200
+    assert response.json()["items"][0] == {
+        "userId": str(USER_ID),
+        "username": "kasiyer",
+        "displayName": "Kasiyer",
+        "status": "active",
+        "roles": ["cashier"],
+        "stationIds": [],
+        "hallIds": [],
+        "firstPasswordRequired": True,
+        "createdAt": "2026-07-03T12:00:00+00:00",
+        "updatedAt": "2026-07-03T12:00:00+00:00",
+    }
+    assert service.list_tenant_id == TENANT_ID
+
+
+def test_create_staff_requires_csrf_and_binds_roles_and_scopes() -> None:
+    service = FakeStaffAccessService()
+    client = make_client(actor=make_actor(), staff_access_service=service)
+
+    missing_csrf = client.post(
+        "/api/tenant-setup/staff",
+        json={
+            "username": "barista",
+            "displayName": "Barista",
+            "roles": ["station_staff"],
+            "stationIds": [str(STATION_ID)],
+            "hallIds": [],
+        },
+    )
+    response = client.post(
+        "/api/tenant-setup/staff",
+        headers={"X-CSRF-Token": "csrf"},
+        json={
+            "username": "barista",
+            "displayName": "Barista",
+            "roles": ["station_staff"],
+            "stationIds": [str(STATION_ID)],
+            "hallIds": [],
+        },
+    )
+
+    assert missing_csrf.status_code == 403
+    assert response.status_code == 200
+    assert response.json()["username"] == "barista"
+    assert response.json()["roles"] == ["station_staff"]
+    assert response.json()["stationIds"] == [str(STATION_ID)]
+    assert response.json()["firstPasswordRequired"] is True
+    assert service.create_args is not None
+    assert service.create_args["actor"] == make_actor()
+    command = service.create_args["command"]
+    assert isinstance(command, CreateStaffCommand)
+    assert command.username == "barista"
+    assert command.display_name == "Barista"
+    assert command.roles == (StaffRole.STATION_STAFF,)
+    assert command.station_ids == (STATION_ID,)
 
 
 def test_create_station_requires_csrf_and_returns_station() -> None:

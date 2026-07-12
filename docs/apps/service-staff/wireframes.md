@@ -46,7 +46,7 @@ Required states:
 | No service role | Block app access. |
 | Tenant unavailable/suspended | Block service access. |
 
-Service staff first-password change does not require OTP in the current release.
+Service staff first-password change requires OTP sent to the platform-owned tenant identity GSM.
 
 ## Service Tracking Disabled
 

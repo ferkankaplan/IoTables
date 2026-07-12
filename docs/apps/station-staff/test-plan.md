@@ -86,7 +86,7 @@ Out of scope for this test plan:
 | Acceptance Criterion | Test Evidence |
 | --- | --- |
 | Station staff login and bootstrap password change | Browser/API tests. |
-| OTP not required for station staff | Login/first-password tests prove no OTP step. |
+| OTP required for station staff | Login/first-password tests prove tenant-GSM OTP step. |
 | One station opens directly | Browser routing test. |
 | Multiple stations require selector | Browser routing test. |
 | Unauthorized stations not visible/mutable | API/security and UI tests. |
@@ -118,7 +118,7 @@ StationStaffApp executable tests must cover the app-visible behavior of these en
 | `GET /api/auth/login-requirements` | First-password requirement discovery. |
 | `POST /api/auth/login` | StationStaff scope, missing role, invalid credentials. |
 | `POST /api/auth/first-password/begin` | Bootstrap password setup. |
-| `POST /api/auth/first-password/complete` | No OTP required for station staff. |
+| `POST /api/auth/first-password/complete` | OTP required for station staff. |
 | `GET /api/auth/session` | Protected route access. |
 | `POST /api/auth/logout` | Session revocation. |
 | `GET /api/station-staff/authorized-stations` | Station selector/direct queue behavior. |
@@ -197,7 +197,7 @@ StationStaffApp is ready for implementation only when:
 
 - all happy paths and branches above have an owner test layer;
 - station scope, stale transition, duplicate-click, and concurrency coverage are defined;
-- no-OTP first-password behavior is defined;
+- OTP-required first-password behavior is defined;
 - UI state and copy coverage are defined;
 - forbidden StationStaffApp runtime/control leaks are explicitly tested absent;
 - semantic index is regenerated after this document changes.

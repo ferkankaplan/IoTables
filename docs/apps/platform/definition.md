@@ -195,11 +195,11 @@ Initial `cafe` starter staff credentials:
 
 | Staff User | Username | Temporary Password | First Login Requirement |
 | --- | --- | --- | --- |
-| Kasiyer | `kasiyer` | `admin` | Must change password; OTP not required |
-| Aşçı | `asci` | `admin` | Must change password; OTP not required |
-| Barista | `barista` | `admin` | Must change password; OTP not required |
-| Garson | `garson` | `admin` | Must change password; OTP not required |
-| Komi | `komi` | `admin` | Must change password; OTP not required |
+| Kasiyer | `kasiyer` | `admin` | Must change password with tenant-GSM OTP |
+| Aşçı | `asci` | `admin` | Must change password with tenant-GSM OTP |
+| Barista | `barista` | `admin` | Must change password with tenant-GSM OTP |
+| Garson | `garson` | `admin` | Must change password with tenant-GSM OTP |
+| Komi | `komi` | `admin` | Must change password with tenant-GSM OTP |
 
 These are temporary bootstrap credentials only. They must not allow continued access after the first login without password change.
 
@@ -289,9 +289,9 @@ SMS provider selection is not a PlatformApp product decision. PlatformApp depend
 - Tenant creation requires OTP verification against the requested tenant GSM number before provisioning starts.
 - Initial tenant admin password is temporary and must be changed on first login.
 - Starter staff passwords are temporary and must be changed on first login.
-- Starter tenant admin and cashier first password setup does not require OTP in the current release.
+- Starter tenant admin and cashier first password setup requires OTP sent to the platform-owned tenant identity GSM.
 - Staff password reset OTP is sent to the platform-owned tenant identity GSM number.
-- Starter station and service staff password setup does not require OTP unless their role is later expanded with critical financial or administrative authority.
+- Starter station and service staff password setup requires OTP sent to the platform-owned tenant identity GSM.
 - Sector starter data must be applied only once during tenant creation.
 - Sector starter data must not run during server startup, restart, deployment, migration, or release upgrade.
 - Changing tenant sector after creation must not re-run starter data.

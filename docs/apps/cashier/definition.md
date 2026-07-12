@@ -20,7 +20,7 @@ CashierApp is not a tenant setup interface. It does not manage halls, tables, st
 
 The initial cashier user is created automatically by PlatformApp during tenant provisioning when the selected sector starter template includes a cashier staff user. For the initial `cafe` template, the cashier username is `kasiyer` and the temporary password is `admin`.
 
-The cashier must change the temporary password on first login. First-password setup does not require OTP in the current release; later password reset flows use OTP sent to the platform-owned tenant identity GSM. After creation, the cashier is a normal tenant-owned staff user.
+The cashier must change the temporary password on first login. First-password setup requires OTP sent to the platform-owned tenant identity GSM; later password reset flows use OTP sent to the platform-owned tenant identity GSM. After creation, the cashier is a normal tenant-owned staff user.
 
 ## App Authority
 
@@ -228,7 +228,7 @@ CashierApp handles money and live sessions, so all cashier actions must be safe 
 - Cashier routes require authentication.
 - Cashier actions require cashier permission.
 - Starter cashier password is temporary and must be changed on first login.
-- Starter cashier first-password setup requires password change without OTP in the current release.
+- Starter cashier first-password setup requires password change with tenant-GSM OTP.
 - Cashier password reset uses OTP sent to the platform-owned tenant identity GSM.
 - Payments and corrections must be audited.
 - CashierApp must not trust frontend-calculated totals.

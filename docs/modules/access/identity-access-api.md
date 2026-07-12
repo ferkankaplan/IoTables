@@ -60,8 +60,8 @@ In v1, valid Platform Owner username/password creates a PlatformApp session dire
 | --- | --- | --- | --- |
 | `setupToken` | string | yes | One-time setup context. |
 | `newPassword` | string | yes | Validated by password policy. |
-| `otpChallengeId` | string | conditional | Required for tenant admin and cashier. |
-| `otpCode` | string | conditional | Required for tenant admin and cashier. |
+| `otpChallengeId` | string | yes | Required for tenant admin, cashier, station staff, and service staff first-password setup. |
+| `otpCode` | string | yes | Required for tenant admin, cashier, station staff, and service staff first-password setup. |
 
 ## Response Schemas
 
@@ -69,15 +69,15 @@ In v1, valid Platform Owner username/password creates a PlatformApp session dire
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `status` | string enum | `password_change_required` in the current release. |
+| `status` | string enum | `otp_required` before completing current release first-password setup. |
 | `setupToken` | string | Existing setup token; no authenticated app session exists yet. |
-| `otpRequired` | boolean | False for all current release first-password setup flows. |
-| `otpChallengeId` | string/null | Null for current release first-password setup. |
-| `targetHint` | string/null | Null for current release first-password setup. |
-| `expiresAt` | timestamp/null | Null for current release first-password setup. |
-| `remainingAttempts` | integer/null | Null for current release first-password setup. |
+| `otpRequired` | boolean | True for current release tenant admin, cashier, station staff, and service staff first-password setup flows. |
+| `otpChallengeId` | string/null | Present when OTP is required. |
+| `targetHint` | string/null | Redacted platform-owned tenant identity GSM. |
+| `expiresAt` | timestamp/null | OTP challenge expiry. |
+| `remainingAttempts` | integer/null | Remaining OTP verification attempts. |
 
-The OTP code is never returned, logged, or stored in recoverable form. Current release first-password setup does not create OTP challenges. OTP challenge creation is used by tenant creation and password reset flows.
+The OTP code is never returned, logged, or stored in recoverable form. Current release first-password setup creates an OTP challenge against the platform-owned tenant identity GSM.
 
 `LoginResult`:
 

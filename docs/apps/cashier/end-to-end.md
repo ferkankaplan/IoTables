@@ -6,7 +6,7 @@ See the full shared flow: [../_shared/canonical-end-to-end.md](../_shared/canoni
 
 ### 9. Cashier Settles and Closes Session
 1. Cashier logs into CashierApp.
-2. If the starter password is still active, Cashier must change it before entering the board; first password setup does not require OTP in the current release.
+2. If the starter password is still active, Cashier must change it before entering the board; first password setup requires OTP sent to the platform-owned tenant identity GSM.
 3. Cashier sees halls, tables, active sessions, balances, and latest order state.
 4. Cashier opens a table session panel.
 5. Cashier receives partial or full payments against the single Check/Adisyon.

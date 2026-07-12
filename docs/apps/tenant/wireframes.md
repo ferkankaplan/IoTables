@@ -74,7 +74,7 @@ Required states:
 | First password change required | Force new password before admin access. |
 | Tenant unavailable | Block admin access according to tenant status. |
 
-First-password setup must complete before Admin Dashboard access. OTP is not required for first-password setup in the current release.
+First-password setup must complete before Admin Dashboard access. OTP is required and is sent to the platform-owned tenant identity GSM.
 
 ## Admin Dashboard
 

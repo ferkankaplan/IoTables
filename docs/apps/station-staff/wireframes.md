@@ -47,7 +47,7 @@ Required states:
 | No station role | Block app access. |
 | Tenant unavailable/suspended | Block station access. |
 
-Station staff first-password change does not require OTP in the current release.
+Station staff first-password change requires OTP sent to the platform-owned tenant identity GSM.
 
 ## Station Selector
 
