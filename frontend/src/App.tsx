@@ -1,4 +1,13 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  KeyboardEvent,
+  ReactNode,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import QRCode from "qrcode";
 
 type TenantHealthSummary = {
@@ -1762,6 +1771,7 @@ function CashierSignedInScreen({
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [voidingPayment, setVoidingPayment] = useState<CashierPayment | null>(null);
   const [voidReason, setVoidReason] = useState("");
+  const [closeSessionOpen, setCloseSessionOpen] = useState(false);
   const [showVirtualTables, setShowVirtualTables] = useState(false);
   const [qrPreview, setQrPreview] = useState<{
     tableId: string;
@@ -1930,6 +1940,7 @@ function CashierSignedInScreen({
       setBillSummary(null);
       setPayments([]);
       setOrders([]);
+      setCloseSessionOpen(false);
       await loadBoard();
       setActionState("idle");
     } catch (requestError) {
@@ -2145,7 +2156,7 @@ function CashierSignedInScreen({
               <button
                 className="h-10 w-full border border-zinc-950 px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:border-zinc-300 disabled:bg-zinc-100"
                 disabled={actionState === "submitting" || billSummary.remainingMinor !== 0}
-                onClick={() => void closeSession()}
+                onClick={() => setCloseSessionOpen(true)}
                 type="button"
               >
                 Oturumu kapat
@@ -2331,6 +2342,48 @@ function CashierSignedInScreen({
               </button>
             </div>
           </form>
+        </ActionModal>
+      ) : null}
+      {closeSessionOpen && selectedTable && billSummary ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setCloseSessionOpen(false);
+            }
+          }}
+          title="Oturumu kapat"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows
+              rows={[
+                ["Masa", selectedTable.tableLabel],
+                ["Toplam", `${billSummary.totalMinor} ${billSummary.currency}`],
+                ["Ödenen", `${billSummary.paidMinor} ${billSummary.currency}`],
+                ["Kalan", `${billSummary.remainingMinor} ${billSummary.currency}`]
+              ]}
+            />
+            <p className="text-sm text-zinc-600">
+              Bu işlem masa oturumunu kapatır. Kalan bakiye sıfır olmadan işlem gönderilemez.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                disabled={actionState === "submitting"}
+                onClick={() => setCloseSessionOpen(false)}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={actionState === "submitting" || billSummary.remainingMinor !== 0}
+                onClick={() => void closeSession()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Kapatılıyor" : "Oturumu kapat"}
+              </button>
+            </div>
+          </div>
         </ActionModal>
       ) : null}
     </main>
@@ -4538,6 +4591,10 @@ function MenuManagementWorkspace() {
   const [variantCreateOpen, setVariantCreateOpen] = useState(false);
   const [modifierConfigOpen, setModifierConfigOpen] = useState(false);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
+  const [categoryDisableOpen, setCategoryDisableOpen] = useState(false);
+  const [productDisableOpen, setProductDisableOpen] = useState(false);
+  const [categoryDisableReason, setCategoryDisableReason] = useState("");
+  const [productDisableReason, setProductDisableReason] = useState("");
 
   async function loadMenu(nextCategoryId?: string, nextProductId?: string) {
     setState("loading");
@@ -4656,7 +4713,7 @@ function MenuManagementWorkspace() {
   }
 
   async function disableSelectedCategory() {
-    if (!selectedCategory || actionState === "submitting") {
+    if (!selectedCategory || !categoryDisableReason.trim() || actionState === "submitting") {
       return;
     }
     setActionState("submitting");
@@ -4665,7 +4722,7 @@ function MenuManagementWorkspace() {
       await apiRequest<MenuCategory>(
         `/api/tenant-setup/menu/categories/${selectedCategory.categoryId}/disable`,
         {
-          body: JSON.stringify({reason: "tenant_admin_action"}),
+          body: JSON.stringify({reason: categoryDisableReason.trim()}),
           headers: {
             "Content-Type": "application/json",
             "X-CSRF-Token": crypto.randomUUID()
@@ -4674,6 +4731,8 @@ function MenuManagementWorkspace() {
         }
       );
       await loadMenu(selectedCategory.categoryId, selectedProductId ?? undefined);
+      setCategoryDisableOpen(false);
+      setCategoryDisableReason("");
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4682,7 +4741,7 @@ function MenuManagementWorkspace() {
   }
 
   async function disableSelectedProduct() {
-    if (!selectedProduct || actionState === "submitting") {
+    if (!selectedProduct || !productDisableReason.trim() || actionState === "submitting") {
       return;
     }
     setActionState("submitting");
@@ -4691,7 +4750,7 @@ function MenuManagementWorkspace() {
       await apiRequest<ProductService>(
         `/api/tenant-setup/menu/products/${selectedProduct.productId}/disable`,
         {
-          body: JSON.stringify({reason: "tenant_admin_action"}),
+          body: JSON.stringify({reason: productDisableReason.trim()}),
           headers: {
             "Content-Type": "application/json",
             "X-CSRF-Token": crypto.randomUUID()
@@ -4700,6 +4759,8 @@ function MenuManagementWorkspace() {
         }
       );
       await loadMenu(selectedProduct.categoryId, selectedProduct.productId);
+      setProductDisableOpen(false);
+      setProductDisableReason("");
       setActionState("idle");
     } catch (error) {
       setActionError(errorMessageFrom(error));
@@ -4904,7 +4965,10 @@ function MenuManagementWorkspace() {
               <button
                 className="h-9 border border-zinc-300 px-3 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
                 disabled={!selectedCategory.enabled || actionState === "submitting"}
-                onClick={() => void disableSelectedCategory()}
+                onClick={() => {
+                  setCategoryDisableReason("");
+                  setCategoryDisableOpen(true);
+                }}
                 type="button"
               >
                 Pasifleştir
@@ -4962,7 +5026,10 @@ function MenuManagementWorkspace() {
             <button
               className="h-9 border border-zinc-300 px-3 text-xs font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:bg-zinc-100"
               disabled={!selectedProduct.enabled || actionState === "submitting"}
-              onClick={() => void disableSelectedProduct()}
+              onClick={() => {
+                setProductDisableReason("");
+                setProductDisableOpen(true);
+              }}
               type="button"
             >
               Pasifleştir
@@ -5202,6 +5269,90 @@ function MenuManagementWorkspace() {
                 type="button"
               >
                 {actionState === "submitting" ? "Kaydediliyor" : "Unavailable yap"}
+              </button>
+            </div>
+          </div>
+        </ActionModal>
+      ) : null}
+      {categoryDisableOpen && selectedCategory ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setCategoryDisableOpen(false);
+              setCategoryDisableReason("");
+            }
+          }}
+          title="Kategoriyi pasifleştir"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows rows={[["Kategori", selectedCategory.name]]} />
+            <FieldText
+              label="Pasifleştirme nedeni"
+              onChange={setCategoryDisableReason}
+              required
+              value={categoryDisableReason}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                disabled={actionState === "submitting"}
+                onClick={() => {
+                  setCategoryDisableOpen(false);
+                  setCategoryDisableReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!categoryDisableReason.trim() || actionState === "submitting"}
+                onClick={() => void disableSelectedCategory()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
+              </button>
+            </div>
+          </div>
+        </ActionModal>
+      ) : null}
+      {productDisableOpen && selectedProduct ? (
+        <ActionModal
+          onClose={() => {
+            if (actionState !== "submitting") {
+              setProductDisableOpen(false);
+              setProductDisableReason("");
+            }
+          }}
+          title="Ürünü pasifleştir"
+        >
+          <div className="space-y-4 px-5 py-5">
+            <DetailRows rows={[["Ürün", selectedProduct.name]]} />
+            <FieldText
+              label="Pasifleştirme nedeni"
+              onChange={setProductDisableReason}
+              required
+              value={productDisableReason}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="h-10 border border-zinc-300 px-4 text-sm font-medium hover:bg-zinc-50"
+                disabled={actionState === "submitting"}
+                onClick={() => {
+                  setProductDisableOpen(false);
+                  setProductDisableReason("");
+                }}
+                type="button"
+              >
+                Vazgeç
+              </button>
+              <button
+                className="h-10 bg-zinc-950 px-4 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                disabled={!productDisableReason.trim() || actionState === "submitting"}
+                onClick={() => void disableSelectedProduct()}
+                type="button"
+              >
+                {actionState === "submitting" ? "Pasifleştiriliyor" : "Pasifleştir"}
               </button>
             </div>
           </div>
@@ -5832,14 +5983,86 @@ function ActionModal({
   onClose: () => void;
   title: string;
 }) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key !== "Tab" || !panelRef.current) {
+      return;
+    }
+
+    const focusable = Array.from(
+      panelRef.current.querySelectorAll<HTMLElement>(
+        [
+          "a[href]",
+          "button:not([disabled])",
+          "input:not([disabled])",
+          "select:not([disabled])",
+          "textarea:not([disabled])",
+          "[tabindex]:not([tabindex='-1'])"
+        ].join(",")
+      )
+    ).filter((element) => element.offsetParent !== null);
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 py-6">
-      <section className="flex max-h-full w-full max-w-xl flex-col border border-zinc-200 bg-white shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/35 px-4 py-6"
+      onKeyDown={handleKeyDown}
+    >
+      <section
+        aria-labelledby={titleId}
+        aria-modal="true"
+        className="flex max-h-full w-full max-w-xl flex-col border border-zinc-200 bg-white shadow-xl"
+        ref={panelRef}
+        role="dialog"
+      >
         <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold" id={titleId}>
+            {title}
+          </h3>
           <button
             className="h-9 border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-50"
             onClick={onClose}
+            ref={closeButtonRef}
             type="button"
           >
             Kapat
